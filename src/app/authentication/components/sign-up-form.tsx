@@ -1,10 +1,12 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 const registerSchema = z.object({
@@ -22,7 +24,9 @@ const registerSchema = z.object({
       .trim()
       .min(8, { message: "Senha deve ter no mínimo 8 caracteres" }),
   });
-  
+
+const SignUpForm = () => {  
+
 const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -31,12 +35,11 @@ const form = useForm<z.infer<typeof registerSchema>>({
       password: "",
     },
   });
-
+  
   function onSubmit(values: z.infer<typeof registerSchema>) {
     console.log(values);
   }
 
-const SignUpForm = () => {
     return ( <Card>
         <Form {...form}>
           <form
@@ -73,7 +76,7 @@ const SignUpForm = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite seu email" {...field} />
+                      <Input type="email" placeholder="Digite seu email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -86,7 +89,7 @@ const SignUpForm = () => {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite sua senha" {...field} />
+                      <Input type="password" placeholder="Digite sua senha" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
