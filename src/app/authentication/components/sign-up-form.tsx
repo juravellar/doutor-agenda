@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -54,15 +55,25 @@ const SignUpForm = () => {
   });
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
-    await authClient.signUp.email({
-      email: values.email,
-      password: values.password,
-      name: values.username,
-    }, {
-      onSuccess: () => {
-        router.push("/dashboard");
+    await authClient.signUp.email(
+      {
+        email: values.email,
+        password: values.password,
+        name: values.username,
       },
-    });
+      {
+        onSuccess: () => {
+          router.push("/dashboard");
+        },
+        onError: (ctx) => {
+          if (ctx.error.code === "USER_ALREADY_EXISTS") {
+            toast.error("Email já cadastrado");
+            return;
+          }
+          toast.error("Erro ao criar conta");
+        },
+      },
+    );
   }
 
   return (
