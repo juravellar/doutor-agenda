@@ -30,7 +30,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "../../../lib/auth-client";
 
 // Menu items.
 const items = [
@@ -102,15 +102,13 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   <Avatar>
-                    <AvatarFallback>
-                      f
-                    </AvatarFallback>
+                    <AvatarFallback>f</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="text-sm">
                       {session.data?.user?.clinic?.name}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {session.data?.user.email}
                     </p>
                   </div>

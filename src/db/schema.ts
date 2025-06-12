@@ -115,10 +115,10 @@ export const doctorsTable = pgTable("doctors", {
     .notNull()
     .references(() => clinicsTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  avatarImage: text("avatar_image_url"),
-  //1 - Monday, 2 - Tuesday, 3 - Wednesday, 4 - Thursday, 5 - Friday, 6 - Saturday, 0 - Sunday
-  availableFromWeekDay: integer("available_week_days").notNull(),
-  availableToWeekDay: integer("available_week_days").notNull(),
+  avatarImageUrl: text("avatar_image_url"),
+  // 1 - Monday, 2 - Tuesday, 3 - Wednesday, 4 - Thursday, 5 - Friday, 6 - Saturday, 0 - Sunday
+  availableFromWeekDay: integer("available_from_week_day").notNull(),
+  availableToWeekDay: integer("available_to_week_day").notNull(),
   availableFromTime: time("available_from_time").notNull(),
   availableToTime: time("available_to_time").notNull(),
   specialty: text("specialty").notNull(),
@@ -126,9 +126,9 @@ export const doctorsTable = pgTable("doctors", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .notNull()
     .$onUpdate(() => new Date()),
 });
+
 
 export const doctorsTableRelations = relations(doctorsTable, ({ one }) => ({
   clinic: one(clinicsTable, {

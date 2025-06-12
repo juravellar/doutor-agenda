@@ -10,7 +10,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { auth } from "@/lib/auth";
+import { auth } from "../../../lib/auth";
 
 import AddDoctorButton from "./_components/add-doctor-button";
 
