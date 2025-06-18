@@ -30,6 +30,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+
 import { authClient } from "../../../lib/auth-client";
 
 // Menu items.
@@ -115,8 +116,11 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4 focus:text-destructive" />
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>

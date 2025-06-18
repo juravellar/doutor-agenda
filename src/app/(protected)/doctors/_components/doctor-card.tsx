@@ -117,7 +117,7 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
           <AlertDialogTrigger asChild>
             <Button
               variant="outline"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive w-full"
+              className="hover:bg-destructive/10 hover:text-destructive w-full"
             >
               <TrashIcon />
               Deletar médico

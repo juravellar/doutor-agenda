@@ -64,7 +64,7 @@ export function PatientTableActions({ patient }: PatientTableActionsProps) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <EditIcon className="mr-2 h-4 w-4" />
+              <EditIcon className="mr-2 h-4 w-4 text-black" />
               Editar
             </DropdownMenuItem>
           </DialogTrigger>
@@ -77,10 +77,10 @@ export function PatientTableActions({ patient }: PatientTableActionsProps) {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem
-              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              className="focus:bg-destructive/10 focus:text-destructive"
               onSelect={(e) => e.preventDefault()}
             >
-              <TrashIcon className="mr-2 h-4 w-4" />
+              <TrashIcon className="mr-2 h-4 w-4 focus:text-destructive" />
               Deletar
             </DropdownMenuItem>
           </AlertDialogTrigger>
