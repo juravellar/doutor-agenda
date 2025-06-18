@@ -72,6 +72,8 @@ export function AppSidebar() {
     });
   };
 
+  const isActive = (itemUrl: string) => pathname === itemUrl;
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4">
@@ -84,7 +86,15 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className={
+                      isActive(item.url)
+                        ? "!bg-primary/5 !text-primary hover:!bg-primary/10 focus:!bg-primary/10 [&>svg]:!text-primary [&>span]:!text-primary" 
+                          : "hover:!bg-primary/5 hover:[&>svg]:!text-primary hover:[&>span]:!text-primary"
+                    } 
+                  >
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -120,7 +130,7 @@ export function AppSidebar() {
                   onClick={handleSignOut}
                   className="focus:bg-destructive/10 focus:text-destructive"
                 >
-                  <LogOut className="mr-2 h-4 w-4 focus:text-destructive" />
+                  <LogOut className="focus:text-destructive mr-2 h-4 w-4" />
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
