@@ -84,9 +84,11 @@ const UpsertAppointmentForm = ({
     defaultValues: {
       patientId: appointment?.patientId ?? "",
       doctorId: appointment?.doctorId ?? "",
-      appointmentPrice: 0,
+      appointmentPrice: appointment?.appointmentPriceInCents
+        ? appointment.appointmentPriceInCents / 100
+        : 0,
       date: appointment?.date ?? undefined,
-      time: "",
+      time: appointment?.time ?? "",
     },
   });
 
@@ -113,9 +115,11 @@ const UpsertAppointmentForm = ({
       form.reset({
         patientId: appointment?.patientId ?? "",
         doctorId: appointment?.doctorId ?? "",
-        appointmentPrice: 0,
+        appointmentPrice: appointment?.appointmentPriceInCents
+          ? appointment.appointmentPriceInCents / 100
+          : 0,
         date: appointment?.date ?? undefined,
-        time: "",
+        time: appointment?.time ?? "",
       });
     }
   }, [isOpen, form, appointment]);
@@ -162,6 +166,7 @@ const UpsertAppointmentForm = ({
                 <FormLabel>Paciente</FormLabel>
                 <Select
                   onValueChange={field.onChange}
+                  value={field.value}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -190,6 +195,7 @@ const UpsertAppointmentForm = ({
                 <FormLabel>Médico</FormLabel>
                 <Select
                   onValueChange={field.onChange}
+                  value={field.value}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -269,7 +275,7 @@ const UpsertAppointmentForm = ({
                       disabled={(date) =>
                         date < new Date() || date < new Date("1900-01-01")
                       }
-                      initialFocus
+                      autoFocus
                       locale={ptBR}
                     />
                   </PopoverContent>
@@ -287,6 +293,7 @@ const UpsertAppointmentForm = ({
                 <FormLabel>Horário</FormLabel>
                 <Select
                   onValueChange={field.onChange}
+                  value={field.value}
                   defaultValue={field.value}
                   disabled={!isDateTimeEnabled}
                 >
@@ -296,15 +303,32 @@ const UpsertAppointmentForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* TODO: Implementar horários disponíveis baseados no médico */}
-                    <SelectItem value="08:00">08:00</SelectItem>
-                    <SelectItem value="09:00">09:00</SelectItem>
-                    <SelectItem value="10:00">10:00</SelectItem>
-                    <SelectItem value="11:00">11:00</SelectItem>
-                    <SelectItem value="14:00">14:00</SelectItem>
-                    <SelectItem value="15:00">15:00</SelectItem>
-                    <SelectItem value="16:00">16:00</SelectItem>
-                    <SelectItem value="17:00">17:00</SelectItem>
+                    {(() => {
+                      const selectedDoctor = doctors.find(
+                        (doctor) => doctor.id === form.watch("doctorId"),
+                      );
+
+                      if (!selectedDoctor) return null;
+
+                      const availableHours = [];
+                      const fromHour = parseInt(
+                        selectedDoctor.availableFromTime.split(":")[0],
+                      );
+                      const toHour = parseInt(
+                        selectedDoctor.availableToTime.split(":")[0],
+                      );
+
+                      for (let hour = fromHour; hour < toHour; hour++) {
+                        const timeString = `${hour.toString().padStart(2, "0")}:00`;
+                        availableHours.push(timeString);
+                      }
+
+                      return availableHours.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ));
+                    })()}
                   </SelectContent>
                 </Select>
                 <FormMessage />

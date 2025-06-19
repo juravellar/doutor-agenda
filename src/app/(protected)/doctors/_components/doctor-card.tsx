@@ -66,32 +66,41 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
   const availability = getAvailability(doctor);
 
   return (
-    <Card>
+    <Card className="w-full max-w-xs flex-1">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
             <AvatarFallback>{doctorInitials}</AvatarFallback>
           </Avatar>
-          <div>
-            <h3 className="text-sm font-medium">{doctor.name}</h3>
-            <p className="text-muted-foreground text-sm">{doctor.specialty}</p>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-medium">{doctor.name}</h3>
+            <p className="text-muted-foreground truncate text-sm">
+              {doctor.specialty}
+            </p>
           </div>
         </div>
       </CardHeader>
       <Separator />
-      <CardContent className="flex flex-col gap-2">
-        <Badge variant="outline">
+      <CardContent className="flex flex-col gap-2 overflow-hidden">
+        <Badge variant="outline" className="max-w-full truncate">
           <CalendarIcon className="mr-1" />
-          {availability.from.format("dddd")} a {availability.to.format("dddd")}
+          <span className="truncate">
+            {availability.from.format("dddd")} a{" "}
+            {availability.to.format("dddd")}
+          </span>
         </Badge>
-        <Badge variant="outline">
+        <Badge variant="outline" className="max-w-full truncate">
           <ClockIcon className="mr-1" />
-          {availability.from.format("HH:mm")} -{" "}
-          {availability.to.format("HH:mm")}
+          <span className="truncate">
+            {availability.from.format("HH:mm")} -{" "}
+            {availability.to.format("HH:mm")}
+          </span>
         </Badge>
-        <Badge variant="outline">
+        <Badge variant="outline" className="max-w-full truncate">
           <DollarSignIcon className="mr-1" />
-          {formatCurrencyInCents(doctor.appointmentPriceInCents)}
+          <span className="truncate">
+            {formatCurrencyInCents(doctor.appointmentPriceInCents)}
+          </span>
         </Badge>
       </CardContent>
       <Separator />
@@ -101,7 +110,7 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
           onOpenChange={setIsUpsertDoctorDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button className="w-full">Ver detalhes</Button>
+            <Button className="h-10 w-full">Ver detalhes</Button>
           </DialogTrigger>
           <UpsertDoctorForm
             doctor={{
@@ -117,9 +126,9 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
           <AlertDialogTrigger asChild>
             <Button
               variant="outline"
-              className="hover:bg-destructive/10 hover:text-destructive w-full"
+              className="hover:bg-destructive/10 hover:text-destructive h-10 w-full"
             >
-              <TrashIcon />
+              <TrashIcon className="mr-2 h-4 w-4" />
               Deletar médico
             </Button>
           </AlertDialogTrigger>

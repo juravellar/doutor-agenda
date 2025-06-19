@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
 export const deletePatient = actionClient
-  .schema(
+  .inputSchema(
     z.object({
       id: z.string().uuid(),
     }),
