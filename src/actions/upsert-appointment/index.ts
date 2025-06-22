@@ -1,5 +1,6 @@
 "use server";
 
+import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -9,6 +10,8 @@ import { db } from "@/db";
 import { appointmentsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+
+import { getAvailableTimes } from "../get-available-times";
 
 export const upsertAppointment = actionClient
   .inputSchema(
@@ -32,7 +35,23 @@ export const upsertAppointment = actionClient
       throw new Error("Clínica não encontrada");
     }
 
-    // Combine date and time into a single Date object
+    const availableTimes = await getAvailableTimes({
+      doctorId: parsedInput.doctorId,
+      date: dayjs(parsedInput.date).format("YYYY-MM-DD"),
+    });
+
+    if (!availableTimes?.data) {
+      throw new Error("Horário não encontrado");
+    }
+
+    const isTimeAvailable = availableTimes.data?.some(
+      (time) => time.value === parsedInput.time && time.available,
+    );
+
+    if (!isTimeAvailable) {
+      throw new Error("Horário não encontrado");
+    }
+
     const [hours, minutes] = parsedInput.time.split(":").map(Number);
     const appointmentDate = new Date(parsedInput.date);
     appointmentDate.setHours(hours, minutes, 0, 0);
