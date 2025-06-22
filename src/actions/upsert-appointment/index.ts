@@ -26,10 +26,10 @@ export const upsertAppointment = actionClient
       headers: await headers(),
     });
     if (!session?.user) {
-      throw new Error("Unauthorized");
+      throw new Error("Não autorizado.");
     }
-    if (!session.user.clinic) {
-      throw new Error("Clinic not found");
+    if (!session?.user.clinic?.id) {
+      throw new Error("Clínica não encontrada");
     }
 
     // Combine date and time into a single Date object
@@ -53,7 +53,6 @@ export const upsertAppointment = actionClient
           patientId: parsedInput.patientId,
           doctorId: parsedInput.doctorId,
           date: appointmentDate,
-          time: parsedInput.time,
           appointmentPriceInCents: parsedInput.appointmentPriceInCents,
         })
         .where(eq(appointmentsTable.id, parsedInput.id));
@@ -62,7 +61,6 @@ export const upsertAppointment = actionClient
         patientId: parsedInput.patientId,
         doctorId: parsedInput.doctorId,
         date: appointmentDate,
-        time: parsedInput.time,
         appointmentPriceInCents: parsedInput.appointmentPriceInCents,
         clinicId: session.user.clinic.id,
       });

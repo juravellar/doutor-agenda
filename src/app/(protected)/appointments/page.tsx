@@ -22,22 +22,26 @@ const AppointmentsPage = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
   if (!session?.user) {
     redirect("/authentication");
   }
+
   if (!session.user.clinic) {
     redirect("/clinic-form");
   }
 
+  const clinicId = session.user.clinic.id;
+
   const [patients, doctors, appointments] = await Promise.all([
     db.query.patientsTable.findMany({
-      where: eq(patientsTable.clinicId, session.user.clinic.id),
+      where: eq(patientsTable.clinicId, clinicId),
     }),
     db.query.doctorsTable.findMany({
-      where: eq(doctorsTable.clinicId, session.user.clinic.id),
+      where: eq(doctorsTable.clinicId, clinicId),
     }),
     db.query.appointmentsTable.findMany({
-      where: eq(appointmentsTable.clinicId, session.user.clinic.id),
+      where: eq(appointmentsTable.clinicId, clinicId),
       with: {
         patient: true,
         doctor: true,
@@ -61,8 +65,8 @@ const AppointmentsPage = async () => {
       <PageContent>
         <AppointmentsTable
           appointments={appointments}
-          patients={patients}
           doctors={doctors}
+          patients={patients}
         />
       </PageContent>
     </PageContainer>

@@ -27,16 +27,15 @@ export const createAppointmentsTableColumns = ({
     accessorKey: "patient.name",
     header: "Paciente",
   },
-  
   {
-    id: "dateTime",
-    header: "Data",
+    id: "date",
+    accessorKey: "date",
+    header: "Data e Hora",
     cell: (params) => {
-      const { date, time } = params.row.original;
-      const [hours, minutes] = time.split(":").map(Number);
-      const dateTime = new Date(date);
-      dateTime.setHours(hours, minutes, 0, 0);
-      return format(dateTime, "dd/MM/yyyy, HH:mm", { locale: ptBR });
+      const appointment = params.row.original;
+      return format(new Date(appointment.date), "dd/MM/yyyy 'às' HH:mm", {
+        locale: ptBR,
+      });
     },
   },
   {
@@ -61,7 +60,7 @@ export const createAppointmentsTableColumns = ({
       }).format(price / 100);
     },
   },
-  
+
   {
     id: "actions",
     cell: ({ row }) => (

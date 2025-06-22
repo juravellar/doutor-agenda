@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 
-import UpsertAppointmentForm from "./add-appointments-form";
+import UpsertAppointmentForm from "./add-appointment-form";
 
 type Appointment = typeof appointmentsTable.$inferSelect & {
   patient: { name: string };
@@ -82,7 +82,7 @@ export function AppointmentTableActions({
             onSuccess={() => setIsOpen(false)}
             isOpen={isOpen}
             patients={patients}
-            doctors={doctors} 
+            doctors={doctors}
           />
         </Dialog>
         <AlertDialog>
