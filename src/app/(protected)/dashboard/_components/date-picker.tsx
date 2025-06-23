@@ -23,7 +23,7 @@ export function DatePicker({
     "from",
     parseAsIsoDate.withDefault(new Date()),
   );
-  
+
   const [to, setTo] = useQueryState(
     "to",
     parseAsIsoDate.withDefault(addMonths(new Date(), 1)),
@@ -59,7 +59,7 @@ export function DatePicker({
               !date && "text-muted-foreground",
             )}
           >
-            <CalendarIcon />
+            <CalendarIcon className="text-primary h-4 w-4" />
             {date?.from ? (
               date.to ? (
                 <>

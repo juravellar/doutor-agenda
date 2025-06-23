@@ -61,7 +61,7 @@ const AppointmentsChart = ({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-2">
-        <DollarSign />
+        <DollarSign className="text-primary h-4 w-4" />
         <CardTitle>Agendamentos e Faturamento</CardTitle>
       </CardHeader>
       <CardContent>

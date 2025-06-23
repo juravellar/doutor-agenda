@@ -3,11 +3,21 @@
 import { DataTable } from "@/components/ui/data-table";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 
-import { createAppointmentsTableColumns } from "./table.columns";
+import { createAppointmentsTableColumns } from "./table-columns";
 
 type Appointment = typeof appointmentsTable.$inferSelect & {
-  patient: { name: string };
-  doctor: { name: string; specialty: string };
+  patient: {
+    id: string;
+    name: string;
+    email: string;
+    phoneNumber: string;
+    sex: "male" | "female";
+  };
+  doctor: {
+    id: string;
+    name: string;
+    specialty: string;
+  };
 };
 
 interface AppointmentsTableProps {

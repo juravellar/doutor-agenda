@@ -40,7 +40,7 @@ interface AppointmentTableActionsProps {
   doctors: (typeof doctorsTable.$inferSelect)[];
 }
 
-export function AppointmentTableActions({
+export function AppointmentsTableActions({
   patients,
   doctors,
   appointment,
