@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -22,6 +21,7 @@ const pathTranslations: Record<string, string> = {
   appointments: "Agendamentos",
   new: "Adicionar",
   edit: "Editar",
+  subscription: "Assinatura",
 };
 
 type ResourceType = "patients" | "doctors" | "appointments";
@@ -36,62 +36,86 @@ const ResourceName: React.FC<ResourceNameProps> = ({ id, resourceType }) => {
   return <>{name || "Carregando..."}</>;
 };
 
+// Define quais rotas pertencem ao grupo "Outros"
+const outrosRoutes = ["/subscription"];
+
+function getSidebarGroupLabel(pathname: string): string {
+  // Se a rota começa com algum dos caminhos de "Outros", retorna "Outros"
+  if (outrosRoutes.some((route) => pathname.startsWith(route))) {
+    return "Outros";
+  }
+  // Caso contrário, retorna "Menu Principal"
+  return "Menu Principal";
+}
+
 export function AppBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
+  // Determina o label do grupo do sidebar
+  const sidebarGroupLabel = getSidebarGroupLabel(`/${segments[0] || ""}`);
+
   return (
-    <Breadcrumb aria-label="breadcrumb">
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/dashboard">Menu Principal</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
+    <div className="flex min-h-[60px] items-center">
+      <Breadcrumb aria-label="breadcrumb">
+        <BreadcrumbList className="flex items-center">
+          <BreadcrumbItem className="flex items-center">
+            <BreadcrumbLink asChild>
+              <Link
+                className="flex h-10 items-center"
+                href={
+                  sidebarGroupLabel === "Outros"
+                    ? "/subscription"
+                    : "/dashboard"
+                }
+              >
+                {sidebarGroupLabel}
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          {segments.map((segment, index) => {
+            const href = `/${segments.slice(0, index + 1).join("/")}`;
+            const isLast = index === segments.length - 1;
+            const previousSegment = segments[index - 1];
+            const isId = isUUID(segment);
+            const isResource =
+              previousSegment &&
+              ["patients", "doctors", "appointments"].includes(previousSegment);
+            const resourceType = isResource
+              ? (previousSegment as ResourceType)
+              : undefined;
+            const name =
+              pathTranslations[segment] ||
+              segment.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
-        {segments.map((segment, index) => {
-          const href = `/${segments.slice(0, index + 1).join("/")}`;
-          const isLast = index === segments.length - 1;
-          const previousSegment = segments[index - 1];
+            const breadcrumbContent =
+              isId && resourceType ? (
+                <ResourceName id={segment} resourceType={resourceType} />
+              ) : (
+                name
+              );
 
-          const isId = isUUID(segment);
-          const isResource =
-            previousSegment &&
-            ["patients", "doctors", "appointments"].includes(previousSegment);
-
-          const resourceType = isResource
-            ? (previousSegment as ResourceType)
-            : undefined;
-
-          const name =
-            pathTranslations[segment] ||
-            segment.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
-
-          const breadcrumbContent =
-            isId && resourceType ? (
-              <ResourceName id={segment} resourceType={resourceType} />
-            ) : (
-              name
+            return (
+              <React.Fragment key={href}>
+                <BreadcrumbSeparator className="text-primary flex items-center" />
+                <BreadcrumbItem className="flex items-center">
+                  {isLast ? (
+                    <BreadcrumbPage className="text-primary flex h-10 items-center font-bold">
+                      {breadcrumbContent}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild className="text-primary font-bold">
+                      <Link href={href} className="flex h-10 items-center">
+                        {breadcrumbContent}
+                      </Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
             );
-
-          return (
-            <React.Fragment key={href}>
-              <BreadcrumbSeparator className="text-primary" />
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage className="font-bold text-primary">
-                    {breadcrumbContent}
-                  </BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild className="font-bold text-primary">
-                    <Link href={href}>{breadcrumbContent}</Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 }

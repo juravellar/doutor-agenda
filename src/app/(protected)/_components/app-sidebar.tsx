@@ -2,6 +2,9 @@
 
 import {
   CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  Gem,
   LayoutDashboard,
   LogOut,
   Stethoscope,
@@ -10,6 +13,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -18,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
@@ -57,10 +62,20 @@ const items = [
   },
 ];
 
+// Outros items - seção colapsável
+const otherItems = [
+  {
+    title: "Assinatura",
+    url: "/subscription",
+    icon: Gem,
+  },
+];
+
 export function AppSidebar() {
   const router = useRouter();
   const session = authClient.useSession();
   const pathname = usePathname();
+  const [isOthersExpanded, setIsOthersExpanded] = useState(false);
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -74,9 +89,13 @@ export function AppSidebar() {
 
   const isActive = (itemUrl: string) => pathname === itemUrl;
 
+  const toggleOthersSection = () => {
+    setIsOthersExpanded(!isOthersExpanded);
+  };
+
   return (
     <Sidebar>
-      <SidebarHeader className="border-b p-4">
+      <SidebarHeader className="border-b p-3.5">
         <Image src="/logo.svg" alt="Doutor Agenda" width={136} height={28} />
       </SidebarHeader>
       <SidebarContent>
@@ -91,9 +110,9 @@ export function AppSidebar() {
                     isActive={isActive(item.url)}
                     className={
                       isActive(item.url)
-                        ? "!bg-primary/5 !text-primary hover:!bg-primary/10 focus:!bg-primary/10 [&>svg]:!text-primary [&>span]:!text-primary" 
-                          : "hover:!bg-primary/5 hover:[&>svg]:!text-primary hover:[&>span]:!text-primary"
-                    } 
+                        ? "!bg-primary/5 !text-primary hover:!bg-primary/10 focus:!bg-primary/10 [&>svg]:!text-primary [&>span]:!text-primary"
+                        : "hover:!bg-primary/5 hover:[&>svg]:!text-primary hover:[&>span]:!text-primary"
+                    }
                   >
                     <Link href={item.url}>
                       <item.icon />
@@ -104,6 +123,44 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+        <Separator />
+        <SidebarGroup>
+          <SidebarGroupLabel
+            className="hover:bg-primary/5 hover:text-primary -mx-2 -my-1 flex cursor-pointer items-center justify-between rounded-md px-2 py-1"
+            onClick={toggleOthersSection}
+          >
+            <span>Outros</span>
+            {isOthersExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </SidebarGroupLabel>
+          {isOthersExpanded && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {otherItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      className={
+                        isActive(item.url)
+                          ? "!bg-primary/5 !text-primary hover:!bg-primary/10 focus:!bg-primary/10 [&>svg]:!text-primary [&>span]:!text-primary"
+                          : "hover:!bg-primary/5 hover:[&>svg]:!text-primary hover:[&>span]:!text-primary"
+                      }
+                    >
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>

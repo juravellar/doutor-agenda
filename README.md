@@ -38,3 +38,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 //TODO:
 - [ ] Add image to user/doctor profile
 - [ ] Add status camp on appointments table
+- [ ] Alinhar breadcrump e logo
