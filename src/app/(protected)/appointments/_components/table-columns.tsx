@@ -77,6 +77,11 @@ export function createAppointmentsTableColumns({
       },
     },
     {
+      id: "status",
+      accessorKey: "status",
+      header: "Status",
+    },
+    {
       id: "actions",
       cell: (params) => {
         const appointment = params.row.original;

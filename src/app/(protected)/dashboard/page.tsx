@@ -13,9 +13,9 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { getDashboard } from "@/data/get-dashboard";
 import { auth } from "@/lib/auth";
 
+import { getDashboard } from "../../../../data/get-dashboard";
 import AppointmentsChart from "./_components/appointments-charts";
 import DashboardAppointmentsTable from "./_components/dashboard-appointments-table";
 import { DatePicker } from "./_components/date-picker";
