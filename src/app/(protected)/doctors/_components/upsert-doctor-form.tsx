@@ -73,7 +73,7 @@ interface UpsertDoctorFormProps {
   doctor?: typeof doctorsTable.$inferSelect;
   onSuccess?: () => void;
 }
-  
+
 const UpsertDoctorForm = ({
   doctor,
   onSuccess,
