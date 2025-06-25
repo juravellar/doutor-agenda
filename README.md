@@ -37,11 +37,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 // TODO:
 
-- [ ] Add image to user/doctor profile
 - [ ] Add status camp on appointments table
-- [ ] Inserir textos para quando não tiver dados salvos ainda (médicos)
+
 Comandos para rodar local:
 
--stripe: stripe listen --forward-to localhost:3000/api/stripe/webhook
+-stripe: -stripe login
+         - stripe listen --forward-to localhost:3000/api/stripe/webhook (alterar o .env "STRIPE_WEBHOOK_SECRET")
 -servidor: npm run dev
 -drizzle-kit: npx drizzle-kit studio

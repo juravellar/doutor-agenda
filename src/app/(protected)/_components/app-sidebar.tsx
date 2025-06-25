@@ -15,7 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,7 +96,9 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4">
-        <Image src="/logo.svg" alt="Doutor Agenda" width={136} height={28} />
+        <Link href="/dashboard" aria-label="Ir para o dashboard" className="inline-block">
+          <Image src="/logo.svg" alt="Doutor Agenda" width={136} height={28} />
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -170,7 +172,13 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   <Avatar>
-                    <AvatarFallback>f</AvatarFallback>
+                    {session.data?.user?.image ? (
+                      <AvatarImage src={session.data.user.image} alt={session.data.user.email ?? "Avatar"} />
+                    ) : (
+                      <AvatarFallback>
+                        {session.data?.user?.email?.charAt(0).toUpperCase() ?? "?"}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div>
                     <p className="text-sm">

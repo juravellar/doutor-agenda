@@ -37,6 +37,8 @@ const DoctorsPage = async () => {
     where: eq(doctorsTable.clinicId, session.user.clinic.id),
   });
 
+  const hasDoctors = doctors.length > 0;
+
   return (
     <PageContainer>
       <PageHeader>
@@ -49,11 +51,19 @@ const DoctorsPage = async () => {
         </PageActions>
       </PageHeader>
       <PageContent>
-        <div className="flex flex-wrap justify-start gap-6">
-          {doctors.map((doctor) => (
-            <DoctorCard key={doctor.id} doctor={doctor} />
-          ))}
-        </div>
+        {hasDoctors ? (
+          <div className="flex flex-wrap justify-start gap-6">
+            {doctors.map((doctor) => (
+              <DoctorCard key={doctor.id} doctor={doctor} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 w-full">
+            <span className="text-muted-foreground text-lg mb-4">
+              Nenhum médico cadastrado.
+            </span>
+          </div>
+        )}
       </PageContent>
     </PageContainer>
   );
