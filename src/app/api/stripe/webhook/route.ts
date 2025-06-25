@@ -53,8 +53,8 @@ export const POST = async (request: Request) => {
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
 
-      let subscriptionId: string | null = null;
-      let userId: string | null = null;
+      let subscriptionId: string | undefined;
+      let userId: string | undefined;
 
       const invoiceParent = invoice.parent as InvoiceParent | undefined;
       if (
@@ -63,9 +63,8 @@ export const POST = async (request: Request) => {
         invoiceParent.subscription_details.metadata &&
         invoiceParent.subscription_details.metadata.userId
       ) {
-        subscriptionId =
-          invoiceParent.subscription_details.subscription ?? null;
-        userId = invoiceParent.subscription_details.metadata.userId ?? null;
+        subscriptionId = invoiceParent.subscription_details.subscription;
+        userId = invoiceParent.subscription_details.metadata.userId;
       } else if (
         invoice.lines &&
         Array.isArray(invoice.lines.data) &&
@@ -105,7 +104,20 @@ export const POST = async (request: Request) => {
     }
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-      const userId = subscription.metadata?.userId;
+      let userId = subscription.metadata?.userId;
+
+      // Fallback: buscar userId pelo stripeCustomerId se não houver metadata
+      if (!userId && subscription.customer) {
+        const user = await db.query.usersTable.findFirst({
+          where: eq(
+            usersTable.stripeCustomerId,
+            subscription.customer as string,
+          ),
+        });
+        if (user?.id) {
+          userId = user.id;
+        }
+      }
 
       if (!userId) {
         throw new Error(
@@ -120,7 +132,46 @@ export const POST = async (request: Request) => {
           stripeCustomerId: null,
           plan: null,
         })
-        .where(eq(usersTable.id, userId));
+        .where(eq(usersTable.id, userId as string));
+      break;
+    }
+    case "customer.subscription.updated": {
+      const subscription = event.data.object as Stripe.Subscription;
+      let userId = subscription.metadata?.userId;
+
+      // Fallback: buscar userId pelo stripeCustomerId se não houver metadata
+      if (!userId && subscription.customer) {
+        const user = await db.query.usersTable.findFirst({
+          where: eq(
+            usersTable.stripeCustomerId,
+            subscription.customer as string,
+          ),
+        });
+        if (user?.id) {
+          userId = user.id;
+        }
+      }
+
+      if (!userId) {
+        throw new Error(
+          "User ID not found in customer.subscription.updated event",
+        );
+      }
+
+      // Se a assinatura foi cancelada ou marcada para não renovar
+      if (
+        subscription.cancel_at_period_end ||
+        subscription.status === "canceled"
+      ) {
+        await db
+          .update(usersTable)
+          .set({
+            stripeSubscriptionId: null,
+            stripeCustomerId: null,
+            plan: null,
+          })
+          .where(eq(usersTable.id, userId));
+      }
       break;
     }
     default:

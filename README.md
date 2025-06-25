@@ -39,7 +39,6 @@ TODO:
 
 - [ ] Add image to user/doctor profile
 - [ ] Add status camp on appointments table
-- [ ] Corrigir Outros > Assinaturas hover
 
 Comandos para rodar local:
 

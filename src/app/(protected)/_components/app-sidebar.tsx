@@ -127,7 +127,7 @@ export function AppSidebar() {
         <Separator />
         <SidebarGroup>
           <SidebarGroupLabel
-            className="hover:bg-primary/5 hover:text-primary -mx-2 -my-1 flex cursor-pointer items-center justify-between rounded-md px-2 py-1"
+            className="hover:bg-primary/5 hover:text-primary -mx-2 -my-1 flex cursor-pointer items-center justify-between rounded-md px-2 py-1 mb-0.5"
             onClick={toggleOthersSection}
           >
             <span>Outros</span>
