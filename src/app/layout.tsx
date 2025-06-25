@@ -24,11 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${manrope.variable} antialiased`}
-      >
-        <ReactQueryProvider> 
-          <NuqsAdapter> {children} </NuqsAdapter>
+      <body className={`${manrope.variable} antialiased`}>
+        <ReactQueryProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
         </ReactQueryProvider>
         <Toaster position="bottom-center" richColors theme="light" />
       </body>

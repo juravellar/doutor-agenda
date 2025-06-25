@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <main className="w-full">
-        <header className="bg-background flex h-14 items-center gap-4 border-b px-4">
+        <header className="bg-background flex h-10 items-center gap-4 border-b px-4">
           <SidebarTrigger />
           <AppBreadcrumb />
         </header>

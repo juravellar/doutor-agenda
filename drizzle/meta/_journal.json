@@ -8,6 +8,20 @@
       "when": 1749311760609,
       "tag": "0000_cold_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750735627222,
+      "tag": "0001_cool_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750737974086,
+      "tag": "0002_nostalgic_raza",
+      "breakpoints": true
     }
   ]
 }

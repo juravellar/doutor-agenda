@@ -11,7 +11,7 @@ import { actionClient } from "@/lib/next-safe-action";
 import { upsertPatientSchema } from "./schema";
 
 export const upsertPatient = actionClient
-  .inputSchema(upsertPatientSchema)
+  .schema(upsertPatientSchema)
   .action(async ({ parsedInput }) => {
     const session = await auth.api.getSession({
       headers: await headers(),

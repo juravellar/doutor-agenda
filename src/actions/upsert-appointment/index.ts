@@ -14,7 +14,7 @@ import { actionClient } from "@/lib/next-safe-action";
 import { getAvailableTimes } from "../get-available-times";
 
 export const upsertAppointment = actionClient
-  .inputSchema(
+  .schema(
     z.object({
       id: z.string().uuid().optional(),
       patientId: z.string().uuid(),

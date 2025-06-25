@@ -35,7 +35,14 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-//TODO:
+TODO:
+
 - [ ] Add image to user/doctor profile
 - [ ] Add status camp on appointments table
-- [ ] Alinhar breadcrump e logo
+- [ ] Corrigir Outros > Assinaturas hover
+
+Comandos para rodar local:
+
+-stripe: stripe listen --forward-to localhost:3000/api/stripe/webhook
+-servidor: npm run dev
+-drizzle-kit: npx drizzle-kit studio

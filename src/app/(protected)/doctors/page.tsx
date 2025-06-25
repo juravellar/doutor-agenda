@@ -25,6 +25,10 @@ const DoctorsPage = async () => {
     redirect("/authentication");
   }
 
+  if (!session.user.plan) {
+    redirect("/new-subscription");
+  }
+
   if (!session?.user.clinic) {
     redirect("/clinic-form");
   }
