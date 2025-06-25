@@ -1,43 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🩺 Doutor Agenda
 
-## Getting Started
+Aplicação web desenvolvida com [Next.js](https://nextjs.org) para gerenciamento de agendamentos médicos.
 
-First, run the development server:
+🔗 **Acesse a aplicação online:**
+👉 [https://doutor-agenda-gold.vercel.app](https://doutor-agenda-gold.vercel.app)
+
+---
+
+## 🚀 Tecnologias Utilizadas
+
+* **Next.js** (App Router)
+* **TypeScript**
+* **Drizzle ORM**
+* **PostgreSQL**
+* **Stripe (pagamentos)**
+* **Radix UI / Tailwind CSS**
+* **Deploy via Vercel**
+
+---
+
+## 🧑‍💻 Como rodar localmente
+
+Clone o projeto e instale as dependências:
+
+```bash
+npm install
+```
+
+Inicie o servidor de desenvolvimento:
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
+# ou
 pnpm dev
-# or
+# ou
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador para visualizar.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 💳 Integração com Stripe (Testes Locais)
 
-## Learn More
+1. Faça login no Stripe:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+stripe login
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Inicie o listener de Webhooks:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
 
-## Deploy on Vercel
+3. Atualize a variável de ambiente `.env` com o valor de `STRIPE_WEBHOOK_SECRET`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Ferramentas do Projeto
 
-Comandos para rodar local:
+* **Fontes otimizadas com** [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) (Geist da Vercel)
+* **Painel visual do banco com Drizzle Studio**:
 
--stripe: -stripe login
-         - stripe listen --forward-to localhost:3000/api/stripe/webhook (alterar o .env "STRIPE_WEBHOOK_SECRET")
--servidor: npm run dev
--drizzle-kit: npx drizzle-kit studio
+```bash
+npx drizzle-kit studio
+```
+
+---
+
+## 📋 TODO
+
+* [ ] Implementar verificação de e-mail
+* [ ] Implementar verificação de dois fatores
+* [ ] Adicionar campo `status` na tabela de agendamentos (`appointments`)
+
+---
+
+## 📚 Aprenda Mais
+
+* [Documentação do Next.js](https://nextjs.org/docs)
+* [Tutorial interativo do Next.js](https://nextjs.org/learn)
+* [Repositório oficial no GitHub](https://github.com/vercel/next.js)
