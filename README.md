@@ -7,6 +7,16 @@ Aplicação web desenvolvida com [Next.js](https://nextjs.org) para gerenciament
 
 ---
 
+## ⚠️ Atenção para Testes de Pagamento
+
+> 💳 **Durante a assinatura, utilize o cartão de teste do Stripe:**
+> Número do cartão: `4242 4242 4242 4242`
+> Expiração, CVC e CEP podem ser preenchidos com qualquer valor válido.
+
+⚠️ **Não insira dados reais de cartão de crédito.** Esse ambiente é exclusivo para testes.
+
+---
+
 ## 🚀 Tecnologias Utilizadas
 
 * **Next.js** (App Router)
@@ -74,9 +84,10 @@ npx drizzle-kit studio
 
 ## 📋 TODO
 
-* [ ] Implementar verificação de e-mail
-* [ ] Implementar verificação de dois fatores
-* [ ] Adicionar campo `status` na tabela de agendamentos (`appointments`)
+* Implementar verificação de e-mail
+* Implementar verificação de dois fatores
+* Adicionar campo `status` na tabela de agendamentos (`appointments`)
+* Buscar por outros TODO's ao longo do projeto
 
 ---
 
