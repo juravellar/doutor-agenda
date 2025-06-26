@@ -88,6 +88,7 @@ npx drizzle-kit studio
 * Implementar verificação de dois fatores
 * Adicionar campo `status` na tabela de agendamentos (`appointments`)
 * Buscar por outros TODO's ao longo do projeto
+* Verificar novamente UTC -3 no banco e nos forms de agendamento e médicos
 
 ---
 
