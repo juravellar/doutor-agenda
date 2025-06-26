@@ -7,7 +7,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { ReactQueryProvider } from "@/providers/react-query";
 
-// Caminho público para o favicon
 const faviconUrl = "/simbolo.png";
 
 const manrope = Manrope({

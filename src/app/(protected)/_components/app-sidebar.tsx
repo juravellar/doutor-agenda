@@ -38,7 +38,6 @@ import {
 
 import { authClient } from "../../../lib/auth-client";
 
-// Menu items.
 const items = [
   {
     title: "Dashboard",
@@ -62,7 +61,6 @@ const items = [
   },
 ];
 
-// Outros items - seção colapsável
 const otherItems = [
   {
     title: "Assinatura",

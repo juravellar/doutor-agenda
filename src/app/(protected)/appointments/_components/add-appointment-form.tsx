@@ -109,7 +109,6 @@ const UpsertAppointmentForm = ({
     enabled: !!selectedDate && !!selectedDoctorId,
   });
 
-  // Atualizar o preço quando o médico for selecionado
   useEffect(() => {
     if (selectedDoctorId) {
       const selectedDoctor = doctors.find(

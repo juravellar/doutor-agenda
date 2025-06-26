@@ -106,7 +106,6 @@ export const POST = async (request: Request) => {
       const subscription = event.data.object as Stripe.Subscription;
       let userId = subscription.metadata?.userId;
 
-      // Fallback: buscar userId pelo stripeCustomerId se não houver metadata
       if (!userId && subscription.customer) {
         const user = await db.query.usersTable.findFirst({
           where: eq(
@@ -139,7 +138,6 @@ export const POST = async (request: Request) => {
       const subscription = event.data.object as Stripe.Subscription;
       let userId = subscription.metadata?.userId;
 
-      // Fallback: buscar userId pelo stripeCustomerId se não houver metadata
       if (!userId && subscription.customer) {
         const user = await db.query.usersTable.findFirst({
           where: eq(
@@ -158,7 +156,6 @@ export const POST = async (request: Request) => {
         );
       }
 
-      // Se a assinatura foi cancelada ou marcada para não renovar
       if (
         subscription.cancel_at_period_end ||
         subscription.status === "canceled"

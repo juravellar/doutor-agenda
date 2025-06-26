@@ -36,15 +36,12 @@ const ResourceName: React.FC<ResourceNameProps> = ({ id, resourceType }) => {
   return <>{name || "Carregando..."}</>;
 };
 
-// Define quais rotas pertencem ao grupo "Outros"
 const outrosRoutes = ["/subscription"];
 
 function getSidebarGroupLabel(pathname: string): string {
-  // Se a rota começa com algum dos caminhos de "Outros", retorna "Outros"
   if (outrosRoutes.some((route) => pathname.startsWith(route))) {
     return "Outros";
   }
-  // Caso contrário, retorna "Menu Principal"
   return "Menu Principal";
 }
 
@@ -52,7 +49,6 @@ export function AppBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  // Determina o label do grupo do sidebar
   const sidebarGroupLabel = getSidebarGroupLabel(`/${segments[0] || ""}`);
 
   return (
