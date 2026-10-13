@@ -1,6 +1,5 @@
 "use server";
 
-import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -8,6 +7,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { appointmentsTable, patientsTable } from "@/db/schema";
+import { clinicDateTimeToDate, inClinicTimezone } from "@/helpers/time";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -41,9 +41,12 @@ export const upsertAppointment = actionClient
       throw new Error("Paciente não encontrado");
     }
 
+    const appointmentDay = inClinicTimezone(parsedInput.date).format(
+      "YYYY-MM-DD",
+    );
     const availableTimes = await getAvailableTimes({
       doctorId: parsedInput.doctorId,
-      date: dayjs(parsedInput.date).format("YYYY-MM-DD"),
+      date: appointmentDay,
     });
 
     if (!availableTimes?.data) {
@@ -58,9 +61,10 @@ export const upsertAppointment = actionClient
       throw new Error("Horário não encontrado");
     }
 
-    const [hours, minutes] = parsedInput.time.split(":").map(Number);
-    const appointmentDate = new Date(parsedInput.date);
-    appointmentDate.setHours(hours, minutes, 0, 0);
+    const appointmentDate = clinicDateTimeToDate(
+      appointmentDay,
+      parsedInput.time,
+    );
 
     if (parsedInput.id) {
       const appointment = await db.query.appointmentsTable.findFirst({

@@ -72,4 +72,22 @@ describe("getAvailableTimes", () => {
       "10:00:00",
     ]);
   });
+
+  it("marks slots booked in clinic time as unavailable", async () => {
+    mocks.findDoctor.mockResolvedValue(doctor);
+    mocks.findAppointments.mockResolvedValue([
+      { date: new Date("2026-10-12T11:30:00.000Z") },
+      { date: new Date("2026-10-13T12:00:00.000Z") },
+    ]);
+
+    const result = await getAvailableTimes({
+      doctorId: DOCTOR_ID,
+      date: MONDAY,
+    });
+
+    const unavailable = result?.data
+      ?.filter((slot) => !slot.available)
+      .map((slot) => slot.value);
+    expect(unavailable).toEqual(["08:30:00"]);
+  });
 });

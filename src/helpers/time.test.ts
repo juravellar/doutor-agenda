@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { clinicTimeToUtc, generateTimeSlots, utcTimeToClinic } from "./time";
+import {
+  clinicDateTimeToDate,
+  clinicTimeToUtc,
+  generateTimeSlots,
+  inClinicTimezone,
+  utcTimeToClinic,
+} from "./time";
 
 describe("clinicTimeToUtc", () => {
   it("converts clinic time to UTC", () => {
@@ -31,5 +37,26 @@ describe("utcTimeToClinic", () => {
     const friday = utcTimeToClinic("01:30:00").day(5);
     expect(friday.day()).toBe(5);
     expect(friday.format("HH:mm")).toBe("22:30");
+  });
+});
+
+describe("clinicDateTimeToDate", () => {
+  it("builds the instant of a clinic date and time", () => {
+    expect(clinicDateTimeToDate("2026-10-12", "08:00:00").toISOString()).toBe(
+      "2026-10-12T11:00:00.000Z",
+    );
+  });
+
+  it("rolls into the next UTC day for late appointments", () => {
+    expect(clinicDateTimeToDate("2026-10-12", "22:30:00").toISOString()).toBe(
+      "2026-10-13T01:30:00.000Z",
+    );
+  });
+});
+
+describe("inClinicTimezone", () => {
+  it("reads an instant back as clinic date and time", () => {
+    const date = inClinicTimezone(new Date("2026-10-13T01:30:00.000Z"));
+    expect(date.format("YYYY-MM-DD HH:mm")).toBe("2026-10-12 22:30");
   });
 });

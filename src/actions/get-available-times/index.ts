@@ -7,7 +7,11 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { appointmentsTable, doctorsTable } from "@/db/schema";
-import { generateTimeSlots, utcTimeToClinic } from "@/helpers/time";
+import {
+  generateTimeSlots,
+  inClinicTimezone,
+  utcTimeToClinic,
+} from "@/helpers/time";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -45,10 +49,9 @@ export const getAvailableTimes = actionClient
       where: eq(appointmentsTable.doctorId, parsedInput.doctorId),
     });
     const appointmentsOnSelectedDate = appointments
-      .filter((appointment) => {
-        return dayjs(appointment.date).isSame(parsedInput.date, "day");
-      })
-      .map((appointment) => dayjs(appointment.date).format("HH:mm:ss"));
+      .map((appointment) => inClinicTimezone(appointment.date))
+      .filter((date) => date.format("YYYY-MM-DD") === parsedInput.date)
+      .map((date) => date.format("HH:mm:ss"));
     const timeSlots = generateTimeSlots();
 
     const doctorAvailableFrom = utcTimeToClinic(

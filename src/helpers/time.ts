@@ -18,6 +18,13 @@ export const clinicTimeToUtc = (time: string) =>
 export const utcTimeToClinic = (time: string) =>
   dayjs.utc(time, TIME_FORMAT).tz(CLINIC_TIMEZONE);
 
+export const inClinicTimezone = (date: Date) => dayjs(date).tz(CLINIC_TIMEZONE);
+
+export const clinicDateTimeToDate = (date: string, time: string) =>
+  dayjs
+    .tz(`${date} ${time}`, `YYYY-MM-DD ${TIME_FORMAT}`, CLINIC_TIMEZONE)
+    .toDate();
+
 export const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 5; hour <= 23; hour++) {
