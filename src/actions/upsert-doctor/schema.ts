@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+// Shared with the client form, whose fields have a different shape.
+export const timeRangeRule = {
+  isValid: (from: string, to: string) => from < to,
+  message: "O horário de término deve ser posterior ao horário de início.",
+};
+
+export const weekDayRangeRule = {
+  isValid: (from: number, to: number) => from <= to,
+  message: "O dia final deve ser igual ou posterior ao dia inicial.",
+};
+
 export const upsertDoctorSchema = z
   .object({
     id: z.string().uuid().optional(),
@@ -22,14 +33,17 @@ export const upsertDoctorSchema = z
     }),
   })
   .refine(
-    (data) => {
-      return data.availableFromTime < data.availableToTime;
-    },
-    {
-      message:
-        "O horário de início não pode ser anterior ao horário de término.",
-      path: ["availableToTime"],
-    },
+    (data) =>
+      timeRangeRule.isValid(data.availableFromTime, data.availableToTime),
+    { message: timeRangeRule.message, path: ["availableToTime"] },
+  )
+  .refine(
+    (data) =>
+      weekDayRangeRule.isValid(
+        data.availableFromWeekDay,
+        data.availableToWeekDay,
+      ),
+    { message: weekDayRangeRule.message, path: ["availableToWeekDay"] },
   );
 
 export type UpsertDoctorSchema = z.infer<typeof upsertDoctorSchema>;

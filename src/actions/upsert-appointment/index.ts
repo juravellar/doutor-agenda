@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { appointmentsTable } from "@/db/schema";
+import { appointmentsTable, patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -33,6 +33,12 @@ export const upsertAppointment = actionClient
     }
     if (!session?.user.clinic?.id) {
       throw new Error("Clínica não encontrada");
+    }
+    const patient = await db.query.patientsTable.findFirst({
+      where: eq(patientsTable.id, parsedInput.patientId),
+    });
+    if (!patient || patient.clinicId !== session.user.clinic.id) {
+      throw new Error("Paciente não encontrado");
     }
 
     const availableTimes = await getAvailableTimes({

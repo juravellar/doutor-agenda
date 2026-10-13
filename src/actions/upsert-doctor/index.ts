@@ -1,62 +1,57 @@
 "use server";
 
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
 import { doctorsTable } from "@/db/schema";
+import { clinicTimeToUtc } from "@/helpers/time";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
 import { upsertDoctorSchema } from "./schema";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
 export const upsertDoctor = actionClient
   .schema(upsertDoctorSchema)
   .action(async ({ parsedInput }) => {
-    const availableFromTime = parsedInput.availableFromTime; // 15:30:00
-    const availableToTime = parsedInput.availableToTime; // 16:00:00
-
-    const availableFromTimeLocal = dayjs.tz(
-      availableFromTime,
-      "HH:mm:ss",
-      "America/Sao_Paulo",
-    );
-    const availableToTimeLocal = dayjs.tz(
-      availableToTime,
-      "HH:mm:ss",
-      "America/Sao_Paulo",
-    );
-
     const session = await auth.api.getSession({
       headers: await headers(),
     });
     if (!session?.user) {
       throw new Error("Unauthorized");
     }
-    if (!session?.user.clinic?.id) {
+    const clinicId = session.user.clinic?.id;
+    if (!clinicId) {
       throw new Error("Clinic not found");
     }
+    if (parsedInput.id) {
+      const existingDoctor = await db.query.doctorsTable.findFirst({
+        where: eq(doctorsTable.id, parsedInput.id),
+      });
+      if (existingDoctor && existingDoctor.clinicId !== clinicId) {
+        throw new Error("Médico não encontrado");
+      }
+    }
+
+    const availableFromTime = clinicTimeToUtc(parsedInput.availableFromTime);
+    const availableToTime = clinicTimeToUtc(parsedInput.availableToTime);
+
     await db
       .insert(doctorsTable)
       .values({
         ...parsedInput,
-        id: parsedInput.id,
-        clinicId: session?.user.clinic?.id,
-        availableFromTime: availableFromTimeLocal.format("HH:mm:ss"),
-        availableToTime: availableToTimeLocal.format("HH:mm:ss"),
+        clinicId,
+        availableFromTime,
+        availableToTime,
       })
       .onConflictDoUpdate({
         target: [doctorsTable.id],
+        setWhere: eq(doctorsTable.clinicId, clinicId),
         set: {
           ...parsedInput,
-          availableFromTime: availableFromTimeLocal.format("HH:mm:ss"),
-          availableToTime: availableToTimeLocal.format("HH:mm:ss"),
+          availableFromTime,
+          availableToTime,
         },
       });
     revalidatePath("/doctors");
