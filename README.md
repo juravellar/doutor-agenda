@@ -2,7 +2,7 @@
 
 Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e horários de atendimento, pacientes, consultas com horários livres calculados automaticamente, e um dashboard de faturamento. Toda conta começa no plano Free, e os planos pagos são cobrados via Stripe.
 
-🔗 **Aplicação online:** [doutor-agenda-gold.vercel.app](https://doutor-agenda-gold.vercel.app)
+🔗 **Aplicação online:** [avelliq.vercel.app](https://avelliq.vercel.app)
 
 > 💳 **Os planos pagos usam o modo de testes do Stripe.** Use o cartão `4242 4242 4242 4242`, com qualquer data de validade futura, CVC e CEP. **Não use dados reais de cartão.**
 
