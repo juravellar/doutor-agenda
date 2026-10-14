@@ -14,6 +14,9 @@ import {
 import { db } from "@/db";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { createGate } from "@/lib/create-gate";
+import { isReadOnly } from "@/lib/free-period";
+import { getPlanUsage } from "@/lib/plan-usage";
 
 import AddAppointmentButton from "./_components/add-appointments-button";
 import { AppointmentsTable } from "./_components/appointments-table";
@@ -50,6 +53,11 @@ const AppointmentsPage = async () => {
     }),
   ]);
 
+  const usage = await getPlanUsage(session.user.clinic.id, session.user.plan);
+  const readOnly = isReadOnly(
+    session.user.plan,
+    session.user.clinic.createdAt,
+  );
   return (
     <PageContainer>
       <PageHeader>
@@ -60,7 +68,16 @@ const AppointmentsPage = async () => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddAppointmentButton patients={patients} doctors={doctors} />
+          <AddAppointmentButton
+            patients={patients}
+            doctors={doctors}
+            gate={createGate(
+              usage.appointmentsPerMonth,
+              readOnly,
+              { one: "agendamento", many: "agendamentos" },
+              " neste mês",
+            )}
+          />
         </PageActions>
       </PageHeader>
       <PageContent>

@@ -9,11 +9,14 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { inClinicTimezone } from "@/helpers/time";
 import { auth } from "@/lib/auth";
+import { getPlanUsage } from "@/lib/plan-usage";
 import { PLANS, resolvePlan } from "@/lib/plans";
 import { getPlanPrices } from "@/lib/stripe-plan";
 
 import { PlanCard } from "./_components/plan-card";
+import { PlanUsageCard } from "./_components/plan-usage-card";
 
 const SubscriptionPage = async () => {
   const session = await auth.api.getSession({
@@ -25,8 +28,17 @@ const SubscriptionPage = async () => {
   if (!session.user.clinic) {
     redirect("/clinic-form");
   }
-  const prices = await getPlanPrices();
-  const currentPlanId = resolvePlan(session.user.plan).id;
+  const currentPlan = resolvePlan(session.user.plan);
+  const [prices, usage] = await Promise.all([
+    getPlanPrices(),
+    getPlanUsage(session.user.clinic.id, session.user.plan),
+  ]);
+  const subscriptionNotice = {
+    pastDue: session.user.subscriptionStatus === "past_due",
+    endsOn: session.user.subscriptionEndsAt
+      ? inClinicTimezone(session.user.subscriptionEndsAt).format("DD/MM/YYYY")
+      : null,
+  };
   return (
     <PageContainer>
       <PageHeader>
@@ -38,14 +50,16 @@ const SubscriptionPage = async () => {
         </PageHeaderContent>
       </PageHeader>
       <PageContent>
+        <PlanUsageCard planName={currentPlan.name} usage={usage} />
         <div className="grid w-full max-w-5xl gap-6 md:grid-cols-3">
           {Object.values(PLANS).map((plan) => (
             <PlanCard
               key={plan.id}
               plan={plan}
               price={plan.id === "free" ? null : prices[plan.id]}
-              currentPlanId={currentPlanId}
+              currentPlanId={currentPlan.id}
               userEmail={session.user.email}
+              subscriptionNotice={subscriptionNotice}
             />
           ))}
         </div>

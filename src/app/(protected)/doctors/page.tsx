@@ -13,6 +13,9 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { doctorsTable } from "@/db/schema";
+import { createGate } from "@/lib/create-gate";
+import { isReadOnly } from "@/lib/free-period";
+import { getPlanUsage } from "@/lib/plan-usage";
 
 import { auth } from "../../../lib/auth";
 import AddDoctorButton from "./_components/add-doctor-button";
@@ -36,6 +39,11 @@ const DoctorsPage = async () => {
 
   const hasDoctors = doctors.length > 0;
 
+  const usage = await getPlanUsage(session.user.clinic.id, session.user.plan);
+  const readOnly = isReadOnly(
+    session.user.plan,
+    session.user.clinic.createdAt,
+  );
   return (
     <PageContainer>
       <PageHeader>
@@ -44,7 +52,12 @@ const DoctorsPage = async () => {
           <PageDescription>Gerencie os médicos da sua clínica</PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddDoctorButton />
+          <AddDoctorButton
+            gate={createGate(usage.doctors, readOnly, {
+              one: "médico",
+              many: "médicos",
+            })}
+          />
         </PageActions>
       </PageHeader>
       <PageContent>

@@ -20,6 +20,10 @@ export const usersTable = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   plan: text("plan"),
+  // Mirrors the Stripe subscription that grants the plan, for the UI: its
+  // status and, once canceled, when access ends.
+  subscriptionStatus: text("subscription_status"),
+  subscriptionEndsAt: timestamp("subscription_ends_at"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });

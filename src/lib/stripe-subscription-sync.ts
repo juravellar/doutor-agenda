@@ -25,6 +25,16 @@ export const planForSubscription = (
   return planForPriceId(subscription.items.data[0]?.price.id) ?? "essential";
 };
 
+// When a canceled subscription stops granting access; null while it renews.
+export const scheduledEndOf = (subscription: Stripe.Subscription) => {
+  const endsAt =
+    subscription.cancel_at ??
+    (subscription.cancel_at_period_end
+      ? subscription.items.data[0]?.current_period_end
+      : null);
+  return endsAt ? new Date(endsAt * 1000) : null;
+};
+
 const customerIdOf = (subscription: Stripe.Subscription) =>
   typeof subscription.customer === "string"
     ? subscription.customer
@@ -132,6 +142,8 @@ export const syncSubscription = async (
       .set({
         plan: chosen ? planForSubscription(chosen) : null,
         stripeSubscriptionId: chosen?.id ?? null,
+        subscriptionStatus: chosen?.status ?? null,
+        subscriptionEndsAt: chosen ? scheduledEndOf(chosen) : null,
         // Without a subscription granting access, an event about another
         // customer must not replace the one checkout will use next.
         stripeCustomerId: chosen
