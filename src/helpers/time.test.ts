@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   clinicDateTimeToDate,
+  clinicDayRange,
   clinicMonthRange,
   clinicTimeToUtc,
   generateTimeSlots,
   inClinicTimezone,
+  isWeekDayInRange,
   utcTimeToClinic,
 } from "./time";
 
@@ -67,5 +69,35 @@ describe("clinicMonthRange", () => {
     const { start, end } = clinicMonthRange("2026-10-14");
     expect(start.toISOString()).toBe("2026-10-01T03:00:00.000Z");
     expect(end.toISOString()).toBe("2026-11-01T03:00:00.000Z");
+  });
+});
+
+describe("clinicDayRange", () => {
+  it("covers the clinic-time day", () => {
+    const { start, end } = clinicDayRange("2026-10-12");
+    expect(start.toISOString()).toBe("2026-10-12T03:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-10-13T03:00:00.000Z");
+  });
+});
+
+describe("isWeekDayInRange", () => {
+  it("handles a range inside the week", () => {
+    expect(isWeekDayInRange(1, 1, 5)).toBe(true);
+    expect(isWeekDayInRange(5, 1, 5)).toBe(true);
+    expect(isWeekDayInRange(6, 1, 5)).toBe(false);
+  });
+
+  it("handles a range that wraps around the weekend", () => {
+    expect([6, 0, 1].map((day) => isWeekDayInRange(day, 6, 1))).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    expect([2, 3, 4, 5].some((day) => isWeekDayInRange(day, 6, 1))).toBe(false);
+  });
+
+  it("handles a single day", () => {
+    expect(isWeekDayInRange(3, 3, 3)).toBe(true);
+    expect(isWeekDayInRange(4, 3, 3)).toBe(false);
   });
 });

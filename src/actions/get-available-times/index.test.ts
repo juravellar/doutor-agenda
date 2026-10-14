@@ -1,3 +1,4 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -77,7 +78,6 @@ describe("getAvailableTimes", () => {
     mocks.findDoctor.mockResolvedValue(doctor);
     mocks.findAppointments.mockResolvedValue([
       { date: new Date("2026-10-12T11:30:00.000Z") },
-      { date: new Date("2026-10-13T12:00:00.000Z") },
     ]);
 
     const result = await getAvailableTimes({
@@ -89,5 +89,50 @@ describe("getAvailableTimes", () => {
       ?.filter((slot) => !slot.available)
       .map((slot) => slot.value);
     expect(unavailable).toEqual(["08:30:00"]);
+  });
+
+  it("loads only the selected clinic day, without the edited appointment", async () => {
+    mocks.findDoctor.mockResolvedValue(doctor);
+    const EDITED_ID = "44444444-4444-4444-8444-444444444444";
+
+    await getAvailableTimes({
+      doctorId: DOCTOR_ID,
+      date: MONDAY,
+      ignoreAppointmentId: EDITED_ID,
+    });
+
+    const { where } = mocks.findAppointments.mock.calls[0][0];
+    const query = new PgDialect().sqlToQuery(where);
+    expect(query.sql).toContain(">=");
+    expect(query.sql).toContain("<");
+    expect(query.sql).toContain("<>");
+    expect(query.params).toEqual(
+      expect.arrayContaining([
+        DOCTOR_ID,
+        EDITED_ID,
+        "2026-10-12T03:00:00.000Z",
+        "2026-10-13T03:00:00.000Z",
+      ]),
+    );
+  });
+
+  it("offers slots on days of a range that wraps around the weekend", async () => {
+    mocks.findDoctor.mockResolvedValue({
+      ...doctor,
+      availableFromWeekDay: 6,
+      availableToWeekDay: 1,
+    });
+
+    const sunday = await getAvailableTimes({
+      doctorId: DOCTOR_ID,
+      date: "2026-10-11",
+    });
+    const wednesday = await getAvailableTimes({
+      doctorId: DOCTOR_ID,
+      date: "2026-10-14",
+    });
+
+    expect(sunday?.data?.length).toBeGreaterThan(0);
+    expect(wednesday?.data).toEqual([]);
   });
 });

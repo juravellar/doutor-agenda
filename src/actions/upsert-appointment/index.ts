@@ -53,6 +53,7 @@ export const upsertAppointment = actionClient
     const availableTimes = await getAvailableTimes({
       doctorId: parsedInput.doctorId,
       date: appointmentDay,
+      ignoreAppointmentId: parsedInput.id,
     });
 
     if (!availableTimes?.data) {

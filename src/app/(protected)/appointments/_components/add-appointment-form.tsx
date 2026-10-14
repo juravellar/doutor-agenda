@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { inClinicTimezone, isWeekDayInRange } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +93,9 @@ const UpsertAppointmentForm = ({
         ? appointment.appointmentPriceInCents / 100
         : 0,
       date: appointment?.date ?? undefined,
-      time: "",
+      time: appointment
+        ? inClinicTimezone(appointment.date).format("HH:mm:ss")
+        : "",
     },
   });
 
@@ -101,11 +104,17 @@ const UpsertAppointmentForm = ({
   const selectedDate = form.watch("date");
 
   const { data: availableTimes } = useQuery({
-    queryKey: ["available-times", selectedDoctorId, selectedDate],
+    queryKey: [
+      "available-times",
+      selectedDoctorId,
+      selectedDate,
+      appointment?.id,
+    ],
     queryFn: async () =>
       getAvailableTimes({
         date: dayjs(selectedDate).format("YYYY-MM-DD"),
         doctorId: selectedDoctorId,
+        ignoreAppointmentId: appointment?.id,
       }),
     enabled: !!selectedDate && !!selectedDoctorId,
   });
@@ -116,13 +125,16 @@ const UpsertAppointmentForm = ({
         (doctor) => doctor.id === selectedDoctorId,
       );
       if (selectedDoctor) {
-        form.setValue(
-          "appointmentPrice",
-          selectedDoctor.appointmentPriceInCents / 100,
-        );
+        // An appointment keeps the price it was booked with until its doctor
+        // is changed.
+        const priceInCents =
+          appointment && appointment.doctorId === selectedDoctorId
+            ? appointment.appointmentPriceInCents
+            : selectedDoctor.appointmentPriceInCents;
+        form.setValue("appointmentPrice", priceInCents / 100);
       }
     }
-  }, [selectedDoctorId, doctors, form]);
+  }, [selectedDoctorId, doctors, form, appointment]);
 
   useEffect(() => {
     if (isOpen) {
@@ -133,7 +145,9 @@ const UpsertAppointmentForm = ({
           ? appointment.appointmentPriceInCents / 100
           : 0,
         date: appointment?.date ?? undefined,
-        time: "",
+        time: appointment
+          ? inClinicTimezone(appointment.date).format("HH:mm:ss")
+          : "",
       });
     }
   }, [isOpen, form, appointment]);
@@ -162,10 +176,10 @@ const UpsertAppointmentForm = ({
       (doctor) => doctor.id === selectedDoctorId,
     );
     if (!selectedDoctor) return false;
-    const dayOfWeek = date.getDay();
-    return (
-      dayOfWeek >= selectedDoctor?.availableFromWeekDay &&
-      dayOfWeek <= selectedDoctor?.availableToWeekDay
+    return isWeekDayInRange(
+      date.getDay(),
+      selectedDoctor.availableFromWeekDay,
+      selectedDoctor.availableToWeekDay,
     );
   };
   const isDateTimeEnabled = selectedPatientId && selectedDoctorId;

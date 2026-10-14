@@ -97,15 +97,22 @@ describe("upsertDoctor", () => {
     expect(mocks.values).toHaveBeenCalledOnce();
   });
 
-  it("rejects an inverted weekday range", async () => {
+  it("accepts a weekly range that wraps around the weekend", async () => {
+    mocks.findDoctor.mockResolvedValue(undefined);
+
     const result = await upsertDoctor({
       ...input,
       availableFromWeekDay: 5,
       availableToWeekDay: 1,
     });
 
-    expect(result?.validationErrors).toBeDefined();
-    expect(mocks.values).not.toHaveBeenCalled();
+    expect(result?.validationErrors).toBeUndefined();
+    expect(mocks.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        availableFromWeekDay: 5,
+        availableToWeekDay: 1,
+      }),
+    );
   });
 
   it("blocks a second doctor on the Free plan", async () => {

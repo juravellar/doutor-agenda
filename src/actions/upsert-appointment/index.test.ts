@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   getAvailableTimes: vi.fn(),
   insertValues: vi.fn(),
   countAppointments: vi.fn(),
+  findAppointment: vi.fn(),
+  updateSet: vi.fn(() => ({ where: vi.fn() })),
 }));
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
@@ -15,8 +17,12 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/db", () => ({
   db: {
-    query: { patientsTable: { findFirst: mocks.findPatient } },
+    query: {
+      patientsTable: { findFirst: mocks.findPatient },
+      appointmentsTable: { findFirst: mocks.findAppointment },
+    },
     $count: mocks.countAppointments,
+    update: () => ({ set: mocks.updateSet }),
     insert: () => ({ values: mocks.insertValues }),
   },
 }));
@@ -115,5 +121,26 @@ describe("upsertAppointment", () => {
 
     expect(result?.serverError).toBeUndefined();
     expect(mocks.insertValues).toHaveBeenCalledOnce();
+  });
+
+  it("lets an appointment be saved again at its own time", async () => {
+    const APPOINTMENT_ID = "44444444-4444-4444-8444-444444444444";
+    mocks.findAppointment.mockResolvedValue({
+      id: APPOINTMENT_ID,
+      clinicId: CLINIC_ID,
+    });
+
+    const result = await upsertAppointment({ ...input, id: APPOINTMENT_ID });
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.getAvailableTimes).toHaveBeenCalledWith({
+      doctorId: DOCTOR_ID,
+      date: "2026-10-12",
+      ignoreAppointmentId: APPOINTMENT_ID,
+    });
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ date: new Date("2026-10-12T11:00:00.000Z") }),
+    );
+    expect(mocks.countAppointments).not.toHaveBeenCalled();
   });
 });
