@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { inClinicTimezone } from "@/helpers/time";
 import { accountStatus } from "@/lib/account-status";
@@ -37,6 +38,20 @@ const linkClass = "font-medium underline";
 
 export function AccountStatusBanner() {
   const session = authClient.useSession();
+  const { refetch } = session;
+  const pathname = usePathname();
+  const visitedPath = useRef(pathname);
+
+  // Navigating inside the app doesn't reload the client session, so a change
+  // made elsewhere (e.g. a cancellation that reached the webhook after the
+  // page loaded) would only show after a full reload. Refresh on navigation.
+  useEffect(() => {
+    if (visitedPath.current !== pathname) {
+      visitedPath.current = pathname;
+      refetch();
+    }
+  }, [pathname, refetch]);
+
   const user = session.data?.user;
   const status = user ? accountStatus(user) : null;
   if (!user || !status) {
