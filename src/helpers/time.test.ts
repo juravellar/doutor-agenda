@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   clinicDateTimeToDate,
+  clinicMonthRange,
   clinicTimeToUtc,
   generateTimeSlots,
   inClinicTimezone,
@@ -58,5 +59,13 @@ describe("inClinicTimezone", () => {
   it("reads an instant back as clinic date and time", () => {
     const date = inClinicTimezone(new Date("2026-10-13T01:30:00.000Z"));
     expect(date.format("YYYY-MM-DD HH:mm")).toBe("2026-10-12 22:30");
+  });
+});
+
+describe("clinicMonthRange", () => {
+  it("covers the clinic-time month of the given date", () => {
+    const { start, end } = clinicMonthRange("2026-10-14");
+    expect(start.toISOString()).toBe("2026-10-01T03:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-11-01T03:00:00.000Z");
   });
 });

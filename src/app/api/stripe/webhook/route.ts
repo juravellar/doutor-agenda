@@ -4,6 +4,7 @@ import Stripe from "stripe";
 
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
+import { planForPriceId } from "@/lib/stripe-plan";
 
 interface InvoiceParent {
   subscription_details?: {
@@ -92,12 +93,17 @@ export const POST = async (request: Request) => {
         throw new Error("User ID not found in invoice.paid event");
       }
 
+      // Subscriptions created before plans existed only had the Essencial price.
+      const plan =
+        planForPriceId(invoice.lines?.data[0]?.pricing?.price_details?.price) ??
+        "essential";
+
       await db
         .update(usersTable)
         .set({
           stripeSubscriptionId: subscriptionId,
           stripeCustomerId: invoice.customer as string,
-          plan: "essential",
+          plan,
         })
         .where(eq(usersTable.id, userId));
       break;
@@ -168,6 +174,18 @@ export const POST = async (request: Request) => {
             plan: null,
           })
           .where(eq(usersTable.id, userId));
+      } else if (
+        subscription.status === "active" ||
+        subscription.status === "trialing"
+      ) {
+        // Upgrades and downgrades made in the customer portal arrive here.
+        const plan = planForPriceId(subscription.items.data[0]?.price.id);
+        if (plan) {
+          await db
+            .update(usersTable)
+            .set({ plan, stripeSubscriptionId: subscription.id })
+            .where(eq(usersTable.id, userId));
+        }
       }
       break;
     }

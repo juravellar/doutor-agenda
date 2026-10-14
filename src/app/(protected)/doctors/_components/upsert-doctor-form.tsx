@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorsTable } from "@/db/schema";
+import { actionErrorMessage } from "@/lib/action-errors";
 
 import { medicalSpecialties } from "../_constants";
 
@@ -123,8 +124,8 @@ const UpsertDoctorForm = ({
       toast.success("Médico adicionado com sucesso.");
       onSuccess?.();
     },
-    onError: () => {
-      toast.error("Erro ao adicionar médico.");
+    onError: ({ error }) => {
+      toast.error(actionErrorMessage(error, "Erro ao adicionar médico."));
     },
   });
 

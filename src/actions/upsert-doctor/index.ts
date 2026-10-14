@@ -9,6 +9,8 @@ import { doctorsTable } from "@/db/schema";
 import { clinicTimeToUtc } from "@/helpers/time";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { ensurePlanAllows } from "@/lib/plan-limits";
+import { resolvePlan } from "@/lib/plans";
 
 import { upsertDoctorSchema } from "./schema";
 
@@ -25,13 +27,20 @@ export const upsertDoctor = actionClient
     if (!clinicId) {
       throw new Error("Clinic not found");
     }
-    if (parsedInput.id) {
-      const existingDoctor = await db.query.doctorsTable.findFirst({
-        where: eq(doctorsTable.id, parsedInput.id),
-      });
-      if (existingDoctor && existingDoctor.clinicId !== clinicId) {
-        throw new Error("Médico não encontrado");
-      }
+    const existingDoctor = parsedInput.id
+      ? await db.query.doctorsTable.findFirst({
+          where: eq(doctorsTable.id, parsedInput.id),
+        })
+      : undefined;
+    if (existingDoctor && existingDoctor.clinicId !== clinicId) {
+      throw new Error("Médico não encontrado");
+    }
+    if (!existingDoctor) {
+      const doctorCount = await db.$count(
+        doctorsTable,
+        eq(doctorsTable.clinicId, clinicId),
+      );
+      ensurePlanAllows(resolvePlan(session.user.plan), "doctors", doctorCount);
     }
 
     const availableFromTime = clinicTimeToUtc(parsedInput.availableFromTime);

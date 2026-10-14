@@ -1,9 +1,9 @@
 import type Stripe from "stripe";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 
-import { formatPlanPrice } from "./stripe-plan";
+import { formatPlanPrice, planForPriceId, priceIdForPlan } from "./stripe-plan";
 
 const price = (overrides: Partial<Stripe.Price>) =>
   ({
@@ -37,5 +37,29 @@ describe("formatPlanPrice", () => {
 
   it("returns null for prices without a fixed amount", () => {
     expect(formatPlanPrice(price({ unit_amount: null }))).toBeNull();
+  });
+});
+
+describe("planForPriceId", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("maps each configured Stripe price to its plan", () => {
+    vi.stubEnv("STRIPE_ESSENTIAL_PLAN_PRICE_ID", "price_essential");
+    vi.stubEnv("STRIPE_PROFESSIONAL_PLAN_PRICE_ID", "price_professional");
+
+    expect(priceIdForPlan("professional")).toBe("price_professional");
+    expect(planForPriceId("price_essential")).toBe("essential");
+    expect(planForPriceId("price_professional")).toBe("professional");
+  });
+
+  it("returns null for unknown or missing prices", () => {
+    vi.stubEnv("STRIPE_ESSENTIAL_PLAN_PRICE_ID", "price_essential");
+    vi.stubEnv("STRIPE_PROFESSIONAL_PLAN_PRICE_ID", "");
+
+    expect(planForPriceId("price_other")).toBeNull();
+    expect(planForPriceId(undefined)).toBeNull();
+    expect(planForPriceId("")).toBeNull();
   });
 });
