@@ -19,19 +19,25 @@ const ClinicFormPage = async () => {
   if (!session) {
     redirect("/authentication");
   }
-  if (session.user.clinic) {
-    redirect("/dashboard");
+  const { clinics, clinicLimit } = session.user;
+  const isFirstClinic = clinics.length === 0;
+  if (clinicLimit !== null && clinics.length >= clinicLimit) {
+    redirect(isFirstClinic ? "/dashboard" : "/clinics");
   }
   return (
     <Dialog open={true}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Cadastro de clínica</DialogTitle>
+          <DialogTitle>
+            {isFirstClinic ? "Cadastro de clínica" : "Nova clínica"}
+          </DialogTitle>
           <DialogDescription>
-            Adicione uma clínica para continuar.
+            {isFirstClinic
+              ? "Adicione uma clínica para continuar."
+              : "A nova clínica fica ativa assim que for criada."}
           </DialogDescription>
         </DialogHeader>
-        <ClinicForm />
+        <ClinicForm canCancel={!isFirstClinic} />
       </DialogContent>
     </Dialog>
   );

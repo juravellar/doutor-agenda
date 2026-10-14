@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,7 +26,8 @@ const clinicFormSchema = z.object({
 });
 
 type ClinicFormData = z.infer<typeof clinicFormSchema>;
-const ClinicForm = () => {
+const ClinicForm = ({ canCancel = false }: { canCancel?: boolean }) => {
+  const router = useRouter();
   const form = useForm<ClinicFormData>({
     resolver: zodResolver(clinicFormSchema),
     defaultValues: {
@@ -65,6 +67,15 @@ const ClinicForm = () => {
             )}
           />
           <DialogFooter>
+            {canCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
+                Cancelar
+              </Button>
+            )}
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
