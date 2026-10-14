@@ -63,3 +63,26 @@ describe("planForPriceId", () => {
     expect(planForPriceId("")).toBeNull();
   });
 });
+
+describe("getPlanPrices", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("shows no price instead of failing when a plan's price id is missing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("STRIPE_SECRET_KEY", "");
+    vi.stubEnv("STRIPE_ESSENTIAL_PLAN_PRICE_ID", "");
+    vi.stubEnv("STRIPE_PROFESSIONAL_PLAN_PRICE_ID", "");
+    const { getPlanPrices } = await import("./stripe-plan");
+
+    await expect(getPlanPrices()).resolves.toEqual({
+      essential: null,
+      professional: null,
+    });
+    expect(console.error).toHaveBeenCalledWith(
+      "Stripe price id for plan professional is not configured",
+    );
+  });
+});

@@ -41,16 +41,30 @@ export const planForPriceId = (
   PAID_PLAN_IDS.find((plan) => priceId && priceIdForPlan(plan) === priceId) ??
   null;
 
-const loadPlanPrice = async (plan: PaidPlanId): Promise<PlanPrice | null> => {
-  const priceId = priceIdForPlan(plan);
-  if (!process.env.STRIPE_SECRET_KEY || !priceId) {
-    return null;
-  }
-  try {
+// The price id is an argument, so it is part of the cache key: changing the
+// env var takes effect at once. Failures throw and are therefore not cached.
+const fetchPriceById = unstable_cache(
+  async (priceId: string): Promise<PlanPrice | null> => {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-05-28.basil",
     });
     return formatPlanPrice(await stripe.prices.retrieve(priceId));
+  },
+  ["plan-price"],
+  { revalidate: 3600 },
+);
+
+const loadPlanPrice = async (plan: PaidPlanId): Promise<PlanPrice | null> => {
+  const priceId = priceIdForPlan(plan);
+  if (!priceId) {
+    console.error(`Stripe price id for plan ${plan} is not configured`);
+    return null;
+  }
+  try {
+    return await fetchPriceById(priceId);
   } catch (error) {
     console.error(`Failed to load the Stripe price of plan ${plan}`, error);
     return null;
@@ -58,13 +72,11 @@ const loadPlanPrice = async (plan: PaidPlanId): Promise<PlanPrice | null> => {
 };
 
 // Checkout charges these Stripe prices, so the plan cards must show the same.
-export const getPlanPrices = unstable_cache(
-  async (): Promise<Record<PaidPlanId, PlanPrice | null>> => {
-    const [essential, professional] = await Promise.all(
-      PAID_PLAN_IDS.map(loadPlanPrice),
-    );
-    return { essential, professional };
-  },
-  ["plan-prices"],
-  { revalidate: 3600 },
-);
+export const getPlanPrices = async (): Promise<
+  Record<PaidPlanId, PlanPrice | null>
+> => {
+  const [essential, professional] = await Promise.all(
+    PAID_PLAN_IDS.map(loadPlanPrice),
+  );
+  return { essential, professional };
+};
