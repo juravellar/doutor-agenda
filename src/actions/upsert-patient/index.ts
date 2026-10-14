@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-import { db } from "@/db";
+import { withClinicLock } from "@/db/clinic-lock";
 import { patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
@@ -26,38 +26,40 @@ export const upsertPatient = actionClient
     if (!clinicId) {
       throw new Error("Clinic not found");
     }
-    const existingPatient = parsedInput.id
-      ? await db.query.patientsTable.findFirst({
-          where: eq(patientsTable.id, parsedInput.id),
-        })
-      : undefined;
-    if (existingPatient && existingPatient.clinicId !== clinicId) {
-      throw new Error("Paciente não encontrado");
-    }
-    if (!existingPatient) {
-      const patientCount = await db.$count(
-        patientsTable,
-        eq(patientsTable.clinicId, clinicId),
-      );
-      ensurePlanAllows(
-        resolvePlan(session.user.plan),
-        "patients",
-        patientCount,
-      );
-    }
+    await withClinicLock(clinicId, async (tx) => {
+      const existingPatient = parsedInput.id
+        ? await tx.query.patientsTable.findFirst({
+            where: eq(patientsTable.id, parsedInput.id),
+          })
+        : undefined;
+      if (existingPatient && existingPatient.clinicId !== clinicId) {
+        throw new Error("Paciente não encontrado");
+      }
+      if (!existingPatient) {
+        const patientCount = await tx.$count(
+          patientsTable,
+          eq(patientsTable.clinicId, clinicId),
+        );
+        ensurePlanAllows(
+          resolvePlan(session.user.plan),
+          "patients",
+          patientCount,
+        );
+      }
 
-    await db
-      .insert(patientsTable)
-      .values({
-        ...parsedInput,
-        clinicId,
-      })
-      .onConflictDoUpdate({
-        target: [patientsTable.id],
-        setWhere: eq(patientsTable.clinicId, clinicId),
-        set: {
+      await tx
+        .insert(patientsTable)
+        .values({
           ...parsedInput,
-        },
-      });
+          clinicId,
+        })
+        .onConflictDoUpdate({
+          target: [patientsTable.id],
+          setWhere: eq(patientsTable.clinicId, clinicId),
+          set: {
+            ...parsedInput,
+          },
+        });
+    });
     revalidatePath("/patients");
   });

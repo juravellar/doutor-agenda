@@ -31,6 +31,17 @@ export const clinicMonthRange = (date: string) => {
   return { start: start.toDate(), end: start.add(1, "month").toDate() };
 };
 
+// [start, end) of a clinic-time day.
+export const clinicDayRange = (date: string) => {
+  const start = dayjs.tz(date, "YYYY-MM-DD", CLINIC_TIMEZONE).startOf("day");
+  return { start: start.toDate(), end: start.add(1, "day").toDate() };
+};
+
+// Weekdays go 0 (Sunday) to 6 (Saturday); from > to wraps around the weekend,
+// so Saturday (6) to Monday (1) covers Saturday, Sunday and Monday.
+export const isWeekDayInRange = (day: number, from: number, to: number) =>
+  from <= to ? day >= from && day <= to : day >= from || day <= to;
+
 export const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 5; hour <= 23; hour++) {

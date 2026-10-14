@@ -1,15 +1,17 @@
 "use server";
 
 import dayjs from "dayjs";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, lt, ne } from "drizzle-orm";
 import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { appointmentsTable, doctorsTable } from "@/db/schema";
 import {
+  clinicDayRange,
   generateTimeSlots,
   inClinicTimezone,
+  isWeekDayInRange,
   utcTimeToClinic,
 } from "@/helpers/time";
 import { auth } from "@/lib/auth";
@@ -20,6 +22,8 @@ export const getAvailableTimes = actionClient
     z.object({
       doctorId: z.string(),
       date: z.string().date(), // YYYY-MM-DD,
+      // The appointment being edited, whose own slot must stay selectable.
+      ignoreAppointmentId: z.string().uuid().optional(),
     }),
   )
   .action(async ({ parsedInput }) => {
@@ -38,20 +42,28 @@ export const getAvailableTimes = actionClient
     if (!doctor || doctor.clinicId !== session.user.clinic.id) {
       throw new Error("Médico não encontrado");
     }
-    const selectedDayOfWeek = dayjs(parsedInput.date).day();
-    const doctorIsAvailable =
-      selectedDayOfWeek >= doctor.availableFromWeekDay &&
-      selectedDayOfWeek <= doctor.availableToWeekDay;
+    const doctorIsAvailable = isWeekDayInRange(
+      dayjs(parsedInput.date).day(),
+      doctor.availableFromWeekDay,
+      doctor.availableToWeekDay,
+    );
     if (!doctorIsAvailable) {
       return [];
     }
+    const { start, end } = clinicDayRange(parsedInput.date);
     const appointments = await db.query.appointmentsTable.findMany({
-      where: eq(appointmentsTable.doctorId, parsedInput.doctorId),
+      where: and(
+        eq(appointmentsTable.doctorId, parsedInput.doctorId),
+        gte(appointmentsTable.date, start),
+        lt(appointmentsTable.date, end),
+        parsedInput.ignoreAppointmentId
+          ? ne(appointmentsTable.id, parsedInput.ignoreAppointmentId)
+          : undefined,
+      ),
     });
-    const appointmentsOnSelectedDate = appointments
-      .map((appointment) => inClinicTimezone(appointment.date))
-      .filter((date) => date.format("YYYY-MM-DD") === parsedInput.date)
-      .map((date) => date.format("HH:mm:ss"));
+    const appointmentsOnSelectedDate = appointments.map((appointment) =>
+      inClinicTimezone(appointment.date).format("HH:mm:ss"),
+    );
     const timeSlots = generateTimeSlots();
 
     const doctorAvailableFrom = utcTimeToClinic(

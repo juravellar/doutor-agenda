@@ -7,10 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { upsertDoctor } from "@/actions/upsert-doctor";
-import {
-  timeRangeRule,
-  weekDayRangeRule,
-} from "@/actions/upsert-doctor/schema";
+import { timeRangeRule } from "@/actions/upsert-doctor/schema";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -66,14 +63,6 @@ const formSchema = z
     (data) =>
       timeRangeRule.isValid(data.availableFromTime, data.availableToTime),
     { message: timeRangeRule.message, path: ["availableToTime"] },
-  )
-  .refine(
-    (data) =>
-      weekDayRangeRule.isValid(
-        Number(data.availableFromWeekDay),
-        Number(data.availableToWeekDay),
-      ),
-    { message: weekDayRangeRule.message, path: ["availableToWeekDay"] },
   );
 
 interface UpsertDoctorFormProps {

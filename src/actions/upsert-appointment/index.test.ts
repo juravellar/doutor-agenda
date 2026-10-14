@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  execute: vi.fn(),
   getSession: vi.fn(),
   findPatient: vi.fn(),
   getAvailableTimes: vi.fn(),
   insertValues: vi.fn(),
   countAppointments: vi.fn(),
+  findAppointment: vi.fn(),
+  updateSet: vi.fn(() => ({ where: vi.fn() })),
 }));
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
@@ -13,13 +16,20 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({
-  db: {
-    query: { patientsTable: { findFirst: mocks.findPatient } },
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
+    query: {
+      patientsTable: { findFirst: mocks.findPatient },
+      appointmentsTable: { findFirst: mocks.findAppointment },
+    },
     $count: mocks.countAppointments,
+    update: () => ({ set: mocks.updateSet }),
     insert: () => ({ values: mocks.insertValues }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) =>
+    fn({ ...db, execute: mocks.execute });
+  return { db };
+});
 vi.mock("../get-available-times", () => ({
   getAvailableTimes: mocks.getAvailableTimes,
 }));
@@ -115,5 +125,50 @@ describe("upsertAppointment", () => {
 
     expect(result?.serverError).toBeUndefined();
     expect(mocks.insertValues).toHaveBeenCalledOnce();
+  });
+
+  it("lets an appointment be saved again at its own time", async () => {
+    const APPOINTMENT_ID = "44444444-4444-4444-8444-444444444444";
+    mocks.findAppointment.mockResolvedValue({
+      id: APPOINTMENT_ID,
+      clinicId: CLINIC_ID,
+    });
+
+    const result = await upsertAppointment({ ...input, id: APPOINTMENT_ID });
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.getAvailableTimes).toHaveBeenCalledWith({
+      doctorId: DOCTOR_ID,
+      date: "2026-10-12",
+      ignoreAppointmentId: APPOINTMENT_ID,
+    });
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ date: new Date("2026-10-12T11:00:00.000Z") }),
+    );
+    expect(mocks.countAppointments).not.toHaveBeenCalled();
+  });
+
+  it("checks the slot and the monthly limit while holding the clinic lock", async () => {
+    await upsertAppointment(input);
+
+    const lockedAt = mocks.execute.mock.invocationCallOrder[0];
+    expect(lockedAt).toBeLessThan(
+      mocks.getAvailableTimes.mock.invocationCallOrder[0],
+    );
+    expect(lockedAt).toBeLessThan(
+      mocks.countAppointments.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("explains a slot taken at the same instant by another request", async () => {
+    mocks.insertValues.mockRejectedValue(
+      Object.assign(new Error("duplicate key"), { code: "23505" }),
+    );
+
+    const result = await upsertAppointment(input);
+
+    expect(result?.serverError).toBe(
+      "Este horário não está mais disponível. Escolha outro horário.",
+    );
   });
 });

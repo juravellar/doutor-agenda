@@ -1,3 +1,12 @@
+// Thrown by server actions when the message is meant for the user; any other
+// error reaches the client as SERVER_ERROR_MESSAGE.
+export class UserFacingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UserFacingError";
+  }
+}
+
 export const SERVER_ERROR_MESSAGE = "Não foi possível concluir a operação.";
 
 // Shows messages the server chose to expose (such as plan limits) and falls

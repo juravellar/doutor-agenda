@@ -6,18 +6,23 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
+import { isUniqueViolation, withClinicLock } from "@/db/clinic-lock";
 import { appointmentsTable, patientsTable } from "@/db/schema";
 import {
   clinicDateTimeToDate,
   clinicMonthRange,
   inClinicTimezone,
 } from "@/helpers/time";
+import { UserFacingError } from "@/lib/action-errors";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 import { ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
 
 import { getAvailableTimes } from "../get-available-times";
+
+const SLOT_UNAVAILABLE_MESSAGE =
+  "Este horário não está mais disponível. Escolha outro horário.";
 
 export const upsertAppointment = actionClient
   .schema(
@@ -37,82 +42,93 @@ export const upsertAppointment = actionClient
     if (!session?.user) {
       throw new Error("Não autorizado.");
     }
-    if (!session?.user.clinic?.id) {
+    const clinicId = session.user.clinic?.id;
+    if (!clinicId) {
       throw new Error("Clínica não encontrada");
     }
     const patient = await db.query.patientsTable.findFirst({
       where: eq(patientsTable.id, parsedInput.patientId),
     });
-    if (!patient || patient.clinicId !== session.user.clinic.id) {
+    if (!patient || patient.clinicId !== clinicId) {
       throw new Error("Paciente não encontrado");
     }
 
     const appointmentDay = inClinicTimezone(parsedInput.date).format(
       "YYYY-MM-DD",
     );
-    const availableTimes = await getAvailableTimes({
-      doctorId: parsedInput.doctorId,
-      date: appointmentDay,
-    });
-
-    if (!availableTimes?.data) {
-      throw new Error("Horário não encontrado");
-    }
-
-    const isTimeAvailable = availableTimes.data?.some(
-      (time) => time.value === parsedInput.time && time.available,
-    );
-
-    if (!isTimeAvailable) {
-      throw new Error("Horário não encontrado");
-    }
-
-    const appointmentDate = clinicDateTimeToDate(
-      appointmentDay,
-      parsedInput.time,
-    );
-
-    if (parsedInput.id) {
-      const appointment = await db.query.appointmentsTable.findFirst({
-        where: eq(appointmentsTable.id, parsedInput.id),
-      });
-      if (!appointment) {
-        throw new Error("Agendamento não encontrado");
-      }
-      if (appointment.clinicId !== session.user.clinic.id) {
-        throw new Error("Agendamento não encontrado");
-      }
-      await db
-        .update(appointmentsTable)
-        .set({
-          patientId: parsedInput.patientId,
+    try {
+      await withClinicLock(clinicId, async (tx) => {
+        const availableTimes = await getAvailableTimes({
           doctorId: parsedInput.doctorId,
-          date: appointmentDate,
-          appointmentPriceInCents: parsedInput.appointmentPriceInCents,
-        })
-        .where(eq(appointmentsTable.id, parsedInput.id));
-    } else {
-      const { start, end } = clinicMonthRange(appointmentDay);
-      const appointmentsInMonth = await db.$count(
-        appointmentsTable,
-        and(
-          eq(appointmentsTable.clinicId, session.user.clinic.id),
-          gte(appointmentsTable.date, start),
-          lt(appointmentsTable.date, end),
-        ),
-      );
-      ensurePlanAllows(
-        resolvePlan(session.user.plan),
-        "appointmentsPerMonth",
-        appointmentsInMonth,
-      );
-      await db.insert(appointmentsTable).values({
-        patientId: parsedInput.patientId,
-        doctorId: parsedInput.doctorId,
-        date: appointmentDate,
-        appointmentPriceInCents: parsedInput.appointmentPriceInCents,
-        clinicId: session.user.clinic.id,
+          date: appointmentDay,
+          ignoreAppointmentId: parsedInput.id,
+        });
+
+        if (!availableTimes?.data) {
+          throw new UserFacingError(SLOT_UNAVAILABLE_MESSAGE);
+        }
+
+        const isTimeAvailable = availableTimes.data?.some(
+          (time) => time.value === parsedInput.time && time.available,
+        );
+
+        if (!isTimeAvailable) {
+          throw new UserFacingError(SLOT_UNAVAILABLE_MESSAGE);
+        }
+
+        const appointmentDate = clinicDateTimeToDate(
+          appointmentDay,
+          parsedInput.time,
+        );
+
+        if (parsedInput.id) {
+          const appointment = await tx.query.appointmentsTable.findFirst({
+            where: eq(appointmentsTable.id, parsedInput.id),
+          });
+          if (!appointment) {
+            throw new Error("Agendamento não encontrado");
+          }
+          if (appointment.clinicId !== clinicId) {
+            throw new Error("Agendamento não encontrado");
+          }
+          await tx
+            .update(appointmentsTable)
+            .set({
+              patientId: parsedInput.patientId,
+              doctorId: parsedInput.doctorId,
+              date: appointmentDate,
+              appointmentPriceInCents: parsedInput.appointmentPriceInCents,
+            })
+            .where(eq(appointmentsTable.id, parsedInput.id));
+        } else {
+          const { start, end } = clinicMonthRange(appointmentDay);
+          const appointmentsInMonth = await tx.$count(
+            appointmentsTable,
+            and(
+              eq(appointmentsTable.clinicId, clinicId),
+              gte(appointmentsTable.date, start),
+              lt(appointmentsTable.date, end),
+            ),
+          );
+          ensurePlanAllows(
+            resolvePlan(session.user.plan),
+            "appointmentsPerMonth",
+            appointmentsInMonth,
+          );
+          await tx.insert(appointmentsTable).values({
+            patientId: parsedInput.patientId,
+            doctorId: parsedInput.doctorId,
+            date: appointmentDate,
+            appointmentPriceInCents: parsedInput.appointmentPriceInCents,
+            clinicId: clinicId,
+          });
+        }
       });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new UserFacingError(SLOT_UNAVAILABLE_MESSAGE);
+      }
+      throw error;
     }
 
     revalidatePath("/appointments");

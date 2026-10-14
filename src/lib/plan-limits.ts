@@ -1,7 +1,7 @@
+import { UserFacingError } from "@/lib/action-errors";
 import type { Plan, PlanLimits } from "@/lib/plans";
 
-// Its message is shown to the user; other server errors stay generic.
-export class PlanLimitError extends Error {
+export class PlanLimitError extends UserFacingError {
   constructor(message: string) {
     super(message);
     this.name = "PlanLimitError";
