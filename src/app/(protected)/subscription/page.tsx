@@ -50,18 +50,22 @@ const SubscriptionPage = async () => {
         </PageHeaderContent>
       </PageHeader>
       <PageContent>
-        <PlanUsageCard planName={currentPlan.name} usage={usage} />
-        <div className="grid w-full gap-6 md:grid-cols-3">
-          {Object.values(PLANS).map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              price={plan.id === "free" ? null : prices[plan.id]}
-              currentPlanId={currentPlan.id}
-              userEmail={session.user.email}
-              subscriptionNotice={subscriptionNotice}
-            />
-          ))}
+        {/* Columns follow the content width, not the screen: the sidebar
+            takes part of it. */}
+        <div className="@container space-y-6">
+          <PlanUsageCard planName={currentPlan.name} usage={usage} />
+          <div className="grid w-full gap-6 @4xl:grid-cols-3">
+            {Object.values(PLANS).map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                price={plan.id === "free" ? null : prices[plan.id]}
+                currentPlanId={currentPlan.id}
+                userEmail={session.user.email}
+                subscriptionNotice={subscriptionNotice}
+              />
+            ))}
+          </div>
         </div>
       </PageContent>
     </PageContainer>

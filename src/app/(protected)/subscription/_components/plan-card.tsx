@@ -107,17 +107,17 @@ export function PlanCard({
       )}
     >
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
           {isCurrent &&
             (subscriptionNotice?.pastDue || subscriptionNotice?.endsOn ? (
-              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+              <Badge className="shrink-0 bg-amber-100 text-amber-800 hover:bg-amber-100">
                 {subscriptionNotice.pastDue
                   ? "Pagamento pendente"
                   : "Cancelada"}
               </Badge>
             ) : (
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+              <Badge className="shrink-0 bg-green-100 text-green-700 hover:bg-green-100">
                 Atual
               </Badge>
             ))}

@@ -114,7 +114,7 @@ export function PlanUsageCard({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 @2xl:grid-cols-3">
           {METRICS.map((metric) => (
             <UsageTile
               key={metric.key}
