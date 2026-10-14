@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { accountStatus } from "./account-status";
 
 const NOW = new Date("2027-01-01T12:00:00Z");
-const recentClinic = { createdAt: new Date("2026-12-20T12:00:00Z") };
+const recentClinic = { id: "clinic_1" };
+const recentStart = new Date("2026-12-20T12:00:00Z");
 
 describe("accountStatus", () => {
   it("warns about a failed payment first", () => {
@@ -14,6 +15,7 @@ describe("accountStatus", () => {
           subscriptionStatus: "past_due",
           subscriptionEndsAt: "2027-01-20T03:00:00Z",
           clinic: recentClinic,
+          freePeriodStartsAt: recentStart,
         },
         NOW,
       ),
@@ -28,6 +30,7 @@ describe("accountStatus", () => {
           subscriptionStatus: "active",
           subscriptionEndsAt: "2027-01-20T03:00:00Z",
           clinic: recentClinic,
+          freePeriodStartsAt: recentStart,
         },
         NOW,
       ),
@@ -45,6 +48,7 @@ describe("accountStatus", () => {
           plan: "essential",
           subscriptionStatus: "active",
           clinic: recentClinic,
+          freePeriodStartsAt: recentStart,
         },
         NOW,
       ),
@@ -54,19 +58,30 @@ describe("accountStatus", () => {
   it("tells a Free clinic its period is over", () => {
     expect(
       accountStatus(
-        { plan: null, clinic: { createdAt: "2026-11-15T12:00:00Z" } },
+        {
+          plan: null,
+          clinic: { id: "clinic_1" },
+          freePeriodStartsAt: "2026-11-15T12:00:00Z",
+        },
         new Date("2027-03-01T12:00:00Z"),
       ),
     ).toEqual({ kind: "free-period-over" });
   });
 
   it("warns only in the last 14 free days", () => {
-    const clinic = { createdAt: "2026-11-15T12:00:00Z" }; // ends 2027-02-15
+    const clinic = { id: "clinic_1" };
+    const freePeriodStartsAt = "2026-11-15T12:00:00Z"; // ends 2027-02-15
     expect(
-      accountStatus({ plan: null, clinic }, new Date("2027-01-15T12:00:00Z")),
+      accountStatus(
+        { plan: null, clinic, freePeriodStartsAt },
+        new Date("2027-01-15T12:00:00Z"),
+      ),
     ).toBeNull();
     expect(
-      accountStatus({ plan: null, clinic }, new Date("2027-02-05T12:00:00Z")),
+      accountStatus(
+        { plan: null, clinic, freePeriodStartsAt },
+        new Date("2027-02-05T12:00:00Z"),
+      ),
     ).toEqual({ kind: "free-period-ending", daysLeft: 10 });
   });
 

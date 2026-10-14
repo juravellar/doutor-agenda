@@ -29,3 +29,22 @@ export const freePeriodDaysLeft = (
   clinicCreatedAt: Date | string | undefined,
   now: Date = new Date(),
 ) => Math.max(0, dayjs(freePeriodEndsAt(clinicCreatedAt)).diff(now, "day"));
+
+export const CLINIC_READ_ONLY_MESSAGE =
+  "Esta clínica está só leitura no seu plano atual.";
+export const FREE_PERIOD_OVER_MESSAGE = "Seu período gratuito terminou.";
+
+// Why the active clinic can't be changed right now, or null if it can.
+export const writeBlockReason = (user: {
+  plan?: string | null;
+  freePeriodStartsAt?: Date | string | null;
+  clinic?: { writable?: boolean } | null;
+}) => {
+  if (user.clinic && user.clinic.writable === false) {
+    return CLINIC_READ_ONLY_MESSAGE;
+  }
+  if (isReadOnly(user.plan, user.freePeriodStartsAt ?? undefined)) {
+    return FREE_PERIOD_OVER_MESSAGE;
+  }
+  return null;
+};

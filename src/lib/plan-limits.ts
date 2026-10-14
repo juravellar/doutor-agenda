@@ -10,6 +10,8 @@ export class PlanLimitError extends UserFacingError {
 }
 
 const LIMIT_MESSAGES: Record<keyof PlanLimits, (limit: number) => string> = {
+  clinics: (limit) =>
+    `Seu plano permite até ${limit} ${limit === 1 ? "clínica" : "clínicas"}.`,
   doctors: (limit) =>
     `Seu plano permite até ${limit} ${limit === 1 ? "médico" : "médicos"}.`,
   patients: (limit) => `Seu plano permite até ${limit} pacientes.`,

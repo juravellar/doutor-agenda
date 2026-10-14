@@ -17,7 +17,8 @@ export const accountStatus = (
     plan?: string | null;
     subscriptionStatus?: string | null;
     subscriptionEndsAt?: Date | string | null;
-    clinic?: { createdAt?: Date | string };
+    freePeriodStartsAt?: Date | string | null;
+    clinic?: object | null;
   },
   now: Date = new Date(),
 ): AccountStatus => {
@@ -38,10 +39,11 @@ export const accountStatus = (
     }
     return null;
   }
-  if (isReadOnly(user.plan, user.clinic.createdAt, now)) {
+  const freePeriodStartsAt = user.freePeriodStartsAt ?? undefined;
+  if (isReadOnly(user.plan, freePeriodStartsAt, now)) {
     return { kind: "free-period-over" };
   }
-  const daysLeft = freePeriodDaysLeft(user.clinic.createdAt, now);
+  const daysLeft = freePeriodDaysLeft(freePeriodStartsAt, now);
   return daysLeft <= WARNING_DAYS
     ? { kind: "free-period-ending", daysLeft }
     : null;

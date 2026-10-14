@@ -179,7 +179,8 @@ describe("upsertDoctor", () => {
     mocks.getSession.mockResolvedValue({
       user: {
         plan: null,
-        clinic: { id: CLINIC_ID, createdAt: new Date("2026-11-10T15:00:00Z") },
+        freePeriodStartsAt: new Date("2026-11-10T15:00:00Z"),
+        clinic: { id: CLINIC_ID, writable: true },
       },
     });
 
@@ -187,7 +188,7 @@ describe("upsertDoctor", () => {
     vi.useRealTimers();
 
     expect(result?.serverError).toBe(
-      "Seu período gratuito de 3 meses terminou. Assine um plano para voltar a cadastrar e editar.",
+      "Seu período gratuito terminou. Assine um plano para voltar a cadastrar e editar.",
     );
     expect(mocks.values).not.toHaveBeenCalled();
   });
@@ -198,7 +199,8 @@ describe("upsertDoctor", () => {
     mocks.getSession.mockResolvedValue({
       user: {
         plan: "essential",
-        clinic: { id: CLINIC_ID, createdAt: new Date("2026-11-10T15:00:00Z") },
+        freePeriodStartsAt: new Date("2026-11-10T15:00:00Z"),
+        clinic: { id: CLINIC_ID, writable: true },
       },
     });
     mocks.findDoctor.mockResolvedValue(undefined);

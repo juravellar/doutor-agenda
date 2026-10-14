@@ -14,7 +14,7 @@ import {
 import { db } from "@/db";
 import { doctorsTable } from "@/db/schema";
 import { createGate } from "@/lib/create-gate";
-import { isReadOnly } from "@/lib/free-period";
+import { writeBlockReason } from "@/lib/free-period";
 import { getPlanUsage } from "@/lib/plan-usage";
 
 import { auth } from "../../../lib/auth";
@@ -39,11 +39,12 @@ const DoctorsPage = async () => {
 
   const hasDoctors = doctors.length > 0;
 
-  const usage = await getPlanUsage(session.user.clinic.id, session.user.plan);
-  const readOnly = isReadOnly(
+  const usage = await getPlanUsage(
+    session.user.clinic.id,
     session.user.plan,
-    session.user.clinic.createdAt,
+    session.user.clinics.length,
   );
+  const blockReason = writeBlockReason(session.user);
   return (
     <PageContainer>
       <PageHeader>
@@ -53,7 +54,7 @@ const DoctorsPage = async () => {
         </PageHeaderContent>
         <PageActions>
           <AddDoctorButton
-            gate={createGate(usage.doctors, readOnly, {
+            gate={createGate(usage.doctors, blockReason, {
               one: "médico",
               many: "médicos",
             })}
