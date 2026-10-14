@@ -2,31 +2,19 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
 import { withClinicLock } from "@/db/clinic-lock";
 import { patientsTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
-import { actionClient } from "@/lib/next-safe-action";
-import { ensureCanEdit, ensurePlanAllows } from "@/lib/plan-limits";
+import { clinicWriteActionClient } from "@/lib/clinic-action";
+import { ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
 
 import { upsertPatientSchema } from "./schema";
 
-export const upsertPatient = actionClient
+export const upsertPatient = clinicWriteActionClient
   .schema(upsertPatientSchema)
-  .action(async ({ parsedInput }) => {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      throw new Error("Unauthorized");
-    }
-    const clinicId = session.user.clinic?.id;
-    if (!clinicId) {
-      throw new Error("Clinic not found");
-    }
-    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
+  .action(async ({ parsedInput, ctx }) => {
+    const clinicId = ctx.clinic.id;
     await withClinicLock(clinicId, async (tx) => {
       const existingPatient = parsedInput.id
         ? await tx.query.patientsTable.findFirst({
@@ -41,11 +29,7 @@ export const upsertPatient = actionClient
           patientsTable,
           eq(patientsTable.clinicId, clinicId),
         );
-        ensurePlanAllows(
-          resolvePlan(session.user.plan),
-          "patients",
-          patientCount,
-        );
+        ensurePlanAllows(resolvePlan(ctx.user.plan), "patients", patientCount);
       }
 
       await tx

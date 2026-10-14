@@ -2,10 +2,8 @@
 
 import { and, eq, gte, lt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 
-import { db } from "@/db";
 import { isUniqueViolation, withClinicLock } from "@/db/clinic-lock";
 import { appointmentsTable, patientsTable } from "@/db/schema";
 import {
@@ -14,17 +12,15 @@ import {
   inClinicTimezone,
 } from "@/helpers/time";
 import { UserFacingError } from "@/lib/action-errors";
-import { auth } from "@/lib/auth";
-import { actionClient } from "@/lib/next-safe-action";
-import { ensureCanEdit, ensurePlanAllows } from "@/lib/plan-limits";
+import { computeAvailableTimes } from "@/lib/available-times";
+import { clinicWriteActionClient } from "@/lib/clinic-action";
+import { ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
-
-import { getAvailableTimes } from "../get-available-times";
 
 const SLOT_UNAVAILABLE_MESSAGE =
   "Este horário não está mais disponível. Escolha outro horário.";
 
-export const upsertAppointment = actionClient
+export const upsertAppointment = clinicWriteActionClient
   .schema(
     z.object({
       id: z.string().uuid().optional(),
@@ -35,44 +31,38 @@ export const upsertAppointment = actionClient
       appointmentPriceInCents: z.number(),
     }),
   )
-  .action(async ({ parsedInput }) => {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      throw new Error("Não autorizado.");
-    }
-    const clinicId = session.user.clinic?.id;
-    if (!clinicId) {
-      throw new Error("Clínica não encontrada");
-    }
-    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
-    const patient = await db.query.patientsTable.findFirst({
-      where: eq(patientsTable.id, parsedInput.patientId),
-    });
-    if (!patient || patient.clinicId !== clinicId) {
-      throw new Error("Paciente não encontrado");
-    }
-
+  .action(async ({ parsedInput, ctx }) => {
+    const clinicId = ctx.clinic.id;
     const appointmentDay = inClinicTimezone(parsedInput.date).format(
       "YYYY-MM-DD",
     );
     try {
       await withClinicLock(clinicId, async (tx) => {
-        const availableTimes = await getAvailableTimes({
+        const patient = await tx.query.patientsTable.findFirst({
+          where: eq(patientsTable.id, parsedInput.patientId),
+        });
+        if (!patient || patient.clinicId !== clinicId) {
+          throw new Error("Paciente não encontrado");
+        }
+
+        if (parsedInput.id) {
+          const appointment = await tx.query.appointmentsTable.findFirst({
+            where: eq(appointmentsTable.id, parsedInput.id),
+          });
+          if (!appointment || appointment.clinicId !== clinicId) {
+            throw new Error("Agendamento não encontrado");
+          }
+        }
+
+        const availableTimes = await computeAvailableTimes(tx, {
+          clinicId,
           doctorId: parsedInput.doctorId,
           date: appointmentDay,
           ignoreAppointmentId: parsedInput.id,
         });
-
-        if (!availableTimes?.data) {
-          throw new UserFacingError(SLOT_UNAVAILABLE_MESSAGE);
-        }
-
-        const isTimeAvailable = availableTimes.data?.some(
+        const isTimeAvailable = availableTimes.some(
           (time) => time.value === parsedInput.time && time.available,
         );
-
         if (!isTimeAvailable) {
           throw new UserFacingError(SLOT_UNAVAILABLE_MESSAGE);
         }
@@ -83,15 +73,6 @@ export const upsertAppointment = actionClient
         );
 
         if (parsedInput.id) {
-          const appointment = await tx.query.appointmentsTable.findFirst({
-            where: eq(appointmentsTable.id, parsedInput.id),
-          });
-          if (!appointment) {
-            throw new Error("Agendamento não encontrado");
-          }
-          if (appointment.clinicId !== clinicId) {
-            throw new Error("Agendamento não encontrado");
-          }
           await tx
             .update(appointmentsTable)
             .set({
@@ -101,29 +82,30 @@ export const upsertAppointment = actionClient
               appointmentPriceInCents: parsedInput.appointmentPriceInCents,
             })
             .where(eq(appointmentsTable.id, parsedInput.id));
-        } else {
-          const { start, end } = clinicMonthRange(appointmentDay);
-          const appointmentsInMonth = await tx.$count(
-            appointmentsTable,
-            and(
-              eq(appointmentsTable.clinicId, clinicId),
-              gte(appointmentsTable.date, start),
-              lt(appointmentsTable.date, end),
-            ),
-          );
-          ensurePlanAllows(
-            resolvePlan(session.user.plan),
-            "appointmentsPerMonth",
-            appointmentsInMonth,
-          );
-          await tx.insert(appointmentsTable).values({
-            patientId: parsedInput.patientId,
-            doctorId: parsedInput.doctorId,
-            date: appointmentDate,
-            appointmentPriceInCents: parsedInput.appointmentPriceInCents,
-            clinicId: clinicId,
-          });
+          return;
         }
+
+        const { start, end } = clinicMonthRange(appointmentDay);
+        const appointmentsInMonth = await tx.$count(
+          appointmentsTable,
+          and(
+            eq(appointmentsTable.clinicId, clinicId),
+            gte(appointmentsTable.date, start),
+            lt(appointmentsTable.date, end),
+          ),
+        );
+        ensurePlanAllows(
+          resolvePlan(ctx.user.plan),
+          "appointmentsPerMonth",
+          appointmentsInMonth,
+        );
+        await tx.insert(appointmentsTable).values({
+          patientId: parsedInput.patientId,
+          doctorId: parsedInput.doctorId,
+          date: appointmentDate,
+          appointmentPriceInCents: parsedInput.appointmentPriceInCents,
+          clinicId,
+        });
       });
     } catch (error) {
       if (isUniqueViolation(error)) {

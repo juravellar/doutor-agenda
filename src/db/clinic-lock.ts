@@ -4,16 +4,27 @@ import { db } from "@/db";
 
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+const withAdvisoryLock = <T>(
+  key: string,
+  fn: (tx: Transaction) => Promise<T>,
+) =>
+  db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${key}))`);
+    return fn(tx);
+  });
+
 // Runs fn in a transaction holding a lock on the clinic, so writes that first
 // check plan limits or free slots can't interleave and both pass the check.
 export const withClinicLock = <T>(
   clinicId: string,
   fn: (tx: Transaction) => Promise<T>,
-) =>
-  db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${clinicId}))`);
-    return fn(tx);
-  });
+) => withAdvisoryLock(clinicId, fn);
+
+// Same for per-user writes, such as creating the user's clinic or checkout.
+export const withUserLock = <T>(
+  userId: string,
+  fn: (tx: Transaction) => Promise<T>,
+) => withAdvisoryLock(`user:${userId}`, fn);
 
 // Postgres unique_violation, possibly wrapped by Drizzle.
 export const isUniqueViolation = (error: unknown) => {

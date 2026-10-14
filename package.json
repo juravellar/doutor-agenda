@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run src/db/clinic-lock.integration.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

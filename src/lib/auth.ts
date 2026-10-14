@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
@@ -28,6 +28,9 @@ export const auth = betterAuth({
         }),
         db.query.usersToClinicsTable.findMany({
           where: eq(usersToClinicsTable.userId, user.id),
+          // Users have one clinic; if older data has more, always use the
+          // first one so the free period start never switches between them.
+          orderBy: asc(usersToClinicsTable.createdAt),
           with: {
             clinic: true,
             user: true,

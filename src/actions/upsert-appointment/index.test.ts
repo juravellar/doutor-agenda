@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   getSession: vi.fn(),
   findPatient: vi.fn(),
-  getAvailableTimes: vi.fn(),
+  computeAvailableTimes: vi.fn(),
   insertValues: vi.fn(),
   countAppointments: vi.fn(),
   findAppointment: vi.fn(),
@@ -30,8 +30,8 @@ vi.mock("@/db", () => {
     fn({ ...db, execute: mocks.execute });
   return { db };
 });
-vi.mock("../get-available-times", () => ({
-  getAvailableTimes: mocks.getAvailableTimes,
+vi.mock("@/lib/available-times", () => ({
+  computeAvailableTimes: mocks.computeAvailableTimes,
 }));
 
 import { upsertAppointment } from ".";
@@ -63,19 +63,19 @@ describe("upsertAppointment", () => {
       id: PATIENT_ID,
       clinicId: CLINIC_ID,
     });
-    mocks.getAvailableTimes.mockResolvedValue({
-      data: [{ value: "08:00:00", available: true }],
-    });
+    mocks.computeAvailableTimes.mockResolvedValue([
+      { value: "08:00:00", available: true },
+    ]);
   });
 
   it("stores the appointment at the clinic-time instant", async () => {
     const result = await upsertAppointment(input);
 
     expect(result?.serverError).toBeUndefined();
-    expect(mocks.getAvailableTimes).toHaveBeenCalledWith({
-      doctorId: DOCTOR_ID,
-      date: "2026-10-12",
-    });
+    expect(mocks.computeAvailableTimes).toHaveBeenCalledWith(
+      expect.objectContaining({ execute: mocks.execute }),
+      { clinicId: CLINIC_ID, doctorId: DOCTOR_ID, date: "2026-10-12" },
+    );
     expect(mocks.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
         clinicId: CLINIC_ID,
@@ -94,9 +94,9 @@ describe("upsertAppointment", () => {
   });
 
   it("refuses a slot that is not available", async () => {
-    mocks.getAvailableTimes.mockResolvedValue({
-      data: [{ value: "08:00:00", available: false }],
-    });
+    mocks.computeAvailableTimes.mockResolvedValue([
+      { value: "08:00:00", available: false },
+    ]);
 
     const result = await upsertAppointment(input);
 
@@ -137,11 +137,15 @@ describe("upsertAppointment", () => {
     const result = await upsertAppointment({ ...input, id: APPOINTMENT_ID });
 
     expect(result?.serverError).toBeUndefined();
-    expect(mocks.getAvailableTimes).toHaveBeenCalledWith({
-      doctorId: DOCTOR_ID,
-      date: "2026-10-12",
-      ignoreAppointmentId: APPOINTMENT_ID,
-    });
+    expect(mocks.computeAvailableTimes).toHaveBeenCalledWith(
+      expect.objectContaining({ execute: mocks.execute }),
+      {
+        clinicId: CLINIC_ID,
+        doctorId: DOCTOR_ID,
+        date: "2026-10-12",
+        ignoreAppointmentId: APPOINTMENT_ID,
+      },
+    );
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({ date: new Date("2026-10-12T11:00:00.000Z") }),
     );
@@ -153,7 +157,7 @@ describe("upsertAppointment", () => {
 
     const lockedAt = mocks.execute.mock.invocationCallOrder[0];
     expect(lockedAt).toBeLessThan(
-      mocks.getAvailableTimes.mock.invocationCallOrder[0],
+      mocks.computeAvailableTimes.mock.invocationCallOrder[0],
     );
     expect(lockedAt).toBeLessThan(
       mocks.countAppointments.mock.invocationCallOrder[0],
