@@ -13,6 +13,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { clinicToday } from "@/helpers/time";
 import { auth } from "@/lib/auth";
 
 import { getDashboard } from "../../../../data/get-dashboard";
@@ -46,7 +47,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
 
   if (!from || !to) {
     redirect(
-      `/dashboard?from=${dayjs().format("YYYY-MM-DD")}&to=${dayjs().add(1, "month").format("YYYY-MM-DD")}`,
+      `/dashboard?from=${clinicToday()}&to=${dayjs(clinicToday()).add(1, "month").format("YYYY-MM-DD")}`,
     );
   }
 

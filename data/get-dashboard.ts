@@ -1,8 +1,9 @@
 import dayjs from "dayjs";
-import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, lt, sql, sum } from "drizzle-orm";
 
 import { db } from "@/db";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { CLINIC_TIMEZONE, clinicDayRange, clinicToday } from "@/helpers/time";
 
 interface Params {
   from: string;
@@ -16,9 +17,20 @@ interface Params {
   };
 }
 
+// Appointment dates are stored in UTC; days are counted in clinic time.
+const appointmentClinicDay = sql<string>`DATE(${appointmentsTable.date} AT TIME ZONE 'UTC' AT TIME ZONE ${sql.raw(`'${CLINIC_TIMEZONE}'`)})`;
+
 export const getDashboard = async ({ from, to, session }: Params) => {
-  const chartStartDate = dayjs().subtract(10, "days").startOf("day").toDate();
-  const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
+  // from and to are clinic dates and both days are included in full.
+  const periodStart = clinicDayRange(from).start;
+  const periodEnd = clinicDayRange(to).end;
+  const today = clinicDayRange(clinicToday());
+  const chartStartDate = clinicDayRange(
+    dayjs(clinicToday()).subtract(10, "days").format("YYYY-MM-DD"),
+  ).start;
+  const chartEndDate = clinicDayRange(
+    dayjs(clinicToday()).add(10, "days").format("YYYY-MM-DD"),
+  ).end;
 
   const [
     [totalRevenue],
@@ -40,8 +52,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, session.user.clinic.id),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, periodStart),
+          lt(appointmentsTable.date, periodEnd),
         ),
       ),
     db
@@ -52,8 +64,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, session.user.clinic.id),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, periodStart),
+          lt(appointmentsTable.date, periodEnd),
         ),
       ),
     db
@@ -81,8 +93,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
         appointmentsTable,
         and(
           eq(appointmentsTable.doctorId, doctorsTable.id),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, periodStart),
+          lt(appointmentsTable.date, periodEnd),
         ),
       )
       .where(eq(doctorsTable.clinicId, session.user.clinic.id))
@@ -99,8 +111,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, session.user.clinic.id),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, periodStart),
+          lt(appointmentsTable.date, periodEnd),
         ),
       )
       .groupBy(doctorsTable.specialty)
@@ -108,8 +120,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     db.query.appointmentsTable.findMany({
       where: and(
         eq(appointmentsTable.clinicId, session.user.clinic.id),
-        gte(appointmentsTable.date, dayjs().startOf("day").toDate()),
-        lte(appointmentsTable.date, dayjs().endOf("day").toDate()),
+        gte(appointmentsTable.date, today.start),
+        lt(appointmentsTable.date, today.end),
       ),
       with: {
         patient: true,
@@ -126,7 +138,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .where(eq(doctorsTable.clinicId, session.user.clinic.id)),
     db
       .select({
-        date: sql<string>`DATE(${appointmentsTable.date})`.as("date"),
+        date: sql<string>`${appointmentClinicDay}`.as("date"),
         appointments: count(appointmentsTable.id),
         revenue:
           sql<number>`COALESCE(SUM(${appointmentsTable.appointmentPriceInCents}), 0)`.as(
@@ -138,11 +150,11 @@ export const getDashboard = async ({ from, to, session }: Params) => {
         and(
           eq(appointmentsTable.clinicId, session.user.clinic.id),
           gte(appointmentsTable.date, chartStartDate),
-          lte(appointmentsTable.date, chartEndDate),
+          lt(appointmentsTable.date, chartEndDate),
         ),
       )
-      .groupBy(sql`DATE(${appointmentsTable.date})`)
-      .orderBy(sql`DATE(${appointmentsTable.date})`),
+      .groupBy(appointmentClinicDay)
+      .orderBy(appointmentClinicDay),
   ]);
 
   return {
