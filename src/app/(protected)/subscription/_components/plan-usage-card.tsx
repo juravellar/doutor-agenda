@@ -106,7 +106,7 @@ export function PlanUsageCard({
 }) {
   const anyAtLimit = METRICS.some(({ key }) => isAtLimit(usage[key]));
   return (
-    <Card className="w-full max-w-5xl">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Seu uso no plano {planName}</CardTitle>
         <p className="text-sm text-gray-600">

@@ -51,7 +51,7 @@ const SubscriptionPage = async () => {
       </PageHeader>
       <PageContent>
         <PlanUsageCard planName={currentPlan.name} usage={usage} />
-        <div className="grid w-full max-w-5xl gap-6 md:grid-cols-3">
+        <div className="grid w-full gap-6 md:grid-cols-3">
           {Object.values(PLANS).map((plan) => (
             <PlanCard
               key={plan.id}
