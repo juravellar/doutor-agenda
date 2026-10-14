@@ -25,14 +25,16 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | | Free | Essencial | Profissional |
 |---|---|---|---|
 | Duração | 3 meses | Mensal | Mensal |
-| Médicos | 1 | 5 | Ilimitados |
-| Pacientes | 20 | 100 | Ilimitados |
-| Agendamentos por mês | 40 | 200 | Ilimitados |
+| Clínicas | 1 | 2 | Ilimitadas |
+| Médicos (por clínica) | 1 | 5 | Ilimitados |
+| Pacientes (por clínica) | 20 | 100 | Ilimitados |
+| Agendamentos por mês (por clínica) | 40 | 200 | Ilimitados |
 
 - **Limites:** os limites são verificados no servidor, ao cadastrar médicos, pacientes e agendamentos. Ficam em [`src/lib/plans.ts`](src/lib/plans.ts).
 - **Visibilidade:** a página de assinatura mostra o uso de cada limite. Os botões de cadastro mostram o uso e ficam desativados no limite. Um aviso no topo das páginas informa cancelamento agendado, pagamento pendente e o fim do período gratuito.
 - **Preços:** o valor exibido de cada plano pago vem do próprio Stripe, então é sempre o mesmo cobrado no checkout.
 - **No banco:** um usuário sem assinatura tem `plan` vazio e é tratado como Free.
+- **Várias clínicas:** o seletor no rodapé do menu troca a clínica aberta; cada clínica tem seus próprios médicos, pacientes e agendamentos. Em **Minhas clínicas**, quem tem mais clínicas do que o plano permite (depois de um downgrade) escolhe quais continuam ativas; as outras ficam só leitura, sem perder dados. A primeira escolha é livre e, depois, vale uma alteração a cada 30 dias; para mais, o usuário fala com o suporte.
 - **Fim do Free:** 3 meses depois da criação da clínica, a conta fica só leitura. Dá para ver os dados, mas cadastrar, editar e excluir exige um plano pago. Clínicas criadas antes dessa regra contam os 3 meses a partir de 15/10/2026. O prazo é controlado pelo app, não pelo Stripe.
 
 ## 🚀 Tecnologias
@@ -75,6 +77,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `STRIPE_PROFESSIONAL_PLAN_PRICE_ID` | ID do preço mensal do plano Profissional no Stripe |
    | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (veja a seção do Stripe abaixo) |
    | `NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL` | Link do portal do cliente do Stripe |
+   | `NEXT_PUBLIC_SUPPORT_EMAIL` | E-mail de suporte mostrado a quem precisa alterar as clínicas ativas antes dos 30 dias (opcional) |
 
 3. Crie as tabelas no banco:
 
