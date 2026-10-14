@@ -15,6 +15,9 @@ import {
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { createGate } from "@/lib/create-gate";
+import { isReadOnly } from "@/lib/free-period";
+import { getPlanUsage } from "@/lib/plan-usage";
 
 import AddPatientButton from "./_components/add-patient-button";
 import { patientsTableColumns } from "./_components/table.columns";
@@ -32,6 +35,11 @@ const PatientsPage = async () => {
   const patients = await db.query.patientsTable.findMany({
     where: eq(patientsTable.clinicId, session.user.clinic.id),
   });
+  const usage = await getPlanUsage(session.user.clinic.id, session.user.plan);
+  const readOnly = isReadOnly(
+    session.user.plan,
+    session.user.clinic.createdAt,
+  );
   return (
     <PageContainer>
       <PageHeader>
@@ -42,7 +50,12 @@ const PatientsPage = async () => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddPatientButton />
+          <AddPatientButton
+            gate={createGate(usage.patients, readOnly, {
+              one: "paciente",
+              many: "pacientes",
+            })}
+          />
         </PageActions>
       </PageHeader>
       <PageContent>

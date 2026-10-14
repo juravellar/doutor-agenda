@@ -20,6 +20,8 @@ interface PlanCardProps {
   price: PlanPrice | null;
   currentPlanId: PlanId;
   userEmail: string;
+  // State of the current paid subscription, shown on its card.
+  subscriptionNotice?: { endsOn: string | null; pastDue: boolean };
   className?: string;
 }
 
@@ -28,6 +30,7 @@ export function PlanCard({
   price,
   currentPlanId,
   userEmail,
+  subscriptionNotice,
   className,
 }: PlanCardProps) {
   const router = useRouter();
@@ -77,7 +80,12 @@ export function PlanCard({
         : { label: "Voltar para o Free", onClick: openCustomerPortal };
     }
     if (isCurrent) {
-      return { label: "Gerenciar assinatura", onClick: openCustomerPortal };
+      const label = subscriptionNotice?.pastDue
+        ? "Atualizar pagamento"
+        : subscriptionNotice?.endsOn
+          ? "Reativar assinatura"
+          : "Gerenciar assinatura";
+      return { label, onClick: openCustomerPortal };
     }
     if (hasPaidPlan) {
       return { label: `Mudar para ${plan.name}`, onClick: openCustomerPortal };
@@ -100,13 +108,26 @@ export function PlanCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-          {isCurrent && (
-            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-              Atual
-            </Badge>
-          )}
+          {isCurrent &&
+            (subscriptionNotice?.pastDue || subscriptionNotice?.endsOn ? (
+              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                {subscriptionNotice.pastDue
+                  ? "Pagamento pendente"
+                  : "Cancelada"}
+              </Badge>
+            ) : (
+              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                Atual
+              </Badge>
+            ))}
         </div>
         <p className="text-gray-600">{plan.description}</p>
+        {isCurrent && subscriptionNotice?.endsOn && (
+          <p className="text-sm text-amber-800">
+            Acesso até {subscriptionNotice.endsOn}. Depois disso, a conta volta
+            para o Free.
+          </p>
+        )}
         {plan.id === "free" ? (
           <span className="text-3xl font-bold text-gray-900">Grátis</span>
         ) : (

@@ -30,6 +30,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | Agendamentos por mês | 40 | 200 | Ilimitados |
 
 - **Limites:** os limites são verificados no servidor, ao cadastrar médicos, pacientes e agendamentos. Ficam em [`src/lib/plans.ts`](src/lib/plans.ts).
+- **Visibilidade:** a página de assinatura mostra o uso de cada limite. Os botões de cadastro mostram o uso e ficam desativados no limite. Um aviso no topo das páginas informa cancelamento agendado, pagamento pendente e o fim do período gratuito.
 - **Preços:** o valor exibido de cada plano pago vem do próprio Stripe, então é sempre o mesmo cobrado no checkout.
 - **No banco:** um usuário sem assinatura tem `plan` vazio e é tratado como Free.
 - **Fim do Free:** 3 meses depois da criação da clínica, a conta fica só leitura. Dá para ver os dados, mas cadastrar, editar e excluir exige um plano pago. Clínicas criadas antes dessa regra contam os 3 meses a partir de 15/10/2026. O prazo é controlado pelo app, não pelo Stripe.
