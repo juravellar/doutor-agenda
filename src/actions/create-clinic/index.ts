@@ -16,6 +16,10 @@ export const createClinic = async (name: string) => {
   if (!session?.user) {
     throw new Error("Unauthorized");
   }
+  // One clinic per user: a second one would also restart the free period.
+  if (session.user.clinic) {
+    redirect("/dashboard");
+  }
 
   const [clinic] = await db
     .insert(clinicsTable)

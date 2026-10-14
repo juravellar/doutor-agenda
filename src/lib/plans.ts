@@ -22,9 +22,10 @@ export const PLANS: Record<PlanId, Plan> = {
   free: {
     id: "free",
     name: "Free",
-    description: "Para conhecer a plataforma ou começar com um médico",
+    description: "Para conhecer a plataforma por 3 meses",
     limits: { doctors: 1, patients: 20, appointmentsPerMonth: 40 },
     features: [
+      "Grátis por 3 meses",
       "1 médico",
       "Até 20 pacientes",
       "Até 40 agendamentos por mês",

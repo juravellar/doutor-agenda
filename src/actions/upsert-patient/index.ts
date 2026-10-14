@@ -8,7 +8,7 @@ import { withClinicLock } from "@/db/clinic-lock";
 import { patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import { ensurePlanAllows } from "@/lib/plan-limits";
+import { ensureCanEdit, ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
 
 import { upsertPatientSchema } from "./schema";
@@ -26,6 +26,7 @@ export const upsertPatient = actionClient
     if (!clinicId) {
       throw new Error("Clinic not found");
     }
+    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
     await withClinicLock(clinicId, async (tx) => {
       const existingPatient = parsedInput.id
         ? await tx.query.patientsTable.findFirst({

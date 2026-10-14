@@ -1,4 +1,5 @@
 import { UserFacingError } from "@/lib/action-errors";
+import { isReadOnly } from "@/lib/free-period";
 import type { Plan, PlanLimits } from "@/lib/plans";
 
 export class PlanLimitError extends UserFacingError {
@@ -25,6 +26,17 @@ export const ensurePlanAllows = (
   if (limit !== null && used >= limit) {
     throw new PlanLimitError(
       `${LIMIT_MESSAGES[resource](limit)} Faça upgrade em Assinatura para continuar.`,
+    );
+  }
+};
+
+export const ensureCanEdit = (
+  plan: string | null | undefined,
+  clinicCreatedAt: Date | string | undefined,
+) => {
+  if (isReadOnly(plan, clinicCreatedAt)) {
+    throw new PlanLimitError(
+      "Seu período gratuito de 3 meses terminou. Assine um plano para voltar a cadastrar e editar.",
     );
   }
 };
