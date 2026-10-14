@@ -40,6 +40,8 @@ export const auth = betterAuth({
         user: {
           ...user,
           plan: userData?.plan,
+          subscriptionStatus: userData?.subscriptionStatus,
+          subscriptionEndsAt: userData?.subscriptionEndsAt,
           clinic: clinic?.clinicId
             ? {
                 id: clinic?.clinicId,

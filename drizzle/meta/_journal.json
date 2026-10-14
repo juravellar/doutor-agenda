@@ -36,6 +36,13 @@
       "when": 1791991530422,
       "tag": "0004_users_one_clinic",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792006954411,
+      "tag": "0005_subscription_status",
+      "breakpoints": true
     }
   ]
 }

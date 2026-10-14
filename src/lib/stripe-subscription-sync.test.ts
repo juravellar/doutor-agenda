@@ -90,6 +90,8 @@ describe("syncSubscription", () => {
       plan: "professional",
       stripeSubscriptionId: "sub_a",
       stripeCustomerId: "cus_1",
+      subscriptionStatus: "active",
+      subscriptionEndsAt: null,
     });
   });
 
@@ -181,6 +183,8 @@ describe("syncSubscription", () => {
       plan: "professional",
       stripeSubscriptionId: "sub_a",
       stripeCustomerId: "cus_old",
+      subscriptionStatus: "active",
+      subscriptionEndsAt: null,
     });
   });
 
@@ -224,6 +228,8 @@ describe("syncSubscription", () => {
       plan: "essential",
       stripeSubscriptionId: "sub_a",
       stripeCustomerId: "cus_1",
+      subscriptionStatus: "active",
+      subscriptionEndsAt: null,
     });
   });
 
@@ -259,6 +265,8 @@ describe("syncSubscription", () => {
       plan: null,
       stripeSubscriptionId: null,
       stripeCustomerId: "cus_new",
+      subscriptionStatus: null,
+      subscriptionEndsAt: null,
     });
   });
 
@@ -313,6 +321,32 @@ describe("syncSubscription", () => {
 
     expect(mocks.set).toHaveBeenCalledWith(
       expect.objectContaining({ plan: null, stripeSubscriptionId: null }),
+    );
+  });
+
+  it("records when a canceled subscription stops granting access", async () => {
+    const a = subscription("sub_a", {
+      cancel_at_period_end: true,
+      cancel_at: null,
+      items: {
+        data: [
+          {
+            price: { id: "price_professional" },
+            current_period_end: Date.parse("2026-11-14T03:00:00Z") / 1000,
+          },
+        ],
+      },
+    });
+    stripeHas(a, [a]);
+
+    await syncSubscription(stripe, "sub_a");
+
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: "professional",
+        subscriptionStatus: "active",
+        subscriptionEndsAt: new Date("2026-11-14T03:00:00Z"),
+      }),
     );
   });
 });
