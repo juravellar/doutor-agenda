@@ -24,6 +24,14 @@ export const usersTable = pgTable("users", {
   // status and, once canceled, when access ends.
   subscriptionStatus: text("subscription_status"),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
+  // The clinic the user is working in; must be one of their memberships.
+  activeClinicId: uuid("active_clinic_id").references(() => clinicsTable.id, {
+    onDelete: "set null",
+  }),
+  // When the user first chose which clinics stay usable on a smaller plan,
+  // and when they last changed that choice (one change per 30 days).
+  clinicChoiceMadeAt: timestamp("clinic_choice_made_at"),
+  clinicChoiceChangedAt: timestamp("clinic_choice_changed_at"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });
@@ -75,6 +83,8 @@ export const verificationsTable = pgTable("verifications", {
 export const clinicsTable = pgTable("clinics", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  address: text("address"),
+  phoneNumber: text("phone_number"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -90,13 +100,20 @@ export const usersToClinicsTable = pgTable(
     clinicId: uuid("clinic_id")
       .notNull()
       .references(() => clinicsTable.id, { onDelete: "cascade" }),
+    // Chosen by the user to stay usable when they have more clinics than
+    // their plan allows.
+    keptInPlan: boolean("kept_in_plan").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  // One clinic per user: a second one would also restart the free period.
-  (table) => [uniqueIndex("users_to_clinics_user_id_unique").on(table.userId)],
+  (table) => [
+    uniqueIndex("users_to_clinics_user_clinic_unique").on(
+      table.userId,
+      table.clinicId,
+    ),
+  ],
 );
 
 export const usersToClinicsTableRelations = relations(
