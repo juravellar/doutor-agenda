@@ -8,17 +8,21 @@ const mocks = vi.hoisted(() => {
     findUser: vi.fn(),
     retrieve: vi.fn(),
     list: vi.fn(),
+    execute: vi.fn(),
     set,
   };
 });
 
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
-vi.mock("@/db", () => ({
-  db: {
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
     query: { usersTable: { findFirst: mocks.findUser } },
     update: () => ({ set: mocks.set }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) =>
+    fn({ ...db, execute: mocks.execute });
+  return { db };
+});
 
 import { syncSubscription } from "./stripe-subscription-sync";
 
@@ -58,7 +62,9 @@ const stripeHas = (
     }
     return found;
   });
-  mocks.list.mockResolvedValue({ data: customerSubscriptions });
+  mocks.list.mockReturnValue({
+    autoPagingToArray: async () => [...customerSubscriptions],
+  });
 };
 
 describe("syncSubscription", () => {
@@ -254,5 +260,59 @@ describe("syncSubscription", () => {
       stripeSubscriptionId: null,
       stripeCustomerId: "cus_new",
     });
+  });
+
+  it("reads Stripe and writes the plan while holding the user's lock", async () => {
+    const a = subscription("sub_a");
+    stripeHas(a, [a]);
+
+    await syncSubscription(stripe, "sub_a");
+
+    const lockedAt = mocks.execute.mock.invocationCallOrder[0];
+    expect(lockedAt).toBeLessThan(mocks.list.mock.invocationCallOrder[0]);
+    expect(lockedAt).toBeLessThan(mocks.set.mock.invocationCallOrder[0]);
+  });
+
+  it("fails the webhook instead of downgrading on a transient Stripe error", async () => {
+    const ended = subscription("sub_b", {
+      status: "canceled",
+      customer: "cus_2",
+    });
+    stripeHas(ended, [ended]);
+    mocks.retrieve.mockImplementation(async (id: string) => {
+      if (id === "sub_a") {
+        throw Object.assign(new Error("Too many requests"), {
+          code: "rate_limit",
+        });
+      }
+      return ended;
+    });
+
+    await expect(syncSubscription(stripe, "sub_b")).rejects.toThrow(
+      "Too many requests",
+    );
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+
+  it("treats a current subscription that no longer exists as gone", async () => {
+    const ended = subscription("sub_b", {
+      status: "canceled",
+      customer: "cus_2",
+    });
+    stripeHas(ended, [ended]);
+    mocks.retrieve.mockImplementation(async (id: string) => {
+      if (id === "sub_a") {
+        throw Object.assign(new Error("No such subscription"), {
+          code: "resource_missing",
+        });
+      }
+      return ended;
+    });
+
+    await syncSubscription(stripe, "sub_b");
+
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({ plan: null, stripeSubscriptionId: null }),
+    );
   });
 });

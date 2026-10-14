@@ -20,6 +20,9 @@ export const utcTimeToClinic = (time: string) =>
 
 export const inClinicTimezone = (date: Date) => dayjs(date).tz(CLINIC_TIMEZONE);
 
+export const clinicToday = () =>
+  inClinicTimezone(new Date()).format("YYYY-MM-DD");
+
 export const clinicDateTimeToDate = (date: string, time: string) =>
   dayjs
     .tz(`${date} ${time}`, `YYYY-MM-DD ${TIME_FORMAT}`, CLINIC_TIMEZONE)

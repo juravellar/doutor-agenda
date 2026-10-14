@@ -16,6 +16,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { formatCurrencyInCents } from "@/helpers/currency";
+import { clinicToday } from "@/helpers/time";
 
 interface DailyAppointment {
   date: string;
@@ -30,9 +31,10 @@ interface AppointmentsChartProps {
 const AppointmentsChart = ({
   dailyAppointmentsData,
 }: AppointmentsChartProps) => {
-  // Gerar 21 dias: 10 antes + hoje + 10 depois
+  // Gerar 21 dias: 10 antes + hoje + 10 depois, no dia da clínica
+  const today = clinicToday();
   const chartDays = Array.from({ length: 21 }).map((_, i) =>
-    dayjs()
+    dayjs(today)
       .subtract(10 - i, "days")
       .format("YYYY-MM-DD"),
   );
