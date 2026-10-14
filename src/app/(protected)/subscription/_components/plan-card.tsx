@@ -75,7 +75,8 @@ export function PlanCard({
 
   const action = (() => {
     if (plan.id === "free") {
-      return isCurrent
+      // Already canceled: the account returns to Free on its own.
+      return isCurrent || subscriptionNotice?.endsOn
         ? null
         : { label: "Voltar para o Free", onClick: openCustomerPortal };
     }
@@ -155,6 +156,11 @@ export function PlanCard({
         </div>
 
         <div className="mt-8 min-h-10">
+          {plan.id === "free" && !isCurrent && subscriptionNotice?.endsOn && (
+            <p className="text-center text-sm text-gray-600">
+              A conta volta para o Free em {subscriptionNotice.endsOn}.
+            </p>
+          )}
           {action && (
             <Button
               className="w-full"
