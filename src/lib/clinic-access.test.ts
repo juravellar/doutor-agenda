@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { type Membership, resolveClinicAccess } from "./clinic-access";
+import {
+  clinicChoiceStatus,
+  type Membership,
+  resolveClinicAccess,
+} from "./clinic-access";
 import {
   CLINIC_READ_ONLY_MESSAGE,
   FREE_PERIOD_OVER_MESSAGE,
@@ -132,5 +136,35 @@ describe("writeBlockReason", () => {
         clinic: { writable: true },
       }),
     ).toBeNull();
+  });
+});
+
+describe("clinicChoiceStatus", () => {
+  const now = new Date("2026-11-20T12:00:00Z");
+
+  it("allows the first choice", () => {
+    expect(clinicChoiceStatus(null, null, now).allowed).toBe(true);
+  });
+
+  it("allows one correction right after the first choice", () => {
+    expect(clinicChoiceStatus("2026-11-20T11:00:00Z", null, now).allowed).toBe(
+      true,
+    );
+  });
+
+  it("blocks further changes for 30 days after a change", () => {
+    expect(
+      clinicChoiceStatus("2026-11-01T00:00:00Z", "2026-11-10T12:00:00Z", now),
+    ).toEqual({
+      allowed: false,
+      nextChangeAt: new Date("2026-12-10T12:00:00Z"),
+    });
+  });
+
+  it("allows a change again after 30 days", () => {
+    expect(
+      clinicChoiceStatus("2026-09-01T00:00:00Z", "2026-10-20T12:00:00Z", now)
+        .allowed,
+    ).toBe(true);
   });
 });

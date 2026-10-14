@@ -70,3 +70,27 @@ export const resolveClinicAccess = (
     freePeriodStartsAt,
   };
 };
+
+export const CLINIC_CHOICE_COOLDOWN_DAYS = 30;
+
+/**
+ * Whether the user may (re)choose which clinics stay usable. The first choice
+ * is free; after that one change per 30 days, enough to fix a mistake but not
+ * to rotate clinics and use more than the plan pays for.
+ */
+export const clinicChoiceStatus = (
+  madeAt: Date | string | null | undefined,
+  changedAt: Date | string | null | undefined,
+  now: Date = new Date(),
+) => {
+  if (!madeAt || !changedAt) {
+    return { allowed: true, nextChangeAt: null };
+  }
+  const nextChangeAt = new Date(
+    new Date(changedAt).getTime() +
+      CLINIC_CHOICE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000,
+  );
+  return now >= nextChangeAt
+    ? { allowed: true, nextChangeAt: null }
+    : { allowed: false, nextChangeAt };
+};

@@ -1,11 +1,12 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { db } from "@/db";
-import { isUniqueViolation } from "@/db/clinic-lock";
-import { clinicsTable, usersToClinicsTable } from "@/db/schema";
+import { withUserLock } from "@/db/clinic-lock";
+import { clinicsTable, usersTable, usersToClinicsTable } from "@/db/schema";
+import { resolvePlan } from "@/lib/plans";
 
 import { auth } from "../../lib/auth";
 
@@ -17,30 +18,34 @@ export const createClinic = async (name: string) => {
   if (!session?.user) {
     throw new Error("Unauthorized");
   }
-  if (session.user.clinic) {
-    redirect("/dashboard");
-  }
+  const clinicLimit = resolvePlan(session.user.plan).limits.clinics;
 
-  // One clinic per user is enforced by a unique index: a concurrent submit
-  // that lost the race rolls back, including its clinic row.
-  try {
-    await db.transaction(async (tx) => {
-      const [clinic] = await tx
-        .insert(clinicsTable)
-        .values({
-          name,
-        })
-        .returning();
-      await tx.insert(usersToClinicsTable).values({
-        userId: session.user.id,
-        clinicId: clinic.id,
-      });
-    });
-  } catch (error) {
-    if (!isUniqueViolation(error)) {
-      throw error;
+  // Counted in the database under the user's lock, so a double submit can't
+  // create more clinics than the plan allows.
+  const created = await withUserLock(session.user.id, async (tx) => {
+    const clinicCount = await tx.$count(
+      usersToClinicsTable,
+      eq(usersToClinicsTable.userId, session.user.id),
+    );
+    if (clinicLimit !== null && clinicCount >= clinicLimit) {
+      return false;
     }
-  }
+    const [clinic] = await tx
+      .insert(clinicsTable)
+      .values({
+        name,
+      })
+      .returning();
+    await tx.insert(usersToClinicsTable).values({
+      userId: session.user.id,
+      clinicId: clinic.id,
+    });
+    await tx
+      .update(usersTable)
+      .set({ activeClinicId: clinic.id })
+      .where(eq(usersTable.id, session.user.id));
+    return true;
+  });
 
-  redirect("/dashboard");
+  redirect(created ? "/dashboard" : "/clinics");
 };
