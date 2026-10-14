@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => {
     listSessions: vi.fn(),
     expireSession: vi.fn(),
     createSession: vi.fn(),
+    listSubscriptions: vi.fn(),
+    execute: vi.fn(),
   };
 });
 
@@ -19,15 +21,19 @@ vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({
-  db: {
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
     query: { usersTable: { findFirst: mocks.findUser } },
     update: () => ({ set: mocks.set }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) =>
+    fn({ ...db, execute: mocks.execute });
+  return { db };
+});
 vi.mock("stripe", () => ({
   default: class {
     customers = { create: mocks.createCustomer };
+    subscriptions = { list: mocks.listSubscriptions };
     checkout = {
       sessions: {
         list: mocks.listSessions,
@@ -58,6 +64,7 @@ describe("createStripeCheckout", () => {
     mocks.getSession.mockResolvedValue({ user: { id: "user_1" } });
     mocks.findUser.mockResolvedValue(freeUser);
     mocks.createCustomer.mockResolvedValue({ id: "cus_new" });
+    mocks.listSubscriptions.mockResolvedValue({ data: [] });
     mocks.listSessions.mockResolvedValue({ data: [] });
     mocks.createSession.mockResolvedValue({ id: "cs_1" });
   });
@@ -72,6 +79,7 @@ describe("createStripeCheckout", () => {
     expect(result?.data).toEqual({ sessionId: "cs_1" });
     expect(mocks.createCustomer).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: { userId: "user_1" } }),
+      { idempotencyKey: "customer-for-user-user_1" },
     );
     expect(mocks.set).toHaveBeenCalledWith({ stripeCustomerId: "cus_new" });
     expect(mocks.createSession).toHaveBeenCalledWith(
@@ -111,12 +119,19 @@ describe("createStripeCheckout", () => {
     expect(mocks.expireSession).toHaveBeenCalledWith("cs_open_2");
   });
 
-  it("refuses a second subscription", async () => {
+  it("refuses a second subscription, even before its webhook arrives", async () => {
     mocks.findUser.mockResolvedValue({
       ...freeUser,
-      plan: "essential",
       stripeCustomerId: "cus_old",
-      stripeSubscriptionId: "sub_1",
+    });
+    mocks.listSubscriptions.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          items: { data: [{ price: { id: "price_professional" } }] },
+        },
+      ],
     });
 
     const result = await createStripeCheckout({ plan: "professional" });
@@ -125,5 +140,43 @@ describe("createStripeCheckout", () => {
       "Você já tem uma assinatura. Use Gerenciar assinatura para trocar de plano.",
     );
     expect(mocks.createSession).not.toHaveBeenCalled();
+  });
+
+  it("allows a new checkout after the previous subscription was canceled", async () => {
+    mocks.findUser.mockResolvedValue({
+      ...freeUser,
+      stripeCustomerId: "cus_old",
+    });
+    mocks.listSubscriptions.mockResolvedValue({
+      data: [{ id: "sub_1", status: "canceled", items: { data: [] } }],
+    });
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.data).toEqual({ sessionId: "cs_1" });
+  });
+
+  it("still starts a checkout when an old session can no longer be expired", async () => {
+    mocks.findUser.mockResolvedValue({
+      ...freeUser,
+      stripeCustomerId: "cus_old",
+    });
+    mocks.listSessions.mockResolvedValue({
+      data: [{ id: "cs_paid_meanwhile" }],
+    });
+    mocks.expireSession.mockRejectedValue(new Error("session is not open"));
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.data).toEqual({ sessionId: "cs_1" });
+  });
+
+  it("runs under the user's lock", async () => {
+    await createStripeCheckout({ plan: "professional" });
+
+    expect(mocks.execute).toHaveBeenCalledOnce();
+    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.createSession.mock.invocationCallOrder[0],
+    );
   });
 });
