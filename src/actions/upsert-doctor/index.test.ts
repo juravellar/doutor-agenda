@@ -1,9 +1,11 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   const onConflictDoUpdate = vi.fn();
   const values = vi.fn(() => ({ onConflictDoUpdate }));
   return {
+    execute: vi.fn(),
     getSession: vi.fn(),
     findDoctor: vi.fn(),
     countDoctors: vi.fn(),
@@ -17,13 +19,16 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({
-  db: {
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
     query: { doctorsTable: { findFirst: mocks.findDoctor } },
     $count: mocks.countDoctors,
     insert: () => ({ values: mocks.values }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) =>
+    fn({ ...db, execute: mocks.execute });
+  return { db };
+});
 
 import { upsertDoctor } from ".";
 
@@ -151,5 +156,20 @@ describe("upsertDoctor", () => {
 
     expect(result?.serverError).toBeUndefined();
     expect(mocks.countDoctors).not.toHaveBeenCalled();
+  });
+
+  it("locks the clinic before counting its doctors", async () => {
+    mocks.findDoctor.mockResolvedValue(undefined);
+
+    await upsertDoctor(input);
+
+    const lockQuery = new PgDialect().sqlToQuery(
+      mocks.execute.mock.calls[0][0],
+    );
+    expect(lockQuery.sql).toContain("pg_advisory_xact_lock");
+    expect(lockQuery.params).toEqual([CLINIC_ID]);
+    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.countDoctors.mock.invocationCallOrder[0],
+    );
   });
 });

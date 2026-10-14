@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => {
   const onConflictDoUpdate = vi.fn();
   const values = vi.fn(() => ({ onConflictDoUpdate }));
   return {
+    execute: vi.fn(),
     getSession: vi.fn(),
     findPatient: vi.fn(),
     countPatients: vi.fn(),
@@ -17,13 +18,16 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({
-  db: {
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
     query: { patientsTable: { findFirst: mocks.findPatient } },
     $count: mocks.countPatients,
     insert: () => ({ values: mocks.values }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) =>
+    fn({ ...db, execute: mocks.execute });
+  return { db };
+});
 
 import { upsertPatient } from ".";
 
@@ -81,5 +85,14 @@ describe("upsertPatient", () => {
 
     expect(result?.serverError).toBeDefined();
     expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("locks the clinic before counting its patients", async () => {
+    await upsertPatient(input);
+
+    expect(mocks.execute).toHaveBeenCalledOnce();
+    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.countPatients.mock.invocationCallOrder[0],
+    );
   });
 });

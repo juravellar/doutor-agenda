@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  execute: vi.fn(),
   getSession: vi.fn(),
   findPatient: vi.fn(),
   getAvailableTimes: vi.fn(),
@@ -15,8 +16,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({
-  db: {
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
     query: {
       patientsTable: { findFirst: mocks.findPatient },
       appointmentsTable: { findFirst: mocks.findAppointment },
@@ -24,8 +25,11 @@ vi.mock("@/db", () => ({
     $count: mocks.countAppointments,
     update: () => ({ set: mocks.updateSet }),
     insert: () => ({ values: mocks.insertValues }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) =>
+    fn({ ...db, execute: mocks.execute });
+  return { db };
+});
 vi.mock("../get-available-times", () => ({
   getAvailableTimes: mocks.getAvailableTimes,
 }));
@@ -142,5 +146,29 @@ describe("upsertAppointment", () => {
       expect.objectContaining({ date: new Date("2026-10-12T11:00:00.000Z") }),
     );
     expect(mocks.countAppointments).not.toHaveBeenCalled();
+  });
+
+  it("checks the slot and the monthly limit while holding the clinic lock", async () => {
+    await upsertAppointment(input);
+
+    const lockedAt = mocks.execute.mock.invocationCallOrder[0];
+    expect(lockedAt).toBeLessThan(
+      mocks.getAvailableTimes.mock.invocationCallOrder[0],
+    );
+    expect(lockedAt).toBeLessThan(
+      mocks.countAppointments.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("explains a slot taken at the same instant by another request", async () => {
+    mocks.insertValues.mockRejectedValue(
+      Object.assign(new Error("duplicate key"), { code: "23505" }),
+    );
+
+    const result = await upsertAppointment(input);
+
+    expect(result?.serverError).toBe(
+      "Este horário não está mais disponível. Escolha outro horário.",
+    );
   });
 });

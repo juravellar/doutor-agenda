@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-import { db } from "@/db";
+import { withClinicLock } from "@/db/clinic-lock";
 import { doctorsTable } from "@/db/schema";
 import { clinicTimeToUtc } from "@/helpers/time";
 import { auth } from "@/lib/auth";
@@ -27,41 +27,47 @@ export const upsertDoctor = actionClient
     if (!clinicId) {
       throw new Error("Clinic not found");
     }
-    const existingDoctor = parsedInput.id
-      ? await db.query.doctorsTable.findFirst({
-          where: eq(doctorsTable.id, parsedInput.id),
-        })
-      : undefined;
-    if (existingDoctor && existingDoctor.clinicId !== clinicId) {
-      throw new Error("Médico não encontrado");
-    }
-    if (!existingDoctor) {
-      const doctorCount = await db.$count(
-        doctorsTable,
-        eq(doctorsTable.clinicId, clinicId),
-      );
-      ensurePlanAllows(resolvePlan(session.user.plan), "doctors", doctorCount);
-    }
+    await withClinicLock(clinicId, async (tx) => {
+      const existingDoctor = parsedInput.id
+        ? await tx.query.doctorsTable.findFirst({
+            where: eq(doctorsTable.id, parsedInput.id),
+          })
+        : undefined;
+      if (existingDoctor && existingDoctor.clinicId !== clinicId) {
+        throw new Error("Médico não encontrado");
+      }
+      if (!existingDoctor) {
+        const doctorCount = await tx.$count(
+          doctorsTable,
+          eq(doctorsTable.clinicId, clinicId),
+        );
+        ensurePlanAllows(
+          resolvePlan(session.user.plan),
+          "doctors",
+          doctorCount,
+        );
+      }
 
-    const availableFromTime = clinicTimeToUtc(parsedInput.availableFromTime);
-    const availableToTime = clinicTimeToUtc(parsedInput.availableToTime);
+      const availableFromTime = clinicTimeToUtc(parsedInput.availableFromTime);
+      const availableToTime = clinicTimeToUtc(parsedInput.availableToTime);
 
-    await db
-      .insert(doctorsTable)
-      .values({
-        ...parsedInput,
-        clinicId,
-        availableFromTime,
-        availableToTime,
-      })
-      .onConflictDoUpdate({
-        target: [doctorsTable.id],
-        setWhere: eq(doctorsTable.clinicId, clinicId),
-        set: {
+      await tx
+        .insert(doctorsTable)
+        .values({
           ...parsedInput,
+          clinicId,
           availableFromTime,
           availableToTime,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [doctorsTable.id],
+          setWhere: eq(doctorsTable.clinicId, clinicId),
+          set: {
+            ...parsedInput,
+            availableFromTime,
+            availableToTime,
+          },
+        });
+    });
     revalidatePath("/doctors");
   });
