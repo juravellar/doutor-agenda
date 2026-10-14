@@ -10,6 +10,7 @@ import { createStripeCheckout } from "@/actions/create-stripe-checkout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { actionErrorMessage } from "@/lib/action-errors";
 import type { Plan, PlanId } from "@/lib/plans";
 import type { PlanPrice } from "@/lib/stripe-plan";
 import { cn } from "@/lib/utils";
@@ -48,8 +49,13 @@ export function PlanCard({
         sessionId: data.sessionId,
       });
     },
-    onError: () => {
-      toast.error("Não foi possível iniciar o pagamento. Tente novamente.");
+    onError: ({ error }) => {
+      toast.error(
+        actionErrorMessage(
+          error,
+          "Não foi possível iniciar o pagamento. Tente novamente.",
+        ),
+      );
     },
   });
 

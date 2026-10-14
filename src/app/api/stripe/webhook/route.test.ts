@@ -1,48 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => {
-  const where = vi.fn();
-  const set = vi.fn(() => ({ where }));
-  return {
-    constructEvent: vi.fn(),
-    findUser: vi.fn(),
-    set,
-    where,
-  };
-});
+const mocks = vi.hoisted(() => ({
+  constructEvent: vi.fn(),
+  syncSubscription: vi.fn(),
+}));
 
-vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("stripe", () => ({
   default: class {
     webhooks = { constructEvent: mocks.constructEvent };
   },
 }));
-vi.mock("@/db", () => ({
-  db: {
-    query: { usersTable: { findFirst: mocks.findUser } },
-    update: () => ({ set: mocks.set }),
-  },
+vi.mock("@/lib/stripe-subscription-sync", () => ({
+  syncSubscription: mocks.syncSubscription,
 }));
 
 import { POST } from "./route";
-
-const USER_ID = "user_1";
-
-const subscriptionEvent = (
-  type: string,
-  subscription: Record<string, unknown>,
-) => ({
-  type,
-  data: {
-    object: {
-      id: "sub_1",
-      customer: "cus_1",
-      metadata: { userId: USER_ID },
-      items: { data: [{ price: { id: "price_professional" } }] },
-      ...subscription,
-    },
-  },
-});
 
 const sendEvent = async (event: unknown) => {
   mocks.constructEvent.mockReturnValue(event);
@@ -60,68 +32,79 @@ describe("Stripe webhook", () => {
     vi.clearAllMocks();
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test");
     vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test");
-    vi.stubEnv("STRIPE_ESSENTIAL_PLAN_PRICE_ID", "price_essential");
-    vi.stubEnv("STRIPE_PROFESSIONAL_PLAN_PRICE_ID", "price_professional");
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("keeps the plan when cancellation is scheduled for the period end", async () => {
-    const response = await sendEvent(
-      subscriptionEvent("customer.subscription.updated", {
-        status: "active",
-        cancel_at_period_end: true,
-      }),
-    );
+  it.each([
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+  ])("syncs the subscription on %s", async (type) => {
+    const response = await sendEvent({
+      type,
+      data: { object: { id: "sub_1" } },
+    });
 
     expect(response.status).toBe(200);
-    expect(mocks.set).not.toHaveBeenCalledWith(
-      expect.objectContaining({ plan: null }),
-    );
-    expect(mocks.set).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: "professional" }),
+    expect(mocks.syncSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "sub_1",
     );
   });
 
-  it("removes the plan when the subscription is canceled", async () => {
-    await sendEvent(
-      subscriptionEvent("customer.subscription.updated", {
-        status: "canceled",
-        cancel_at_period_end: false,
-      }),
-    );
+  it("syncs the subscription of a paid invoice", async () => {
+    await sendEvent({
+      type: "invoice.paid",
+      data: {
+        object: {
+          parent: { subscription_details: { subscription: "sub_1" } },
+          lines: { data: [] },
+        },
+      },
+    });
 
-    expect(mocks.set).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: null }),
+    expect(mocks.syncSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "sub_1",
     );
   });
 
-  it("removes the plan when the period of a canceled subscription ends", async () => {
-    await sendEvent(
-      subscriptionEvent("customer.subscription.deleted", {
-        status: "canceled",
-      }),
-    );
+  it("finds the subscription in the invoice lines when the parent lacks it", async () => {
+    await sendEvent({
+      type: "invoice.paid",
+      data: {
+        object: {
+          parent: null,
+          lines: {
+            data: [
+              {
+                parent: {
+                  subscription_item_details: { subscription: "sub_2" },
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
 
-    expect(mocks.set).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: null }),
+    expect(mocks.syncSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "sub_2",
     );
   });
 
-  it("switches the plan after a change in the customer portal", async () => {
-    await sendEvent(
-      subscriptionEvent("customer.subscription.updated", {
-        status: "active",
-        cancel_at_period_end: false,
-        items: { data: [{ price: { id: "price_essential" } }] },
-      }),
-    );
+  it("ignores invoices that are not tied to a subscription", async () => {
+    const response = await sendEvent({
+      type: "invoice.paid",
+      data: { object: { parent: null, lines: { data: [] } } },
+    });
 
-    expect(mocks.set).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: "essential" }),
-    );
+    expect(response.status).toBe(200);
+    expect(mocks.syncSubscription).not.toHaveBeenCalled();
   });
 
   it("rejects requests with an invalid signature", async () => {
@@ -138,6 +121,6 @@ describe("Stripe webhook", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(mocks.set).not.toHaveBeenCalled();
+    expect(mocks.syncSubscription).not.toHaveBeenCalled();
   });
 });
