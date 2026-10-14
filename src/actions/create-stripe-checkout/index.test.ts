@@ -174,9 +174,18 @@ describe("createStripeCheckout", () => {
   it("runs under the user's lock", async () => {
     await createStripeCheckout({ plan: "professional" });
 
-    expect(mocks.execute).toHaveBeenCalledOnce();
+    expect(mocks.execute).toHaveBeenCalledTimes(2);
     expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.createSession.mock.invocationCallOrder[0],
     );
+  });
+
+  it("keeps the new customer id even if opening the checkout fails", async () => {
+    mocks.createSession.mockRejectedValue(new Error("Stripe is down"));
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.serverError).toBeDefined();
+    expect(mocks.set).toHaveBeenCalledWith({ stripeCustomerId: "cus_new" });
   });
 });

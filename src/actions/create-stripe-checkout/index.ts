@@ -36,29 +36,33 @@ export const createStripeCheckout = actionClient
       apiVersion: "2025-05-28.basil",
     });
 
-    // Serialized per user: with a double click or a second tab, the later
-    // request sees the customer and open checkout the earlier one created.
-    const sessionId = await withUserLock(session.user.id, async (tx) => {
+    // Its own transaction, so the customer id is saved even if opening the
+    // checkout fails afterwards; otherwise Stripe would keep a customer the
+    // app has lost track of.
+    const customerId = await withUserLock(session.user.id, async (tx) => {
       const user = await tx.query.usersTable.findFirst({
         where: eq(usersTable.id, session.user.id),
       });
       if (!user) {
         throw new Error("Unauthorized");
       }
-
-      let customerId = user.stripeCustomerId;
-      if (!customerId) {
-        const customer = await stripe.customers.create(
-          { email: user.email, name: user.name, metadata: { userId: user.id } },
-          { idempotencyKey: `customer-for-user-${user.id}` },
-        );
-        customerId = customer.id;
-        await tx
-          .update(usersTable)
-          .set({ stripeCustomerId: customerId })
-          .where(eq(usersTable.id, user.id));
+      if (user.stripeCustomerId) {
+        return user.stripeCustomerId;
       }
+      const customer = await stripe.customers.create(
+        { email: user.email, name: user.name, metadata: { userId: user.id } },
+        { idempotencyKey: `customer-for-user-${user.id}` },
+      );
+      await tx
+        .update(usersTable)
+        .set({ stripeCustomerId: customer.id })
+        .where(eq(usersTable.id, user.id));
+      return customer.id;
+    });
 
+    // Serialized per user: with a double click or a second tab, the later
+    // request sees the checkout the earlier one opened and expires it.
+    const sessionId = await withUserLock(session.user.id, async () => {
       // Stripe, not the database, is the source of truth here: the database
       // only learns about a paid checkout when its webhook arrives.
       const { data: subscriptions } = await stripe.subscriptions.list({
@@ -91,7 +95,7 @@ export const createStripeCheckout = actionClient
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription`,
         subscription_data: {
           metadata: {
-            userId: user.id,
+            userId: session.user.id,
           },
         },
         line_items: [

@@ -113,7 +113,11 @@ export const syncSubscription = async (
     .set({
       plan: chosen ? planForSubscription(chosen) : null,
       stripeSubscriptionId: chosen?.id ?? null,
-      stripeCustomerId: chosen ? customerIdOf(chosen) : customerId,
+      // Without a subscription granting access, an event about another
+      // customer must not replace the one checkout will use next.
+      stripeCustomerId: chosen
+        ? customerIdOf(chosen)
+        : (user.stripeCustomerId ?? customerId),
     })
     .where(eq(usersTable.id, user.id));
 };

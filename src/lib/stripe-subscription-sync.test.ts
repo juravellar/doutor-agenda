@@ -232,4 +232,27 @@ describe("syncSubscription", () => {
     expect(mocks.set).not.toHaveBeenCalled();
     expect(console.warn).toHaveBeenCalled();
   });
+
+  it("keeps the user's customer when an event about another one grants nothing", async () => {
+    mocks.findUser.mockResolvedValue(
+      user({
+        plan: null,
+        stripeSubscriptionId: null,
+        stripeCustomerId: "cus_new",
+      }),
+    );
+    const legacy = subscription("sub_old", {
+      status: "canceled",
+      customer: "cus_old",
+    });
+    stripeHas(legacy, [legacy]);
+
+    await syncSubscription(stripe, "sub_old");
+
+    expect(mocks.set).toHaveBeenCalledWith({
+      plan: null,
+      stripeSubscriptionId: null,
+      stripeCustomerId: "cus_new",
+    });
+  });
 });
