@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 // Runs against a real Postgres only when INTEGRATION_DATABASE_URL is set (see
 // the test:integration script); regular test runs skip it.
@@ -13,9 +13,37 @@ describe.skipIf(!databaseUrl)("clinic lock against Postgres", () => {
     const { withClinicLock } = await import("./clinic-lock");
     const { computeAvailableTimes } = await import("@/lib/available-times");
     const { db } = await import("@/db");
-    const { doctorsTable } = await import("@/db/schema");
-    return { withClinicLock, computeAvailableTimes, db, doctorsTable };
+    const { clinicsTable, doctorsTable } = await import("@/db/schema");
+    return {
+      withClinicLock,
+      computeAvailableTimes,
+      db,
+      clinicsTable,
+      doctorsTable,
+    };
   };
+
+  beforeAll(async () => {
+    const { db, clinicsTable, doctorsTable } = await load();
+    await db
+      .insert(clinicsTable)
+      .values({ id: CLINIC_ID, name: "Integration" })
+      .onConflictDoNothing();
+    await db
+      .insert(doctorsTable)
+      .values({
+        id: DOCTOR_ID,
+        clinicId: CLINIC_ID,
+        name: "Integration",
+        specialty: "S",
+        availableFromWeekDay: 1,
+        availableToWeekDay: 5,
+        availableFromTime: "11:00:00",
+        availableToTime: "21:00:00",
+        appointmentPriceInCents: 100,
+      })
+      .onConflictDoNothing();
+  });
 
   it("does not exhaust the pool when many bookings wait on the same lock", async () => {
     const { withClinicLock, computeAvailableTimes } = await load();
@@ -39,7 +67,9 @@ describe.skipIf(!databaseUrl)("clinic lock against Postgres", () => {
   it("lets only one of many concurrent requests pass a count-then-insert check", async () => {
     const { withClinicLock, db, doctorsTable } = await load();
     const { eq } = await import("drizzle-orm");
-    const LIMIT = 2; // the seeded doctor plus one more
+    // Independent of earlier runs: exactly one more doctor fits.
+    const LIMIT =
+      (await db.$count(doctorsTable, eq(doctorsTable.clinicId, CLINIC_ID))) + 1;
 
     const attempts = await Promise.allSettled(
       Array.from({ length: 10 }, (_, i) =>
