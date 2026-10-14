@@ -25,8 +25,8 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | | Free | Essencial | Profissional |
 |---|---|---|---|
 | Médicos | 1 | 3 | Ilimitados |
-| Pacientes | 25 | Ilimitados | Ilimitados |
-| Agendamentos por mês | 40 | Ilimitados | Ilimitados |
+| Pacientes | 25 | 300 | Ilimitados |
+| Agendamentos por mês | 40 | 300 | Ilimitados |
 
 - **Limites:** os limites são verificados no servidor, ao cadastrar médicos, pacientes e agendamentos. Ficam em [`src/lib/plans.ts`](src/lib/plans.ts).
 - **Preços:** o valor exibido de cada plano pago vem do próprio Stripe, então é sempre o mesmo cobrado no checkout.

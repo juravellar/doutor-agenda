@@ -40,7 +40,19 @@ describe("ensurePlanAllows", () => {
       ensurePlanAllows(PLANS.professional, "doctors", 10_000),
     ).not.toThrow();
     expect(() =>
-      ensurePlanAllows(PLANS.essential, "patients", 10_000),
+      ensurePlanAllows(PLANS.professional, "patients", 10_000),
     ).not.toThrow();
+  });
+
+  it("limits patients and monthly appointments on the Essencial plan", () => {
+    expect(() =>
+      ensurePlanAllows(PLANS.essential, "patients", 299),
+    ).not.toThrow();
+    expect(() => ensurePlanAllows(PLANS.essential, "patients", 300)).toThrow(
+      "Seu plano permite até 300 pacientes.",
+    );
+    expect(() =>
+      ensurePlanAllows(PLANS.essential, "appointmentsPerMonth", 300),
+    ).toThrow("Seu plano permite até 300 agendamentos por mês.");
   });
 });
