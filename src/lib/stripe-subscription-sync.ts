@@ -48,7 +48,10 @@ const findUserFor = async (subscription: Stripe.Subscription) => {
 // Only "no such subscription" means it is gone. Rate limits, network and
 // Stripe outages must fail the webhook, so Stripe retries it later instead of
 // the user being downgraded on a transient error.
-const retrieveIfExists = async (stripe: Stripe, subscriptionId: string) => {
+export const retrieveIfExists = async (
+  stripe: Stripe,
+  subscriptionId: string,
+) => {
   try {
     return await stripe.subscriptions.retrieve(subscriptionId);
   } catch (error) {

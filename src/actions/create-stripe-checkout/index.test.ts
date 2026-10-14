@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => {
     expireSession: vi.fn(),
     createSession: vi.fn(),
     listSubscriptions: vi.fn(),
-    execute: vi.fn(),
+    retrieveSubscription: vi.fn(),
   };
 });
 
@@ -21,19 +21,19 @@ vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => {
-  const db: Record<string, unknown> = {
+vi.mock("@/db", () => ({
+  db: {
     query: { usersTable: { findFirst: mocks.findUser } },
     update: () => ({ set: mocks.set }),
-  };
-  db.transaction = async (fn: (tx: unknown) => unknown) =>
-    fn({ ...db, execute: mocks.execute });
-  return { db };
-});
+  },
+}));
 vi.mock("stripe", () => ({
   default: class {
     customers = { create: mocks.createCustomer };
-    subscriptions = { list: mocks.listSubscriptions };
+    subscriptions = {
+      list: mocks.listSubscriptions,
+      retrieve: mocks.retrieveSubscription,
+    };
     checkout = {
       sessions: {
         list: mocks.listSessions,
@@ -46,12 +46,16 @@ vi.mock("stripe", () => ({
 
 import { createStripeCheckout } from ".";
 
+const pages = <T>(items: T[]) => ({
+  autoPagingToArray: async () => [...items],
+});
+
 const freeUser = {
   id: "user_1",
   name: "Ana",
   email: "ana@example.com",
   plan: null,
-  stripeCustomerId: null,
+  stripeCustomerId: "cus_1",
   stripeSubscriptionId: null,
 };
 
@@ -64,128 +68,166 @@ describe("createStripeCheckout", () => {
     mocks.getSession.mockResolvedValue({ user: { id: "user_1" } });
     mocks.findUser.mockResolvedValue(freeUser);
     mocks.createCustomer.mockResolvedValue({ id: "cus_new" });
-    mocks.listSubscriptions.mockResolvedValue({ data: [] });
-    mocks.listSessions.mockResolvedValue({ data: [] });
-    mocks.createSession.mockResolvedValue({ id: "cs_1" });
+    mocks.listSubscriptions.mockReturnValue(pages([]));
+    mocks.listSessions.mockReturnValue(pages([]));
+    mocks.createSession.mockResolvedValue({ id: "cs_new" });
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("creates one Stripe customer for the user and checks out with it", async () => {
+  it("opens a checkout for the plan, idempotent within a minute", async () => {
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.data).toEqual({ sessionId: "cs_1" });
+    expect(result?.data).toEqual({ sessionId: "cs_new" });
+    expect(mocks.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: "cus_1",
+        metadata: { plan: "professional" },
+        line_items: [{ price: "price_professional", quantity: 1 }],
+      }),
+      { idempotencyKey: expect.stringMatching(/^checkout:[0-9a-f]{64}$/) },
+    );
+  });
+
+  it("creates a customer keyed by the user's details and keeps the saved one", async () => {
+    mocks.findUser
+      .mockResolvedValueOnce({ ...freeUser, stripeCustomerId: null })
+      .mockResolvedValue({ ...freeUser, stripeCustomerId: "cus_saved_first" });
+
+    await createStripeCheckout({ plan: "professional" });
+
     expect(mocks.createCustomer).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: { userId: "user_1" } }),
-      { idempotencyKey: "customer-for-user-user_1" },
+      { idempotencyKey: expect.stringMatching(/^customer:[0-9a-f]{64}$/) },
     );
     expect(mocks.set).toHaveBeenCalledWith({ stripeCustomerId: "cus_new" });
     expect(mocks.createSession).toHaveBeenCalledWith(
-      expect.objectContaining({
-        customer: "cus_new",
-        line_items: [{ price: "price_professional", quantity: 1 }],
-      }),
+      expect.objectContaining({ customer: "cus_saved_first" }),
+      expect.anything(),
     );
   });
 
-  it("reuses the existing Stripe customer", async () => {
-    mocks.findUser.mockResolvedValue({
-      ...freeUser,
-      stripeCustomerId: "cus_old",
+  it("changes the customer idempotency key when the user's name changes", async () => {
+    const keys: string[] = [];
+    mocks.createCustomer.mockImplementation(async (_params, options) => {
+      keys.push(options.idempotencyKey);
+      return { id: "cus_new" };
     });
-
+    mocks.findUser.mockResolvedValueOnce({
+      ...freeUser,
+      stripeCustomerId: null,
+    });
+    await createStripeCheckout({ plan: "professional" });
+    mocks.findUser.mockResolvedValueOnce({
+      ...freeUser,
+      name: "Ana Souza",
+      stripeCustomerId: null,
+    });
     await createStripeCheckout({ plan: "professional" });
 
-    expect(mocks.createCustomer).not.toHaveBeenCalled();
-    expect(mocks.createSession).toHaveBeenCalledWith(
-      expect.objectContaining({ customer: "cus_old" }),
-    );
+    expect(keys[0]).not.toBe(keys[1]);
   });
 
-  it("expires checkouts left open in other tabs", async () => {
+  it.each(["active", "trialing", "past_due", "unpaid", "paused"])(
+    "refuses a new checkout while a subscription is %s",
+    async (status) => {
+      mocks.listSubscriptions.mockReturnValue(pages([{ id: "sub_1", status }]));
+
+      const result = await createStripeCheckout({ plan: "professional" });
+
+      expect(result?.serverError).toBe(
+        "Você já tem uma assinatura. Use Gerenciar assinatura para trocar de plano.",
+      );
+      expect(mocks.createSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refuses when the user's subscription lives on another customer", async () => {
     mocks.findUser.mockResolvedValue({
       ...freeUser,
-      stripeCustomerId: "cus_old",
+      stripeSubscriptionId: "sub_elsewhere",
     });
-    mocks.listSessions.mockResolvedValue({
-      data: [{ id: "cs_open_1" }, { id: "cs_open_2" }],
-    });
-
-    await createStripeCheckout({ plan: "professional" });
-
-    expect(mocks.expireSession).toHaveBeenCalledWith("cs_open_1");
-    expect(mocks.expireSession).toHaveBeenCalledWith("cs_open_2");
-  });
-
-  it("refuses a second subscription, even before its webhook arrives", async () => {
-    mocks.findUser.mockResolvedValue({
-      ...freeUser,
-      stripeCustomerId: "cus_old",
-    });
-    mocks.listSubscriptions.mockResolvedValue({
-      data: [
-        {
-          id: "sub_1",
-          status: "active",
-          items: { data: [{ price: { id: "price_professional" } }] },
-        },
-      ],
+    mocks.retrieveSubscription.mockResolvedValue({
+      id: "sub_elsewhere",
+      status: "active",
     });
 
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.serverError).toBe(
-      "Você já tem uma assinatura. Use Gerenciar assinatura para trocar de plano.",
+    expect(result?.serverError).toContain("Você já tem uma assinatura");
+  });
+
+  it("allows a checkout after the previous subscription ended", async () => {
+    mocks.listSubscriptions.mockReturnValue(
+      pages([{ id: "sub_1", status: "canceled" }]),
     );
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.data).toEqual({ sessionId: "cs_new" });
+  });
+
+  it("reuses the open checkout for the same plan", async () => {
+    mocks.listSessions.mockReturnValue(
+      pages([{ id: "cs_open", metadata: { plan: "professional" } }]),
+    );
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.data).toEqual({ sessionId: "cs_open" });
+    expect(mocks.expireSession).not.toHaveBeenCalled();
     expect(mocks.createSession).not.toHaveBeenCalled();
   });
 
-  it("allows a new checkout after the previous subscription was canceled", async () => {
-    mocks.findUser.mockResolvedValue({
-      ...freeUser,
-      stripeCustomerId: "cus_old",
-    });
-    mocks.listSubscriptions.mockResolvedValue({
-      data: [{ id: "sub_1", status: "canceled", items: { data: [] } }],
-    });
+  it("expires open checkouts for another plan", async () => {
+    mocks.listSessions
+      .mockReturnValueOnce(
+        pages([{ id: "cs_other", metadata: { plan: "essential" } }]),
+      )
+      .mockReturnValue(pages([]));
 
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.data).toEqual({ sessionId: "cs_1" });
+    expect(mocks.expireSession).toHaveBeenCalledWith("cs_other");
+    expect(result?.data).toEqual({ sessionId: "cs_new" });
   });
 
-  it("still starts a checkout when an old session can no longer be expired", async () => {
-    mocks.findUser.mockResolvedValue({
-      ...freeUser,
-      stripeCustomerId: "cus_old",
-    });
-    mocks.listSessions.mockResolvedValue({
-      data: [{ id: "cs_paid_meanwhile" }],
-    });
-    mocks.expireSession.mockRejectedValue(new Error("session is not open"));
-
-    const result = await createStripeCheckout({ plan: "professional" });
-
-    expect(result?.data).toEqual({ sessionId: "cs_1" });
-  });
-
-  it("runs under the user's lock", async () => {
-    await createStripeCheckout({ plan: "professional" });
-
-    expect(mocks.execute).toHaveBeenCalledTimes(2);
-    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.createSession.mock.invocationCallOrder[0],
-    );
-  });
-
-  it("keeps the new customer id even if opening the checkout fails", async () => {
-    mocks.createSession.mockRejectedValue(new Error("Stripe is down"));
+  it("refuses to open a second checkout if an old one could not be expired", async () => {
+    const other = { id: "cs_other", metadata: { plan: "essential" } };
+    mocks.listSessions.mockReturnValue(pages([other]));
+    mocks.expireSession.mockRejectedValue(new Error("Stripe is unavailable"));
 
     const result = await createStripeCheckout({ plan: "professional" });
 
     expect(result?.serverError).toBeDefined();
-    expect(mocks.set).toHaveBeenCalledWith({ stripeCustomerId: "cus_new" });
+    expect(mocks.createSession).not.toHaveBeenCalled();
+  });
+
+  it("ignores an expire error when the session already closed", async () => {
+    mocks.listSessions
+      .mockReturnValueOnce(
+        pages([{ id: "cs_paid", metadata: { plan: "essential" } }]),
+      )
+      .mockReturnValue(pages([]));
+    mocks.expireSession.mockRejectedValue(new Error("session is not open"));
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.data).toEqual({ sessionId: "cs_new" });
+  });
+
+  it("refuses when the database already has a paid subscription", async () => {
+    mocks.findUser.mockResolvedValue({
+      ...freeUser,
+      plan: "essential",
+      stripeSubscriptionId: "sub_1",
+    });
+
+    const result = await createStripeCheckout({ plan: "professional" });
+
+    expect(result?.serverError).toContain("Você já tem uma assinatura");
+    expect(mocks.listSubscriptions).not.toHaveBeenCalled();
   });
 });
