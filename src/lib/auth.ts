@@ -8,9 +8,11 @@ import * as schema from "@/db/schema";
 import { usersTable, usersToClinicsTable } from "@/db/schema";
 
 export const auth = betterAuth({
+  // Model names below are the exact schema keys (usersTable, ...), so no
+  // pluralization: better-auth 1.7 would turn them into usersTables and fail
+  // its schema check on every auth request.
   database: drizzleAdapter(db, {
     provider: "pg",
-    usePlural: true,
     schema,
   }),
   socialProviders: {
