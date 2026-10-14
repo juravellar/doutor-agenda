@@ -162,10 +162,9 @@ export const POST = async (request: Request) => {
         );
       }
 
-      if (
-        subscription.cancel_at_period_end ||
-        subscription.status === "canceled"
-      ) {
+      // A cancellation scheduled for the end of the period keeps the plan until
+      // then; Stripe sends customer.subscription.deleted when it actually ends.
+      if (subscription.status === "canceled") {
         await db
           .update(usersTable)
           .set({
