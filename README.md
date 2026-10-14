@@ -1,5 +1,7 @@
 # 🩺 Avelliq
 
+![Avelliq: dashboard da clínica com faturamento, agendamentos, pacientes e médicos](public/tela.png)
+
 Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e horários de atendimento, pacientes, consultas com horários livres calculados automaticamente, e um dashboard de faturamento. Toda conta começa no plano Free, e os planos pagos são cobrados via Stripe.
 
 🔗 **Aplicação online:** [avelliq.vercel.app](https://avelliq.vercel.app)
