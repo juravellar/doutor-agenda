@@ -75,6 +75,7 @@ describe("createStripeCheckout", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.useRealTimers();
   });
 
   it("opens a checkout for the plan, idempotent within a minute", async () => {
@@ -229,5 +230,44 @@ describe("createStripeCheckout", () => {
 
     expect(result?.serverError).toContain("Você já tem uma assinatura");
     expect(mocks.listSubscriptions).not.toHaveBeenCalled();
+  });
+
+  it("gives a fresh session when returning to a plan whose checkout was expired", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-14T15:00:10Z"));
+    const keys: string[] = [];
+    mocks.createSession.mockImplementation(async (_params, options) => {
+      keys.push(options.idempotencyKey);
+      return { id: `cs_${keys.length}` };
+    });
+    // Same minute: the plan with nothing open, then again while another is open.
+    mocks.listSessions.mockReturnValueOnce(pages([]));
+    await createStripeCheckout({ plan: "professional" });
+    mocks.listSessions
+      .mockReturnValueOnce(
+        pages([{ id: "cs_b", metadata: { plan: "essential" } }]),
+      )
+      .mockReturnValue(pages([]));
+    await createStripeCheckout({ plan: "professional" });
+
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  it("gives a double click the same idempotency key", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-14T15:00:10Z"));
+    const keys: string[] = [];
+    mocks.createSession.mockImplementation(async (_params, options) => {
+      keys.push(options.idempotencyKey);
+      return { id: "cs_same" };
+    });
+
+    await Promise.all([
+      createStripeCheckout({ plan: "professional" }),
+      createStripeCheckout({ plan: "professional" }),
+    ]);
+
+    expect(keys[0]).toBe(keys[1]);
   });
 });

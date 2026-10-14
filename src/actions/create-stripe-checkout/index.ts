@@ -114,7 +114,7 @@ const resolveOpenCheckouts = async (
       throw new Error("A previous checkout session could not be expired");
     }
   }
-  return reusable ?? null;
+  return { reusable: reusable ?? null, openIds: open.map(({ id }) => id) };
 };
 
 export const createStripeCheckout = actionClient
@@ -154,7 +154,7 @@ export const createStripeCheckout = actionClient
       throw new UserFacingError(ALREADY_SUBSCRIBED_MESSAGE);
     }
 
-    const reusable = await resolveOpenCheckouts(
+    const { reusable, openIds } = await resolveOpenCheckouts(
       stripe,
       customerId,
       parsedInput.plan,
@@ -163,8 +163,11 @@ export const createStripeCheckout = actionClient
       return { sessionId: reusable.id };
     }
 
-    // Requests within the same minute (a double click, two tabs) get the
-    // same session back instead of two payable ones.
+    // Requests within the same minute that saw the same open checkouts (a
+    // double click, two tabs) get the same session back instead of two
+    // payable ones. The open checkouts are part of the key so that returning
+    // to a plan whose checkout was just expired creates a fresh session
+    // instead of Stripe replaying the expired one.
     const minute = Math.floor(Date.now() / 60_000).toString();
     const checkout = await stripe.checkout.sessions.create(
       {
@@ -187,7 +190,13 @@ export const createStripeCheckout = actionClient
         ],
       },
       {
-        idempotencyKey: idempotencyKey("checkout", customerId, priceId, minute),
+        idempotencyKey: idempotencyKey(
+          "checkout",
+          customerId,
+          priceId,
+          minute,
+          ...[...openIds].sort(),
+        ),
       },
     );
     return {
