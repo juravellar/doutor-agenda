@@ -11,6 +11,7 @@ import {
   isWeekDayInRange,
   utcTimeToClinic,
 } from "@/helpers/time";
+import { UserFacingError } from "@/lib/action-errors";
 
 // Callers inside withClinicLock must pass its transaction: querying through
 // the global pool there needs a second connection while the lock holds one.
@@ -35,7 +36,8 @@ export const computeAvailableTimes = async (
     where: eq(doctorsTable.id, params.doctorId),
   });
   if (!doctor || doctor.clinicId !== params.clinicId) {
-    throw new Error("Médico não encontrado");
+    // Also reached when the doctor was deleted while a form was open.
+    throw new UserFacingError("Médico não encontrado. Atualize a página.");
   }
   const doctorIsAvailable = isWeekDayInRange(
     dayjs(params.date).day(),
