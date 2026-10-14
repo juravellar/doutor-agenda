@@ -1,4 +1,5 @@
 import {
+  Building2,
   CalendarDays,
   type LucideIcon,
   Stethoscope,
@@ -19,8 +20,9 @@ interface Metric {
 }
 
 const METRICS: Metric[] = [
-  { key: "doctors", label: "Médicos", icon: Stethoscope },
-  { key: "patients", label: "Pacientes", icon: UsersRound },
+  { key: "clinics", label: "Clínicas", icon: Building2 },
+  { key: "doctors", label: "Médicos nesta clínica", icon: Stethoscope },
+  { key: "patients", label: "Pacientes nesta clínica", icon: UsersRound },
   {
     key: "appointmentsPerMonth",
     label: "Agendamentos este mês",
@@ -114,7 +116,7 @@ export function PlanUsageCard({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 @2xl:grid-cols-3">
+        <div className="grid gap-4 @2xl:grid-cols-2 @5xl:grid-cols-4">
           {METRICS.map((metric) => (
             <UsageTile
               key={metric.key}

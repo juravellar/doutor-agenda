@@ -88,4 +88,57 @@ describe("accountStatus", () => {
   it("shows nothing before the user has a clinic", () => {
     expect(accountStatus({ plan: null }, NOW)).toBeNull();
   });
+
+  it("warns when the open clinic is read-only on the plan", () => {
+    expect(
+      accountStatus(
+        {
+          plan: "essential",
+          subscriptionStatus: "active",
+          clinic: { id: "sul", writable: false },
+          clinics: [{}, {}, {}],
+          clinicLimit: 2,
+          overClinicLimit: true,
+          clinicChoiceMadeAt: "2026-12-01T00:00:00Z",
+          freePeriodStartsAt: recentStart,
+        },
+        NOW,
+      ),
+    ).toEqual({ kind: "clinic-read-only", clinicLimit: 2 });
+  });
+
+  it("asks to choose clinics after a downgrade, even on Free", () => {
+    expect(
+      accountStatus(
+        {
+          plan: null,
+          clinic: { id: "centro", writable: true },
+          clinics: [{}, {}, {}],
+          clinicLimit: 1,
+          overClinicLimit: true,
+          clinicChoiceMadeAt: null,
+          freePeriodStartsAt: recentStart,
+        },
+        NOW,
+      ),
+    ).toEqual({ kind: "choose-clinics", clinicCount: 3, clinicLimit: 1 });
+  });
+
+  it("stops asking once the user has chosen", () => {
+    expect(
+      accountStatus(
+        {
+          plan: "essential",
+          subscriptionStatus: "active",
+          clinic: { id: "centro", writable: true },
+          clinics: [{}, {}, {}],
+          clinicLimit: 2,
+          overClinicLimit: true,
+          clinicChoiceMadeAt: "2026-12-01T00:00:00Z",
+          freePeriodStartsAt: recentStart,
+        },
+        NOW,
+      ),
+    ).toBeNull();
+  });
 });
