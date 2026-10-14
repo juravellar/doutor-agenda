@@ -29,6 +29,13 @@
       "when": 1791987745416,
       "tag": "0003_appointments_doctor_slot_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791991530422,
+      "tag": "0004_users_one_clinic",
+      "breakpoints": true
     }
   ]
 }

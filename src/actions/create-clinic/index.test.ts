@@ -2,14 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   const returning = vi.fn();
-  const values = vi.fn(() => ({ returning }));
-  return {
-    getSession: vi.fn(),
-    findMembership: vi.fn(),
-    execute: vi.fn(),
-    values,
-    returning,
-  };
+  const values = vi.fn();
+  return { getSession: vi.fn(), values, returning };
 });
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
@@ -22,13 +16,12 @@ vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
 vi.mock("@/db", () => {
-  const db: Record<string, unknown> = {
-    query: { usersToClinicsTable: { findFirst: mocks.findMembership } },
-    insert: () => ({ values: mocks.values }),
+  const tx = { insert: () => ({ values: mocks.values }) };
+  return {
+    db: {
+      transaction: async (fn: (tx: unknown) => unknown) => fn(tx),
+    },
   };
-  db.transaction = async (fn: (tx: unknown) => unknown) =>
-    fn({ ...db, execute: mocks.execute });
-  return { db };
 });
 
 import { createClinic } from ".";
@@ -38,16 +31,16 @@ describe("createClinic", () => {
     vi.clearAllMocks();
     mocks.getSession.mockResolvedValue({ user: { id: "user_1" } });
     mocks.returning.mockResolvedValue([{ id: "clinic_1" }]);
+    mocks.values.mockImplementation((row: Record<string, unknown>) =>
+      "name" in row ? { returning: mocks.returning } : Promise.resolve(),
+    );
   });
 
-  it("creates the user's first clinic under the user's lock", async () => {
-    mocks.findMembership.mockResolvedValue(undefined);
-
+  it("creates the clinic and the membership in one transaction", async () => {
     await expect(createClinic("Clínica")).rejects.toThrow(
       "redirect:/dashboard",
     );
 
-    expect(mocks.execute).toHaveBeenCalledOnce();
     expect(mocks.values).toHaveBeenCalledWith({ name: "Clínica" });
     expect(mocks.values).toHaveBeenCalledWith({
       userId: "user_1",
@@ -55,13 +48,34 @@ describe("createClinic", () => {
     });
   });
 
-  it("does not create a second clinic, even if the session still has none", async () => {
-    // A concurrent submit already created it after this session was read.
-    mocks.findMembership.mockResolvedValue({ clinicId: "clinic_1" });
+  it("does not insert anything when the session already has a clinic", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: "user_1", clinic: { id: "clinic_1" } },
+    });
 
-    await expect(createClinic("Outra clínica")).rejects.toThrow(
+    await expect(createClinic("Outra")).rejects.toThrow("redirect:/dashboard");
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("treats a concurrent submit that hit the unique index as done", async () => {
+    mocks.values.mockImplementation((row: Record<string, unknown>) =>
+      "name" in row
+        ? { returning: mocks.returning }
+        : Promise.reject(
+            Object.assign(new Error("duplicate"), { code: "23505" }),
+          ),
+    );
+
+    await expect(createClinic("Clínica")).rejects.toThrow(
       "redirect:/dashboard",
     );
-    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("surfaces other database errors", async () => {
+    mocks.values.mockImplementation(() => {
+      throw new Error("connection lost");
+    });
+
+    await expect(createClinic("Clínica")).rejects.toThrow("connection lost");
   });
 });
