@@ -19,6 +19,9 @@ const ClinicFormPage = async () => {
   if (!session) {
     redirect("/authentication");
   }
+  if (session.user.clinic) {
+    redirect("/dashboard");
+  }
   return (
     <Dialog open={true}>
       <DialogContent className="sm:max-w-[425px]">

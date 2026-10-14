@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { doctorsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { ensureCanEdit } from "@/lib/plan-limits";
 
 export const deleteDoctor = actionClient
   .schema(
@@ -32,6 +33,7 @@ export const deleteDoctor = actionClient
     if (doctor.clinicId !== session.user.clinic?.id) {
       throw new Error("Médico não encontrado");
     }
+    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
     await db.delete(doctorsTable).where(eq(doctorsTable.id, parsedInput.id));
     revalidatePath("/doctors");
   });

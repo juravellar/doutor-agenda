@@ -172,4 +172,41 @@ describe("upsertDoctor", () => {
       mocks.countDoctors.mock.invocationCallOrder[0],
     );
   });
+
+  it("refuses changes once a Free clinic's 3 months are over", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-03-01T12:00:00Z"));
+    mocks.getSession.mockResolvedValue({
+      user: {
+        plan: null,
+        clinic: { id: CLINIC_ID, createdAt: new Date("2026-11-10T15:00:00Z") },
+      },
+    });
+
+    const result = await upsertDoctor(input);
+    vi.useRealTimers();
+
+    expect(result?.serverError).toBe(
+      "Seu período gratuito de 3 meses terminou. Assine um plano para voltar a cadastrar e editar.",
+    );
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("keeps paid clinics editable after the free period", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-03-01T12:00:00Z"));
+    mocks.getSession.mockResolvedValue({
+      user: {
+        plan: "essential",
+        clinic: { id: CLINIC_ID, createdAt: new Date("2026-11-10T15:00:00Z") },
+      },
+    });
+    mocks.findDoctor.mockResolvedValue(undefined);
+
+    const result = await upsertDoctor(input);
+    vi.useRealTimers();
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.values).toHaveBeenCalledOnce();
+  });
 });

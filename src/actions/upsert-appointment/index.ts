@@ -16,7 +16,7 @@ import {
 import { UserFacingError } from "@/lib/action-errors";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import { ensurePlanAllows } from "@/lib/plan-limits";
+import { ensureCanEdit, ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
 
 import { getAvailableTimes } from "../get-available-times";
@@ -46,6 +46,7 @@ export const upsertAppointment = actionClient
     if (!clinicId) {
       throw new Error("Clínica não encontrada");
     }
+    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
     const patient = await db.query.patientsTable.findFirst({
       where: eq(patientsTable.id, parsedInput.patientId),
     });

@@ -9,9 +9,10 @@ import { db } from "@/db";
 import { appointmentsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { ensureCanEdit } from "@/lib/plan-limits";
 
 export const deleteAppointment = actionClient
-  .schema (
+  .schema(
     z.object({
       id: z.string().uuid(),
     }),
@@ -32,6 +33,7 @@ export const deleteAppointment = actionClient
     if (appointment.clinicId !== session.user.clinic?.id) {
       throw new Error("Agendamento não encontrado");
     }
+    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
     await db
       .delete(appointmentsTable)
       .where(eq(appointmentsTable.id, parsedInput.id));
