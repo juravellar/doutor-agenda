@@ -10,6 +10,7 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { auth } from "@/lib/auth";
+import { getEssentialPlanPrice } from "@/lib/stripe-plan";
 
 import { SubscriptionPlan } from "./_components/subscription-plan";
 
@@ -23,6 +24,7 @@ const SubscriptionPage = async () => {
   if (!session.user.clinic) {
     redirect("/clinic-form");
   }
+  const price = await getEssentialPlanPrice();
   return (
     <PageContainer>
       <PageHeader>
@@ -36,6 +38,7 @@ const SubscriptionPage = async () => {
           className="w-[350px]"
           active={session.user.plan === "essential"}
           userEmail={session.user.email}
+          price={price}
         />
       </PageContent>
     </PageContainer>

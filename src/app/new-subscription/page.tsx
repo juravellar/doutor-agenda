@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { getEssentialPlanPrice } from "@/lib/stripe-plan";
 
 import { SubscriptionPlan } from "../(protected)/subscription/_components/subscription-plan";
 
@@ -12,6 +13,7 @@ export default async function Home() {
   if (!session) {
     redirect("/authentication");
   }
+  const price = await getEssentialPlanPrice();
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="mb-8 w-full max-w-3xl text-center">
@@ -37,7 +39,7 @@ export default async function Home() {
       </div>
 
       <div className="w-full max-w-md">
-        <SubscriptionPlan userEmail={session.user.email} />
+        <SubscriptionPlan userEmail={session.user.email} price={price} />
       </div>
 
       <div className="mt-8 max-w-lg text-center">

@@ -9,17 +9,20 @@ import { createStripeCheckout } from "@/actions/create-stripe-checkout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import type { PlanPrice } from "@/lib/stripe-plan";
 
 interface SubscriptionPlanProps {
   active?: boolean;
   className?: string;
   userEmail: string;
+  price: PlanPrice | null;
 }
 
 export function SubscriptionPlan({
   active = false,
   className,
   userEmail,
+  price,
 }: SubscriptionPlanProps) {
   const router = useRouter();
   const createStripeCheckoutAction = useAction(createStripeCheckout, {
@@ -74,10 +77,16 @@ export function SubscriptionPlan({
         <p className="text-gray-600">
           Para profissionais autônomos ou pequenas clínicas
         </p>
-        <div className="flex items-baseline">
-          <span className="text-3xl font-bold text-gray-900">R$59</span>
-          <span className="ml-1 text-gray-600">/ mês</span>
-        </div>
+        {price && (
+          <div className="flex items-baseline">
+            <span className="text-3xl font-bold text-gray-900">
+              {price.amount}
+            </span>
+            {price.interval && (
+              <span className="ml-1 text-gray-600">/ {price.interval}</span>
+            )}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent>
