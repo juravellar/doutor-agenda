@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
+import { actionErrorMessage } from "@/lib/action-errors";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, {
@@ -83,8 +84,8 @@ const UpsertPatientForm = ({
       toast.success("Paciente salvo com sucesso.");
       onSuccess?.();
     },
-    onError: () => {
-      toast.error("Erro ao salvar paciente.");
+    onError: ({ error }) => {
+      toast.error(actionErrorMessage(error, "Erro ao salvar paciente."));
     },
   });
 

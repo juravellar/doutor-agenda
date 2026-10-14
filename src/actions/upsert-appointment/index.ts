@@ -1,15 +1,21 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { appointmentsTable, patientsTable } from "@/db/schema";
-import { clinicDateTimeToDate, inClinicTimezone } from "@/helpers/time";
+import {
+  clinicDateTimeToDate,
+  clinicMonthRange,
+  inClinicTimezone,
+} from "@/helpers/time";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { ensurePlanAllows } from "@/lib/plan-limits";
+import { resolvePlan } from "@/lib/plans";
 
 import { getAvailableTimes } from "../get-available-times";
 
@@ -86,6 +92,20 @@ export const upsertAppointment = actionClient
         })
         .where(eq(appointmentsTable.id, parsedInput.id));
     } else {
+      const { start, end } = clinicMonthRange(appointmentDay);
+      const appointmentsInMonth = await db.$count(
+        appointmentsTable,
+        and(
+          eq(appointmentsTable.clinicId, session.user.clinic.id),
+          gte(appointmentsTable.date, start),
+          lt(appointmentsTable.date, end),
+        ),
+      );
+      ensurePlanAllows(
+        resolvePlan(session.user.plan),
+        "appointmentsPerMonth",
+        appointmentsInMonth,
+      );
       await db.insert(appointmentsTable).values({
         patientId: parsedInput.patientId,
         doctorId: parsedInput.doctorId,

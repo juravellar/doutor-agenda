@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { actionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -142,8 +143,8 @@ const UpsertAppointmentForm = ({
       toast.success("Agendamento criado com sucesso.");
       onSuccess?.();
     },
-    onError: () => {
-      toast.error("Erro ao criar agendamento.");
+    onError: ({ error }) => {
+      toast.error(actionErrorMessage(error, "Erro ao criar agendamento."));
     },
   });
 

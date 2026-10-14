@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   findPatient: vi.fn(),
   getAvailableTimes: vi.fn(),
   insertValues: vi.fn(),
+  countAppointments: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
@@ -15,6 +16,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/db", () => ({
   db: {
     query: { patientsTable: { findFirst: mocks.findPatient } },
+    $count: mocks.countAppointments,
     insert: () => ({ values: mocks.insertValues }),
   },
 }));
@@ -44,8 +46,9 @@ describe("upsertAppointment", () => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => {});
     mocks.getSession.mockResolvedValue({
-      user: { clinic: { id: CLINIC_ID } },
+      user: { plan: null, clinic: { id: CLINIC_ID } },
     });
+    mocks.countAppointments.mockResolvedValue(0);
     mocks.findPatient.mockResolvedValue({
       id: PATIENT_ID,
       clinicId: CLINIC_ID,
@@ -89,5 +92,28 @@ describe("upsertAppointment", () => {
 
     expect(result?.serverError).toBeDefined();
     expect(mocks.insertValues).not.toHaveBeenCalled();
+  });
+
+  it("blocks new appointments past the Free monthly limit", async () => {
+    mocks.countAppointments.mockResolvedValue(40);
+
+    const result = await upsertAppointment(input);
+
+    expect(result?.serverError).toBe(
+      "Seu plano permite até 40 agendamentos por mês. Faça upgrade em Assinatura para continuar.",
+    );
+    expect(mocks.insertValues).not.toHaveBeenCalled();
+  });
+
+  it("does not limit appointments on paid plans", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { plan: "professional", clinic: { id: CLINIC_ID } },
+    });
+    mocks.countAppointments.mockResolvedValue(5000);
+
+    const result = await upsertAppointment(input);
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.insertValues).toHaveBeenCalledOnce();
   });
 });

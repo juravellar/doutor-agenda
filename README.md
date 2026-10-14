@@ -1,10 +1,10 @@
-# 🩺 Doutor Agenda
+# 🩺 Avelliq
 
-Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e horários de atendimento, pacientes, consultas com horários livres calculados automaticamente, e um dashboard de faturamento. O acesso é por assinatura, com pagamento via Stripe.
+Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e horários de atendimento, pacientes, consultas com horários livres calculados automaticamente, e um dashboard de faturamento. Toda conta começa no plano Free, e os planos pagos são cobrados via Stripe.
 
-🔗 **Aplicação online:** [doutor-agenda-gold.vercel.app](https://doutor-agenda-gold.vercel.app)
+🔗 **Aplicação online:** [avelliq.vercel.app](https://avelliq.vercel.app)
 
-> 💳 **A assinatura usa o modo de testes do Stripe.** Use o cartão `4242 4242 4242 4242`, com qualquer data de validade futura, CVC e CEP. **Não use dados reais de cartão.**
+> 💳 **Os planos pagos usam o modo de testes do Stripe.** Use o cartão `4242 4242 4242 4242`, com qualquer data de validade futura, CVC e CEP. **Não use dados reais de cartão.**
 
 ---
 
@@ -16,7 +16,19 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 - **Pacientes:** cadastro e listagem.
 - **Agendamentos:** só oferece horários dentro do expediente do médico e que ainda não estejam ocupados.
 - **Dashboard:** faturamento, número de consultas, médicos e especialidades mais procurados, e os agendamentos do dia.
-- **Assinatura** com Stripe Checkout e portal do cliente.
+- **Planos** Free, Essencial e Profissional, com Stripe Checkout para assinar e o portal do cliente para trocar de plano ou cancelar.
+
+## 💼 Planos
+
+| | Free | Essencial | Profissional |
+|---|---|---|---|
+| Médicos | 1 | 3 | Ilimitados |
+| Pacientes | 25 | Ilimitados | Ilimitados |
+| Agendamentos por mês | 40 | Ilimitados | Ilimitados |
+
+- **Limites:** os limites são verificados no servidor, ao cadastrar médicos, pacientes e agendamentos. Ficam em [`src/lib/plans.ts`](src/lib/plans.ts).
+- **Preços:** o valor exibido de cada plano pago vem do próprio Stripe, então é sempre o mesmo cobrado no checkout.
+- **No banco:** um usuário sem assinatura tem `plan` vazio e é tratado como Free.
 
 ## 🚀 Tecnologias
 
@@ -54,7 +66,8 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `NEXT_PUBLIC_APP_URL` | URL pública da aplicação, usada nos redirecionamentos do Stripe |
    | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Login com Google |
    | `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Chaves do Stripe (modo de testes) |
-   | `STRIPE_ESSENTIAL_PLAN_PRICE_ID` | ID do preço do plano no Stripe |
+   | `STRIPE_ESSENTIAL_PLAN_PRICE_ID` | ID do preço mensal do plano Essencial no Stripe |
+   | `STRIPE_PROFESSIONAL_PLAN_PRICE_ID` | ID do preço mensal do plano Profissional no Stripe |
    | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (veja a seção do Stripe abaixo) |
    | `NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL` | Link do portal do cliente do Stripe |
 

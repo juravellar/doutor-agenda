@@ -25,6 +25,12 @@ export const clinicDateTimeToDate = (date: string, time: string) =>
     .tz(`${date} ${time}`, `YYYY-MM-DD ${TIME_FORMAT}`, CLINIC_TIMEZONE)
     .toDate();
 
+// [start, end) of the clinic-time month that contains the given clinic date.
+export const clinicMonthRange = (date: string) => {
+  const start = dayjs.tz(date, "YYYY-MM-DD", CLINIC_TIMEZONE).startOf("month");
+  return { start: start.toDate(), end: start.add(1, "month").toDate() };
+};
+
 export const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 5; hour <= 23; hour++) {

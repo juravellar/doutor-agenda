@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => {
   return {
     getSession: vi.fn(),
     findDoctor: vi.fn(),
+    countDoctors: vi.fn(),
     values,
     onConflictDoUpdate,
   };
@@ -19,6 +20,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/db", () => ({
   db: {
     query: { doctorsTable: { findFirst: mocks.findDoctor } },
+    $count: mocks.countDoctors,
     insert: () => ({ values: mocks.values }),
   },
 }));
@@ -44,8 +46,9 @@ describe("upsertDoctor", () => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => {});
     mocks.getSession.mockResolvedValue({
-      user: { clinic: { id: CLINIC_ID } },
+      user: { plan: "essential", clinic: { id: CLINIC_ID } },
     });
+    mocks.countDoctors.mockResolvedValue(0);
   });
 
   it("rejects unauthenticated requests before touching the database", async () => {
@@ -103,5 +106,43 @@ describe("upsertDoctor", () => {
 
     expect(result?.validationErrors).toBeDefined();
     expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("blocks a second doctor on the Free plan", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { plan: null, clinic: { id: CLINIC_ID } },
+    });
+    mocks.findDoctor.mockResolvedValue(undefined);
+    mocks.countDoctors.mockResolvedValue(1);
+
+    const result = await upsertDoctor(input);
+
+    expect(result?.serverError).toBe(
+      "Seu plano permite até 1 médico. Faça upgrade em Assinatura para continuar.",
+    );
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("allows up to 3 doctors on the Essencial plan", async () => {
+    mocks.findDoctor.mockResolvedValue(undefined);
+    mocks.countDoctors.mockResolvedValue(2);
+
+    const result = await upsertDoctor(input);
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.values).toHaveBeenCalledOnce();
+  });
+
+  it("does not count limits when editing an existing doctor", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { plan: null, clinic: { id: CLINIC_ID } },
+    });
+    mocks.findDoctor.mockResolvedValue({ id: DOCTOR_ID, clinicId: CLINIC_ID });
+    mocks.countDoctors.mockResolvedValue(1);
+
+    const result = await upsertDoctor(input);
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.countDoctors).not.toHaveBeenCalled();
   });
 });

@@ -31,9 +31,6 @@ const AppointmentsPage = async () => {
     redirect("/clinic-form");
   }
 
-  if (!session.user.plan) {
-    redirect("/new-subscription");
-  }
 
   const clinicId = session.user.clinic.id;
 

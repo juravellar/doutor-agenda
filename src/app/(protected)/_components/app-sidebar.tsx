@@ -94,8 +94,17 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4">
-        <Link href="/dashboard" aria-label="Ir para o dashboard" className="inline-block">
-          <Image src="/logo.svg" alt="Doutor Agenda" width={136} height={28} />
+        <Link
+          href="/dashboard"
+          aria-label="Avelliq, ir para o dashboard"
+          className="inline-block"
+        >
+          <span className="flex items-center gap-2">
+            <Image src="/logo-symbol.svg" alt="" width={28} height={28} />
+            <span className="text-xl font-semibold tracking-tight text-[#0E0A2F]">
+              Avelliq
+            </span>
+          </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
