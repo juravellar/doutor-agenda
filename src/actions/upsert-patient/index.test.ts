@@ -50,7 +50,7 @@ describe("upsertPatient", () => {
   });
 
   it("creates a patient within the Free limit", async () => {
-    mocks.countPatients.mockResolvedValue(24);
+    mocks.countPatients.mockResolvedValue(19);
 
     const result = await upsertPatient(input);
 
@@ -63,13 +63,13 @@ describe("upsertPatient", () => {
     );
   });
 
-  it("blocks the 26th patient on the Free plan", async () => {
-    mocks.countPatients.mockResolvedValue(25);
+  it("blocks the 21st patient on the Free plan", async () => {
+    mocks.countPatients.mockResolvedValue(20);
 
     const result = await upsertPatient(input);
 
     expect(result?.serverError).toBe(
-      "Seu plano permite até 25 pacientes. Faça upgrade em Assinatura para continuar.",
+      "Seu plano permite até 20 pacientes. Faça upgrade em Assinatura para continuar.",
     );
     expect(mocks.values).not.toHaveBeenCalled();
   });

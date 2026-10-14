@@ -20,7 +20,7 @@ describe("resolvePlan", () => {
 
 describe("ensurePlanAllows", () => {
   it("allows usage below the limit", () => {
-    expect(() => ensurePlanAllows(PLANS.free, "patients", 24)).not.toThrow();
+    expect(() => ensurePlanAllows(PLANS.free, "patients", 19)).not.toThrow();
   });
 
   it("blocks usage at the limit with a user-facing message", () => {
@@ -30,8 +30,8 @@ describe("ensurePlanAllows", () => {
     expect(() =>
       ensurePlanAllows(PLANS.free, "appointmentsPerMonth", 40),
     ).toThrow("Seu plano permite até 40 agendamentos por mês.");
-    expect(() => ensurePlanAllows(PLANS.essential, "doctors", 3)).toThrow(
-      "Seu plano permite até 3 médicos.",
+    expect(() => ensurePlanAllows(PLANS.essential, "doctors", 5)).toThrow(
+      "Seu plano permite até 5 médicos.",
     );
   });
 
@@ -40,7 +40,19 @@ describe("ensurePlanAllows", () => {
       ensurePlanAllows(PLANS.professional, "doctors", 10_000),
     ).not.toThrow();
     expect(() =>
-      ensurePlanAllows(PLANS.essential, "patients", 10_000),
+      ensurePlanAllows(PLANS.professional, "patients", 10_000),
     ).not.toThrow();
+  });
+
+  it("limits patients and monthly appointments on the Essencial plan", () => {
+    expect(() =>
+      ensurePlanAllows(PLANS.essential, "patients", 99),
+    ).not.toThrow();
+    expect(() => ensurePlanAllows(PLANS.essential, "patients", 100)).toThrow(
+      "Seu plano permite até 100 pacientes.",
+    );
+    expect(() =>
+      ensurePlanAllows(PLANS.essential, "appointmentsPerMonth", 200),
+    ).toThrow("Seu plano permite até 200 agendamentos por mês.");
   });
 });

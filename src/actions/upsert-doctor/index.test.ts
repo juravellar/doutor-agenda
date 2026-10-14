@@ -123,9 +123,9 @@ describe("upsertDoctor", () => {
     expect(mocks.values).not.toHaveBeenCalled();
   });
 
-  it("allows up to 3 doctors on the Essencial plan", async () => {
+  it("allows up to 5 doctors on the Essencial plan", async () => {
     mocks.findDoctor.mockResolvedValue(undefined);
-    mocks.countDoctors.mockResolvedValue(2);
+    mocks.countDoctors.mockResolvedValue(4);
 
     const result = await upsertDoctor(input);
 
