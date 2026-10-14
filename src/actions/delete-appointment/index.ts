@@ -2,38 +2,29 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { appointmentsTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
-import { actionClient } from "@/lib/next-safe-action";
-import { ensureCanEdit } from "@/lib/plan-limits";
+import { clinicWriteActionClient } from "@/lib/clinic-action";
 
-export const deleteAppointment = actionClient
+export const deleteAppointment = clinicWriteActionClient
   .schema(
     z.object({
       id: z.string().uuid(),
     }),
   )
-  .action(async ({ parsedInput }) => {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      throw new Error("Unauthorized");
-    }
+  .action(async ({ parsedInput, ctx }) => {
+    const clinicId = ctx.clinic.id;
     const appointment = await db.query.appointmentsTable.findFirst({
       where: eq(appointmentsTable.id, parsedInput.id),
     });
     if (!appointment) {
       throw new Error("Agendamento não encontrado");
     }
-    if (appointment.clinicId !== session.user.clinic?.id) {
+    if (appointment.clinicId !== clinicId) {
       throw new Error("Agendamento não encontrado");
     }
-    ensureCanEdit(session.user.plan, session.user.clinic?.createdAt);
     await db
       .delete(appointmentsTable)
       .where(eq(appointmentsTable.id, parsedInput.id));
