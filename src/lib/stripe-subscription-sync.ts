@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 
 import { db } from "@/db";
+import { withUserLock } from "@/db/clinic-lock";
 import { usersTable } from "@/db/schema";
 import type { PaidPlanId } from "@/lib/plans";
 import { planForPriceId } from "@/lib/stripe-plan";
@@ -44,13 +45,24 @@ const findUserFor = async (subscription: Stripe.Subscription) => {
   });
 };
 
-const retrieveOrNull = async (stripe: Stripe, subscriptionId: string) => {
+// Only "no such subscription" means it is gone. Rate limits, network and
+// Stripe outages must fail the webhook, so Stripe retries it later instead of
+// the user being downgraded on a transient error.
+const retrieveIfExists = async (stripe: Stripe, subscriptionId: string) => {
   try {
     return await stripe.subscriptions.retrieve(subscriptionId);
-  } catch {
-    return null;
+  } catch (error) {
+    if ((error as { code?: string })?.code === "resource_missing") {
+      return null;
+    }
+    throw error;
   }
 };
+
+export const listCustomerSubscriptions = (stripe: Stripe, customerId: string) =>
+  stripe.subscriptions
+    .list({ customer: customerId, status: "all", limit: 100 })
+    .autoPagingToArray({ limit: 10_000 });
 
 /**
  * Picks the subscription that should define the user's plan: the current one
@@ -93,31 +105,36 @@ export const syncSubscription = async (
   }
 
   const customerId = customerIdOf(subscription);
-  const { data: customerSubscriptions } = await stripe.subscriptions.list({
-    customer: customerId,
-    status: "all",
-    limit: 100,
-  });
-  const candidates = [...customerSubscriptions];
-  const currentId = user.stripeSubscriptionId;
-  if (currentId && !candidates.some(({ id }) => id === currentId)) {
-    const current = await retrieveOrNull(stripe, currentId);
-    if (current) {
-      candidates.push(current);
+  // Serialized per user, so concurrent webhooks for one checkout (created,
+  // updated, invoice.paid) can't write a state read before another's.
+  await withUserLock(user.id, async (tx) => {
+    const latest = await tx.query.usersTable.findFirst({
+      where: eq(usersTable.id, user.id),
+    });
+    if (!latest) {
+      return;
     }
-  }
+    const candidates = await listCustomerSubscriptions(stripe, customerId);
+    const currentId = latest.stripeSubscriptionId;
+    if (currentId && !candidates.some(({ id }) => id === currentId)) {
+      const current = await retrieveIfExists(stripe, currentId);
+      if (current) {
+        candidates.push(current);
+      }
+    }
 
-  const chosen = chooseSubscription(candidates, currentId);
-  await db
-    .update(usersTable)
-    .set({
-      plan: chosen ? planForSubscription(chosen) : null,
-      stripeSubscriptionId: chosen?.id ?? null,
-      // Without a subscription granting access, an event about another
-      // customer must not replace the one checkout will use next.
-      stripeCustomerId: chosen
-        ? customerIdOf(chosen)
-        : (user.stripeCustomerId ?? customerId),
-    })
-    .where(eq(usersTable.id, user.id));
+    const chosen = chooseSubscription(candidates, currentId);
+    await tx
+      .update(usersTable)
+      .set({
+        plan: chosen ? planForSubscription(chosen) : null,
+        stripeSubscriptionId: chosen?.id ?? null,
+        // Without a subscription granting access, an event about another
+        // customer must not replace the one checkout will use next.
+        stripeCustomerId: chosen
+          ? customerIdOf(chosen)
+          : (latest.stripeCustomerId ?? customerId),
+      })
+      .where(eq(usersTable.id, user.id));
+  });
 };
