@@ -45,10 +45,8 @@ export const planForPriceId = (
 // env var takes effect at once. Failures throw and are therefore not cached.
 const fetchPriceById = unstable_cache(
   async (priceId: string): Promise<PlanPrice | null> => {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("STRIPE_SECRET_KEY is not set");
-    }
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    // Read here, not passed in: arguments become part of the cache key.
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
       apiVersion: "2025-05-28.basil",
     });
     return formatPlanPrice(await stripe.prices.retrieve(priceId));
@@ -57,10 +55,28 @@ const fetchPriceById = unstable_cache(
   { revalidate: 3600 },
 );
 
+// Missing configuration is reported once per server instance instead of on
+// every render of the plans page.
+const reportedMissingConfig = new Set<string>();
+const reportMissingConfig = (name: string) => {
+  if (!reportedMissingConfig.has(name)) {
+    reportedMissingConfig.add(name);
+    console.warn(`${name} is not set; plan prices are hidden`);
+  }
+};
+
 const loadPlanPrice = async (plan: PaidPlanId): Promise<PlanPrice | null> => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    reportMissingConfig("STRIPE_SECRET_KEY");
+    return null;
+  }
   const priceId = priceIdForPlan(plan);
   if (!priceId) {
-    console.error(`Stripe price id for plan ${plan} is not configured`);
+    reportMissingConfig(
+      plan === "essential"
+        ? "STRIPE_ESSENTIAL_PLAN_PRICE_ID"
+        : "STRIPE_PROFESSIONAL_PLAN_PRICE_ID",
+    );
     return null;
   }
   try {

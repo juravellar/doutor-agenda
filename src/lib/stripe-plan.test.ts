@@ -70,19 +70,20 @@ describe("getPlanPrices", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows no price instead of failing when a plan's price id is missing", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
+  it("hides prices and warns once when Stripe is not configured", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubEnv("STRIPE_SECRET_KEY", "");
-    vi.stubEnv("STRIPE_ESSENTIAL_PLAN_PRICE_ID", "");
-    vi.stubEnv("STRIPE_PROFESSIONAL_PLAN_PRICE_ID", "");
     const { getPlanPrices } = await import("./stripe-plan");
 
     await expect(getPlanPrices()).resolves.toEqual({
       essential: null,
       professional: null,
     });
-    expect(console.error).toHaveBeenCalledWith(
-      "Stripe price id for plan professional is not configured",
+    await getPlanPrices();
+
+    expect(console.warn).toHaveBeenCalledTimes(1);
+    expect(console.warn).toHaveBeenCalledWith(
+      "STRIPE_SECRET_KEY is not set; plan prices are hidden",
     );
   });
 });
