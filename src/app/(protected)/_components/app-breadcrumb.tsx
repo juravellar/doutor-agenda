@@ -24,6 +24,7 @@ const pathTranslations: Record<string, string> = {
   subscription: "Assinatura",
   clinics: "Minhas clínicas",
   "clinic-settings": "Configurações da clínica",
+  account: "Minha conta",
 };
 
 type ResourceType = "patients" | "doctors" | "appointments";
@@ -38,7 +39,12 @@ const ResourceName: React.FC<ResourceNameProps> = ({ id, resourceType }) => {
   return <>{name || "Carregando..."}</>;
 };
 
-const outrosRoutes = ["/subscription", "/clinics", "/clinic-settings"];
+const outrosRoutes = [
+  "/subscription",
+  "/clinics",
+  "/clinic-settings",
+  "/account",
+];
 
 function getSidebarGroupLabel(pathname: string): string {
   if (outrosRoutes.some((route) => pathname.startsWith(route))) {

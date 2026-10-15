@@ -12,6 +12,7 @@ import {
   Plus,
   Settings,
   Stethoscope,
+  UserRound,
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
@@ -264,6 +265,10 @@ export function AppSidebar() {
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   Configurações da clínica
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/account")}>
+                  <UserRound className="mr-2 h-4 w-4" />
+                  Minha conta
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
