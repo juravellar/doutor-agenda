@@ -4,7 +4,7 @@
 
 Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e horários de atendimento, pacientes, consultas com horários livres calculados automaticamente, e um dashboard de faturamento. Toda conta começa no plano Free, e os planos pagos são cobrados via Stripe.
 
-🔗 **Aplicação online:** [avelliq.vercel.app](https://avelliq.vercel.app)
+🔗 **Aplicação online:** [www.avelliq.com.br](https://www.avelliq.com.br)
 
 > 💳 **Os planos pagos usam o modo de testes do Stripe.** Use o cartão `4242 4242 4242 4242`, com qualquer data de validade futura, CVC e CEP. **Não use dados reais de cartão.**
 
@@ -83,11 +83,13 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `RESEND_API_KEY`, `EMAIL_FROM` | Envio de emails pelo [Resend](https://resend.com). Com as duas definidas, a conta só é liberada depois de confirmar o email (opcional) |
    | `CRON_SECRET` | Segredo da limpeza diária (Vercel Cron) de sessões expiradas e registros de auditoria com mais de 5 anos. Sem ele, a limpeza não roda |
 
-3. Crie as tabelas no banco:
+3. Crie as tabelas no banco a partir do schema:
 
    ```bash
-   npx drizzle-kit migrate
+   npx drizzle-kit push
    ```
+
+   Use `push`, não `migrate`: as primeiras migrações da pasta `drizzle/` são da versão original do projeto e não rodam em sequência num banco vazio.
 
 4. Inicie o servidor de desenvolvimento e abra [http://localhost:3000](http://localhost:3000):
 
@@ -104,6 +106,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | `npm start` | Sobe o build de produção |
 | `npm run lint` | ESLint |
 | `npm test` | Testes com Vitest |
+| `npm run test:integration` | Testes contra um PostgreSQL real (defina `INTEGRATION_DATABASE_URL` com um banco de teste) |
 | `npx drizzle-kit studio` | Interface visual do banco |
 
 ### Stripe em ambiente local
@@ -119,6 +122,18 @@ O comando `stripe listen` mostra um segredo `whsec_...`. Coloque esse valor em `
 
 ---
 
+## 🗄️ Banco de produção
+
+O banco de produção foi criado com `drizzle-kit push` e não tem o histórico do `drizzle-kit migrate`. Cada mudança de schema gera um arquivo novo em `drizzle/` (`npx drizzle-kit generate --name <nome>`), que é aplicado à mão, **antes do merge** do código que depende dele:
+
+```bash
+psql "$DATABASE_URL" -P pager=off -f drizzle/000X_nome.sql
+```
+
+Não cole a `DATABASE_URL` em chats, issues ou commits.
+
+---
+
 ## 🕒 Fuso horário
 
 A clínica opera no fuso `America/Sao_Paulo`, mas o servidor pode estar em qualquer fuso (na Vercel, é UTC). Por isso:
@@ -131,8 +146,7 @@ A clínica opera no fuso `America/Sao_Paulo`, mas o servidor pode estar em qualq
 
 ## 📋 Próximos passos
 
-- [ ] Verificação de e-mail
 - [ ] Autenticação em dois fatores
 - [ ] Campo `status` nos agendamentos
-- [ ] Usar o fuso da clínica também nos filtros de data do dashboard (hoje eles usam o fuso do servidor)
-- [ ] Atualizar `better-auth` e `drizzle-orm`, que têm vulnerabilidades conhecidas
+- [ ] Manter o histórico de agendamentos ao excluir um médico (hoje são apagados junto)
+- [ ] Content Security Policy para scripts, com nonce por requisição
