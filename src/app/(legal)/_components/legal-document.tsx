@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 
 import { TERMS_VERSION } from "@/lib/terms";
 
+// Identification comes from the environment, never from the code: the
+// repository is public and must not carry the owner's personal data.
+export const legalCnpj = () => process.env.LEGAL_CNPJ || null;
+
 export function ContactEmail() {
   const email = process.env.SUPPORT_EMAIL;
   return email ? (

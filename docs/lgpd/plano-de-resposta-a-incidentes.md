@@ -4,6 +4,8 @@ Base: art. 48 da LGPD e Resolução CD/ANPD nº 15/2024. **Revise com um advogad
 
 ## 1. Responsáveis
 
+Preencha numa cópia privada, fora deste repositório público.
+
 | Papel | Quem |
 |---|---|
 | Coordenação e decisão de comunicar | _definir_ |

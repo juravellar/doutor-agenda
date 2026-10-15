@@ -3,7 +3,7 @@
 Modelo de acordo entre a clínica (Controladora) e o Avelliq (Operador), nos termos do art. 39 da LGPD. **Revise com um advogado antes de usar.**
 
 **Controladora:** _[clínica, CNPJ, endereço]_
-**Operador:** _[razão social do Avelliq, CNPJ, endereço]_
+**Operador:** _[razão social e CNPJ do Avelliq, preenchidos na cópia assinada]_
 
 1. **Objeto.** O Operador trata dados pessoais de pacientes e profissionais cadastrados pela Controladora no sistema Avelliq, apenas para prestar o serviço de agendamento contratado.
 
