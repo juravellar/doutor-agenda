@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -20,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
 const clinicFormSchema = z.object({
   name: z
@@ -30,8 +30,8 @@ const clinicFormSchema = z.object({
 });
 
 type ClinicFormData = z.infer<typeof clinicFormSchema>;
-const ClinicForm = ({ canCancel = false }: { canCancel?: boolean }) => {
-  const router = useRouter();
+const ClinicForm = ({ onCancel }: { onCancel?: () => void }) => {
+  const session = authClient.useSession();
   const form = useForm<ClinicFormData>({
     resolver: zodResolver(clinicFormSchema),
     defaultValues: {
@@ -46,6 +46,9 @@ const ClinicForm = ({ canCancel = false }: { canCancel?: boolean }) => {
       form.reset();
     } catch (error) {
       if (isRedirectError(error)) {
+        // The new clinic is now the active one; the sidebar reads it from the
+        // client session, which the redirect alone doesn't refresh.
+        session.refetch();
         return;
       }
       console.error(error);
@@ -71,12 +74,8 @@ const ClinicForm = ({ canCancel = false }: { canCancel?: boolean }) => {
             )}
           />
           <DialogFooter>
-            {canCancel && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
                 Cancelar
               </Button>
             )}

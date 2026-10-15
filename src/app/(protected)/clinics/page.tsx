@@ -18,6 +18,7 @@ import { clinicChoiceStatus } from "@/lib/clinic-access";
 import { resolvePlan } from "@/lib/plans";
 
 import { ClinicChooser } from "./_components/clinic-chooser";
+import { NewClinicButton } from "./_components/new-clinic-button";
 
 const ClinicsPage = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -48,9 +49,7 @@ const ClinicsPage = async () => {
         </PageHeaderContent>
         <PageActions>
           {canAddClinic ? (
-            <Button asChild>
-              <Link href="/clinic-form">Nova clínica</Link>
-            </Button>
+            <NewClinicButton />
           ) : (
             <Button asChild variant="outline">
               <Link href="/subscription">Ver planos para mais clínicas</Link>

@@ -47,6 +47,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { authClient } from "../../../lib/auth-client";
+import { NewClinicDialog } from "./new-clinic-dialog";
 
 const items = [
   {
@@ -99,6 +100,7 @@ export function AppSidebar() {
   });
   const pathname = usePathname();
   const [isOthersExpanded, setIsOthersExpanded] = useState(false);
+  const [newClinicOpen, setNewClinicOpen] = useState(false);
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -249,7 +251,7 @@ export function AppSidebar() {
                 ))}
                 <DropdownMenuItem
                   disabled={!canAddClinic}
-                  onClick={() => router.push("/clinic-form")}
+                  onClick={() => setNewClinicOpen(true)}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   {canAddClinic ? "Nova clínica" : "Nova clínica (limite do plano)"}
@@ -275,6 +277,10 @@ export function AppSidebar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <NewClinicDialog
+              open={newClinicOpen}
+              onOpenChange={setNewClinicOpen}
+            />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
