@@ -34,10 +34,8 @@ const loginSchema = z.object({
     .trim()
     .min(1, { message: "Email é obrigatório" })
     .email({ message: "Email inválido" }),
-  password: z
-    .string()
-    .trim()
-    .min(8, { message: "Senha deve ter no mínimo 8 caracteres" }),
+  // Not trimmed: spaces are part of the password.
+  password: z.string().min(1, { message: "Senha é obrigatória" }),
 });
 
 const LoginForm = () => {
@@ -51,20 +49,35 @@ const LoginForm = () => {
   });
 
   const handleSubmit = async (values: z.infer<typeof loginSchema>) => {
-    await authClient.signIn.email(
-      {
+    const signIn = (password: string) =>
+      authClient.signIn.email({
         email: values.email,
-        password: values.password,
-      },
-      {
-        onSuccess: () => {
-          router.push("/dashboard");
-        },
-        onError: () => {
-          toast.error("Email ou senha inválidos");
-        },
-      },
-    );
+        password,
+        callbackURL: "/dashboard",
+      });
+
+    let { error } = await signIn(values.password);
+    // Accounts created before passwords were kept as typed had the
+    // surrounding spaces stripped at sign-up.
+    const trimmed = values.password.trim();
+    if (
+      error?.code === "INVALID_EMAIL_OR_PASSWORD" &&
+      trimmed !== values.password
+    ) {
+      ({ error } = await signIn(trimmed));
+    }
+
+    if (!error) {
+      router.push("/dashboard");
+      return;
+    }
+    if (error.code === "EMAIL_NOT_VERIFIED") {
+      toast.error(
+        "Confirme seu email antes de entrar. Enviamos um novo link para a sua caixa de entrada.",
+      );
+      return;
+    }
+    toast.error("Email ou senha inválidos");
   };
 
   const handleGoogleLogin = async () => {
