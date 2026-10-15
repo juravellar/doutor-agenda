@@ -45,21 +45,21 @@ const StatsCards = ({
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-              <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full shrink-0">
+            <CardHeader className="flex flex-row items-center gap-2 space-y-0 px-4 pb-2 sm:px-6">
+              <div className="bg-primary/10 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full sm:flex">
                 <Icon className="text-primary h-4 w-4" />
               </div>
-              <CardTitle className="text-muted-foreground text-sm font-medium leading-none">
+              <CardTitle className="text-muted-foreground min-w-0 truncate text-sm leading-none font-medium">
                 {stat.title}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold break-words">{stat.value}</div>
+            <CardContent className="px-4 sm:px-6">
+              <div className="text-xl font-bold break-words sm:text-2xl">{stat.value}</div>
             </CardContent>
           </Card>
         );

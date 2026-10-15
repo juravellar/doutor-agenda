@@ -62,14 +62,15 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
   const doctorInitials = doctor.name
     .split(" ")
     .map((name) => name[0])
-    .join("");
+    .join("")
+    .slice(0, 2);
   const availability = getAvailability(doctor);
 
   return (
-    <Card className="w-full max-w-xs min-w-[280px] flex-1">
+    <Card className="w-full min-w-0">
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Avatar className="h-10 w-10">
+        <div className="flex min-w-0 items-center gap-2">
+          <Avatar className="h-10 w-10 shrink-0">
             <AvatarFallback>{doctorInitials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">

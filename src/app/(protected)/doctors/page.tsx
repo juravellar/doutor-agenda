@@ -63,7 +63,7 @@ const DoctorsPage = async () => {
       </PageHeader>
       <PageContent>
         {hasDoctors ? (
-          <div className="flex flex-wrap justify-start gap-6">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),20rem))] gap-6">
             {doctors.map((doctor) => (
               <DoctorCard key={doctor.id} doctor={doctor} />
             ))}

@@ -14,11 +14,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 export function DatePicker({
   className,
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const isMobile = useIsMobile();
   const [from, setFrom] = useQueryState(
     "from",
     parseAsIsoDate.withDefault(new Date()),
@@ -86,7 +88,7 @@ export function DatePicker({
             defaultMonth={date?.from}
             selected={date}
             onSelect={handleDateSelect}
-            numberOfMonths={2}
+            numberOfMonths={isMobile ? 1 : 2}
             locale={ptBR}
           />
         </PopoverContent>
