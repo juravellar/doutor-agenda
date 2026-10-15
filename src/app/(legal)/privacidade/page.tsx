@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ContactEmail, LegalDocument } from "../_components/legal-document";
+import {
+  ContactEmail,
+  legalCnpj,
+  LegalDocument,
+} from "../_components/legal-document";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade | Avelliq",
 };
 
 export default function PrivacyPolicyPage() {
+  const cnpj = legalCnpj();
   return (
     <LegalDocument title="Política de Privacidade">
       <p>
@@ -18,6 +23,7 @@ export default function PrivacyPolicyPage() {
       </p>
 
       <h2>1. Quem é responsável por cada dado</h2>
+      {cnpj && <p>O Avelliq está inscrito no CNPJ sob o nº {cnpj}.</p>}
       <ul>
         <li>
           <strong>Dados da sua conta</strong> (nome, email, senha, plano): o
@@ -178,9 +184,13 @@ export default function PrivacyPolicyPage() {
         da LGPD.
       </p>
 
-      <h2>8. Encarregado e contato</h2>
+      <h2>8. Canal de comunicação</h2>
       <p>
-        Dúvidas sobre esta política ou sobre seus dados: <ContactEmail />.
+        Como agente de tratamento de pequeno porte, o Avelliq não é obrigado a
+        indicar um encarregado (Resolução CD/ANPD nº 2/2022, art. 11) e mantém
+        este canal para os titulares: <ContactEmail />. Use-o para dúvidas sobre
+        esta política ou para exercer seus direitos; os pedidos são respondidos
+        em até 15 dias.
       </p>
 
       <h2>9. Alterações</h2>

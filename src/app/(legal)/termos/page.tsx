@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ContactEmail, LegalDocument } from "../_components/legal-document";
+import {
+  ContactEmail,
+  legalCnpj,
+  LegalDocument,
+} from "../_components/legal-document";
 
 export const metadata: Metadata = {
   title: "Termos de Uso | Avelliq",
 };
 
 export default function TermsOfUsePage() {
+  const cnpj = legalCnpj();
   return (
     <LegalDocument title="Termos de Uso">
       <p>
@@ -109,6 +114,7 @@ export default function TermsOfUsePage() {
       <h2>9. Contato</h2>
       <p>
         Dúvidas sobre estes termos: <ContactEmail />.
+        {cnpj && <> Avelliq, CNPJ {cnpj}.</>}
       </p>
     </LegalDocument>
   );
