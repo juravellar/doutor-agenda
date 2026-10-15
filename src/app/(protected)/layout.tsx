@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AccountStatusBanner } from "./_components/account-status-banner";
 import { AppBreadcrumb } from "./_components/app-breadcrumb";
 import { AppSidebar } from "./_components/app-sidebar";
+import { TermsGate } from "./_components/terms-gate";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </header>
         <AccountStatusBanner />
         {children}
+        <TermsGate />
       </main>
     </SidebarProvider>
   );

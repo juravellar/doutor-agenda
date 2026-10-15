@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { withClinicLock } from "@/db/clinic-lock";
 import { doctorsTable } from "@/db/schema";
 import { clinicTimeToUtc } from "@/helpers/time";
+import { recordAudit } from "@/lib/audit";
 import { clinicWriteActionClient } from "@/lib/clinic-action";
 import { ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
@@ -36,7 +37,7 @@ export const upsertDoctor = clinicWriteActionClient
       const availableFromTime = clinicTimeToUtc(parsedInput.availableFromTime);
       const availableToTime = clinicTimeToUtc(parsedInput.availableToTime);
 
-      await tx
+      const [saved] = await tx
         .insert(doctorsTable)
         .values({
           ...parsedInput,
@@ -52,7 +53,17 @@ export const upsertDoctor = clinicWriteActionClient
             availableFromTime,
             availableToTime,
           },
-        });
+        })
+        .returning({ id: doctorsTable.id });
+      await recordAudit(
+        {
+          userId: ctx.user.id,
+          clinicId,
+          action: existingDoctor ? "doctor.updated" : "doctor.created",
+          entityId: saved?.id,
+        },
+        tx,
+      );
     });
     revalidatePath("/doctors");
   });

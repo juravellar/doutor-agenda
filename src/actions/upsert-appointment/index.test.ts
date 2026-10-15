@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   updateSet: vi.fn(() => ({ where: vi.fn() })),
 }));
 
+const audit = vi.hoisted(() => ({ recordAudit: vi.fn() }));
+vi.mock("@/lib/audit", () => audit);
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
@@ -24,7 +26,12 @@ vi.mock("@/db", () => {
     },
     $count: mocks.countAppointments,
     update: () => ({ set: mocks.updateSet }),
-    insert: () => ({ values: mocks.insertValues }),
+    insert: () => ({
+      values: (row: unknown) => ({
+        returning: async () =>
+          (await mocks.insertValues(row)) ?? [{ id: "appointment_new" }],
+      }),
+    }),
   };
   db.transaction = async (fn: (tx: unknown) => unknown) =>
     fn({ ...db, execute: mocks.execute });

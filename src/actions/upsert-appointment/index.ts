@@ -13,6 +13,7 @@ import {
   inClinicTimezone,
 } from "@/helpers/time";
 import { UserFacingError } from "@/lib/action-errors";
+import { recordAudit } from "@/lib/audit";
 import { computeAvailableTimes } from "@/lib/available-times";
 import { clinicWriteActionClient } from "@/lib/clinic-action";
 import { ensurePlanAllows } from "@/lib/plan-limits";
@@ -85,6 +86,15 @@ export const upsertAppointment = clinicWriteActionClient
               appointmentPriceInCents: parsedInput.appointmentPriceInCents,
             })
             .where(eq(appointmentsTable.id, parsedInput.id));
+          await recordAudit(
+            {
+              userId: ctx.user.id,
+              clinicId,
+              action: "appointment.updated",
+              entityId: parsedInput.id,
+            },
+            tx,
+          );
           return;
         }
 
@@ -102,13 +112,25 @@ export const upsertAppointment = clinicWriteActionClient
           "appointmentsPerMonth",
           appointmentsInMonth,
         );
-        await tx.insert(appointmentsTable).values({
-          patientId: parsedInput.patientId,
-          doctorId: parsedInput.doctorId,
-          date: appointmentDate,
-          appointmentPriceInCents: parsedInput.appointmentPriceInCents,
-          clinicId,
-        });
+        const [created] = await tx
+          .insert(appointmentsTable)
+          .values({
+            patientId: parsedInput.patientId,
+            doctorId: parsedInput.doctorId,
+            date: appointmentDate,
+            appointmentPriceInCents: parsedInput.appointmentPriceInCents,
+            clinicId,
+          })
+          .returning({ id: appointmentsTable.id });
+        await recordAudit(
+          {
+            userId: ctx.user.id,
+            clinicId,
+            action: "appointment.created",
+            entityId: created?.id,
+          },
+          tx,
+        );
       });
     } catch (error) {
       if (isUniqueViolation(error)) {

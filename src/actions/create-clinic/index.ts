@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { withUserLock } from "@/db/clinic-lock";
 import { clinicsTable, usersTable, usersToClinicsTable } from "@/db/schema";
+import { recordAudit } from "@/lib/audit";
 import { resolvePlan } from "@/lib/plans";
 
 import { auth } from "../../lib/auth";
@@ -59,6 +60,15 @@ export const createClinic = async (rawName: string) => {
         clinicChoiceChangedAt: null,
       })
       .where(eq(usersTable.id, session.user.id));
+    await recordAudit(
+      {
+        userId: session.user.id,
+        clinicId: clinic.id,
+        action: "clinic.created",
+        entityId: clinic.id,
+      },
+      tx,
+    );
     return true;
   });
 

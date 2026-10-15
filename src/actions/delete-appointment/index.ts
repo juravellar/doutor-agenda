@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { appointmentsTable } from "@/db/schema";
+import { recordAudit } from "@/lib/audit";
 import { clinicWriteActionClient } from "@/lib/clinic-action";
 
 export const deleteAppointment = clinicWriteActionClient
@@ -25,8 +26,19 @@ export const deleteAppointment = clinicWriteActionClient
     if (appointment.clinicId !== clinicId) {
       throw new Error("Agendamento não encontrado");
     }
-    await db
-      .delete(appointmentsTable)
-      .where(eq(appointmentsTable.id, parsedInput.id));
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(appointmentsTable)
+        .where(eq(appointmentsTable.id, parsedInput.id));
+      await recordAudit(
+        {
+          userId: ctx.user.id,
+          clinicId,
+          action: "appointment.deleted",
+          entityId: parsedInput.id,
+        },
+        tx,
+      );
+    });
     revalidatePath("/appointments");
   });

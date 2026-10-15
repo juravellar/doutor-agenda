@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
@@ -8,6 +8,7 @@ import * as schema from "@/db/schema";
 import { usersTable, usersToClinicsTable } from "@/db/schema";
 import { resolveClinicAccess } from "@/lib/clinic-access";
 import { isEmailConfigured, sendEmail, verificationEmail } from "@/lib/email";
+import { ACCEPT_TERMS_HEADER, termsAcceptanceForNewUser } from "@/lib/terms";
 
 export const auth = betterAuth({
   // Model names below are the exact schema keys (usersTable, ...), so no
@@ -61,6 +62,7 @@ export const auth = betterAuth({
           freePeriodStartsAt: access.freePeriodStartsAt,
           clinicChoiceMadeAt: userData?.clinicChoiceMadeAt ?? null,
           clinicChoiceChangedAt: userData?.clinicChoiceChangedAt ?? null,
+          termsVersion: userData?.termsVersion ?? null,
         },
         session,
       };
@@ -83,6 +85,37 @@ export const auth = betterAuth({
         type: "string",
         fieldName: "plan",
         required: false,
+      },
+      termsAcceptedAt: {
+        type: "date",
+        fieldName: "termsAcceptedAt",
+        required: false,
+        input: false,
+      },
+      termsVersion: {
+        type: "string",
+        fieldName: "termsVersion",
+        required: false,
+        input: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user, context) => {
+          const acceptance = termsAcceptanceForNewUser(
+            context?.path,
+            context?.headers?.get(ACCEPT_TERMS_HEADER),
+          );
+          if (!acceptance) {
+            throw new APIError("BAD_REQUEST", {
+              message:
+                "É preciso aceitar os Termos de Uso e a Política de Privacidade.",
+            });
+          }
+          return { data: { ...user, ...acceptance } };
+        },
       },
     },
   },

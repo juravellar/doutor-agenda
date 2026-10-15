@@ -19,6 +19,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 - **Agendamentos:** só oferece horários dentro do expediente do médico e que ainda não estejam ocupados.
 - **Dashboard:** faturamento, número de consultas, médicos e especialidades mais procurados, e os agendamentos do dia.
 - **Planos** Free, Essencial e Profissional, com Stripe Checkout para assinar e o portal do cliente para trocar de plano ou cancelar.
+- **LGPD:** Política de Privacidade e Termos de Uso com aceite registrado, exportação dos dados, exclusão da conta, registro de auditoria e limpeza automática de dados antigos. Detalhes e pendências em [`docs/lgpd`](docs/lgpd/README.md).
 
 ## 💼 Planos
 
@@ -77,9 +78,9 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `STRIPE_PROFESSIONAL_PLAN_PRICE_ID` | ID do preço mensal do plano Profissional no Stripe |
    | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (veja a seção do Stripe abaixo) |
    | `NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL` | Link do portal do cliente do Stripe |
-   | `SUPPORT_EMAIL` | E-mail de suporte mostrado a quem precisa alterar as clínicas ativas antes dos 30 dias (opcional) |
+   | `SUPPORT_EMAIL` | E-mail de suporte e de contato de privacidade, mostrado na Política de Privacidade, nos Termos e a quem precisa alterar as clínicas ativas antes dos 30 dias |
    | `RESEND_API_KEY`, `EMAIL_FROM` | Envio de emails pelo [Resend](https://resend.com). Com as duas definidas, a conta só é liberada depois de confirmar o email (opcional) |
-   | `CRON_SECRET` | Segredo da limpeza diária de sessões expiradas (Vercel Cron). Sem ele, a limpeza não roda |
+   | `CRON_SECRET` | Segredo da limpeza diária (Vercel Cron) de sessões expiradas e registros de auditoria com mais de 5 anos. Sem ele, a limpeza não roda |
 
 3. Crie as tabelas no banco:
 

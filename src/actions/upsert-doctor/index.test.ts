@@ -2,7 +2,9 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
-  const onConflictDoUpdate = vi.fn();
+  const onConflictDoUpdate = vi.fn(() => ({
+    returning: async () => [{ id: "saved_id" }],
+  }));
   const values = vi.fn(() => ({ onConflictDoUpdate }));
   return {
     execute: vi.fn(),
@@ -14,6 +16,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
+const audit = vi.hoisted(() => ({ recordAudit: vi.fn() }));
+vi.mock("@/lib/audit", () => audit);
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({

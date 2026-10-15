@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { withClinicLock } from "@/db/clinic-lock";
 import { patientsTable } from "@/db/schema";
+import { recordAudit } from "@/lib/audit";
 import { clinicWriteActionClient } from "@/lib/clinic-action";
 import { ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
@@ -32,7 +33,7 @@ export const upsertPatient = clinicWriteActionClient
         ensurePlanAllows(resolvePlan(ctx.user.plan), "patients", patientCount);
       }
 
-      await tx
+      const [saved] = await tx
         .insert(patientsTable)
         .values({
           ...parsedInput,
@@ -44,7 +45,17 @@ export const upsertPatient = clinicWriteActionClient
           set: {
             ...parsedInput,
           },
-        });
+        })
+        .returning({ id: patientsTable.id });
+      await recordAudit(
+        {
+          userId: ctx.user.id,
+          clinicId,
+          action: existingPatient ? "patient.updated" : "patient.created",
+          entityId: saved?.id,
+        },
+        tx,
+      );
     });
     revalidatePath("/patients");
   });
