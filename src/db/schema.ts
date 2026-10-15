@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -32,6 +33,10 @@ export const usersTable = pgTable("users", {
   // and when they last changed that choice (one change per 30 days).
   clinicChoiceMadeAt: timestamp("clinic_choice_made_at"),
   clinicChoiceChangedAt: timestamp("clinic_choice_changed_at"),
+  // Which version of the terms of use and privacy policy the user accepted,
+  // and when; a newer version asks again.
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  termsVersion: text("terms_version"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });
@@ -241,4 +246,26 @@ export const appointmentsTableRelations = relations(
       references: [doctorsTable.id],
     }),
   }),
+);
+
+// Who changed what in a clinic, for accountability (LGPD arts. 6-X and 37).
+// Holds ids only, never names or contact details, so it doesn't become another
+// copy of the patients' data. Rows outlive deleted users and clinics.
+export const auditLogsTable = pgTable(
+  "audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    userId: text("user_id").references(() => usersTable.id, {
+      onDelete: "set null",
+    }),
+    clinicId: uuid("clinic_id").references(() => clinicsTable.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    entityId: text("entity_id"),
+  },
+  (table) => [
+    index("audit_logs_clinic_created_idx").on(table.clinicId, table.createdAt),
+  ],
 );

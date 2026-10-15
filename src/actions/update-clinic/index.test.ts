@@ -5,12 +5,19 @@ const mocks = vi.hoisted(() => {
   return { getSession: vi.fn(), set: vi.fn(() => ({ where })), where };
 });
 
+const audit = vi.hoisted(() => ({ recordAudit: vi.fn() }));
+vi.mock("@/lib/audit", () => audit);
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({ db: { update: () => ({ set: mocks.set }) } }));
+vi.mock("@/db", () => {
+  const tx = { update: () => ({ set: mocks.set }) };
+  return {
+    db: { transaction: async (fn: (tx: unknown) => unknown) => fn(tx) },
+  };
+});
 
 import { updateClinic } from ".";
 

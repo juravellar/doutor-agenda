@@ -50,6 +50,13 @@
       "when": 1792017111661,
       "tag": "0006_multi_clinic",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792072878196,
+      "tag": "0007_lgpd",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { doctorsTable } from "@/db/schema";
+import { recordAudit } from "@/lib/audit";
 import { clinicWriteActionClient } from "@/lib/clinic-action";
 
 export const deleteDoctor = clinicWriteActionClient
@@ -25,6 +26,17 @@ export const deleteDoctor = clinicWriteActionClient
     if (doctor.clinicId !== clinicId) {
       throw new Error("Médico não encontrado");
     }
-    await db.delete(doctorsTable).where(eq(doctorsTable.id, parsedInput.id));
+    await db.transaction(async (tx) => {
+      await tx.delete(doctorsTable).where(eq(doctorsTable.id, parsedInput.id));
+      await recordAudit(
+        {
+          userId: ctx.user.id,
+          clinicId,
+          action: "doctor.deleted",
+          entityId: parsedInput.id,
+        },
+        tx,
+      );
+    });
     revalidatePath("/doctors");
   });

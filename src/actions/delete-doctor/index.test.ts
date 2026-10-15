@@ -6,17 +6,21 @@ const mocks = vi.hoisted(() => ({
   deleteWhere: vi.fn(),
 }));
 
+const audit = vi.hoisted(() => ({ recordAudit: vi.fn() }));
+vi.mock("@/lib/audit", () => audit);
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
-vi.mock("@/db", () => ({
-  db: {
+vi.mock("@/db", () => {
+  const db: Record<string, unknown> = {
     query: { doctorsTable: { findFirst: mocks.findDoctor } },
     delete: () => ({ where: mocks.deleteWhere }),
-  },
-}));
+  };
+  db.transaction = async (fn: (tx: unknown) => unknown) => fn(db);
+  return { db };
+});
 
 import { deleteDoctor } from ".";
 
@@ -39,6 +43,14 @@ describe("deleteDoctor", () => {
 
     expect(result?.serverError).toBeUndefined();
     expect(mocks.deleteWhere).toHaveBeenCalledOnce();
+    expect(audit.recordAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clinicId: CLINIC_ID,
+        action: "doctor.deleted",
+        entityId: DOCTOR_ID,
+      }),
+      expect.anything(),
+    );
   });
 
   it("refuses to delete once the free period is over", async () => {

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
-  const onConflictDoUpdate = vi.fn();
+  const onConflictDoUpdate = vi.fn(() => ({
+    returning: async () => [{ id: "saved_id" }],
+  }));
   const values = vi.fn(() => ({ onConflictDoUpdate }));
   return {
     execute: vi.fn(),
@@ -13,6 +15,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
+const audit = vi.hoisted(() => ({ recordAudit: vi.fn() }));
+vi.mock("@/lib/audit", () => audit);
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
@@ -65,6 +69,15 @@ describe("upsertPatient", () => {
     expect(mocks.onConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ setWhere: expect.anything() }),
     );
+    const [entry] = audit.recordAudit.mock.calls[0];
+    expect(entry).toEqual({
+      userId: undefined,
+      clinicId: CLINIC_ID,
+      action: "patient.created",
+      entityId: "saved_id",
+    });
+    // Only ids: the patient's name and contact never reach the audit log.
+    expect(JSON.stringify(entry)).not.toMatch(/João|joao@|11999999999/);
   });
 
   it("blocks the 21st patient on the Free plan", async () => {
