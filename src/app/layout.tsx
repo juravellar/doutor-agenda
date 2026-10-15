@@ -7,8 +7,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { ReactQueryProvider } from "@/providers/react-query";
 
-const faviconUrl = "/simbolo.png";
-
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
@@ -17,13 +15,6 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Avelliq",
   description: "Agendamento e gestão para clínicas médicas.",
-  icons: [
-    {
-      rel: "icon",
-      url: faviconUrl,
-      type: "image/png",
-    },
-  ],
 };
 
 export default function RootLayout({
@@ -32,11 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        {/* Garante que o favicon é aplicado corretamente */}
-        <link rel="icon" href={faviconUrl} type="image/png" />
-      </head>
+    <html lang="pt-BR">
       <body className={`${manrope.variable} antialiased`}>
         <ReactQueryProvider>
           <NuqsAdapter>{children}</NuqsAdapter>
