@@ -18,6 +18,14 @@ import {
 import { formatCurrencyInCents } from "@/helpers/currency";
 import { clinicToday } from "@/helpers/time";
 
+// The full format ("R$ 1.200,00") doesn't fit beside the chart on a phone.
+const compactCurrency = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 interface DailyAppointment {
   date: string;
   appointments: number;
@@ -67,10 +75,13 @@ const AppointmentsChart = ({
         <CardTitle>Agendamentos e Faturamento</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="min-h-[200px]">
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-[240px] w-full sm:h-[300px]"
+        >
           <AreaChart
             data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 0, left: 0, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
@@ -78,12 +89,15 @@ const AppointmentsChart = ({
               tickLine={false}
               tickMargin={10}
               axisLine={false}
+              minTickGap={16}
             />
             <YAxis
               yAxisId="left"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              width={32}
+              allowDecimals={false}
             />
             <YAxis
               yAxisId="right"
@@ -91,7 +105,8 @@ const AppointmentsChart = ({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => formatCurrencyInCents(value)}
+              tickFormatter={(value) => compactCurrency.format(value / 100)}
+              width={56}
             />
             <ChartTooltip
               content={

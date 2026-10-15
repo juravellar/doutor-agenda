@@ -9,7 +9,8 @@ export interface CreateGate {
 
 export const createGate = (
   usage: Usage,
-  readOnly: boolean,
+  // Why writing is blocked for the whole clinic (e.g. free period over).
+  blockReason: string | null,
   noun: { one: string; many: string },
   period = "",
 ): CreateGate => ({
@@ -17,8 +18,8 @@ export const createGate = (
     usage.limit === null
       ? null
       : `${usage.used} de ${usage.limit} ${usage.limit === 1 ? noun.one : noun.many}${period}`,
-  blockedReason: readOnly
-    ? "Seu período gratuito terminou."
+  blockedReason: blockReason
+    ? blockReason
     : isAtLimit(usage)
       ? "Você atingiu o limite do seu plano."
       : null,

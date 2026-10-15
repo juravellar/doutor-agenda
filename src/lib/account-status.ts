@@ -6,6 +6,8 @@ const WARNING_DAYS = 14;
 
 export type AccountStatus =
   | { kind: "payment-failed"; planName: string }
+  | { kind: "clinic-read-only"; clinicLimit: number }
+  | { kind: "choose-clinics"; clinicCount: number; clinicLimit: number }
   | { kind: "subscription-ending"; planName: string; endsAt: Date }
   | { kind: "free-period-over" }
   | { kind: "free-period-ending"; daysLeft: number }
@@ -17,18 +19,39 @@ export const accountStatus = (
     plan?: string | null;
     subscriptionStatus?: string | null;
     subscriptionEndsAt?: Date | string | null;
-    clinic?: { createdAt?: Date | string };
+    freePeriodStartsAt?: Date | string | null;
+    clinic?: { id?: string; writable?: boolean } | null;
+    clinics?: unknown[];
+    clinicLimit?: number | null;
+    overClinicLimit?: boolean;
+    clinicChoiceMadeAt?: Date | string | null;
   },
   now: Date = new Date(),
 ): AccountStatus => {
   if (!user.clinic) {
     return null;
   }
-  if (isPaidPlan(user.plan)) {
+  const paid = isPaidPlan(user.plan);
+  if (paid && user.subscriptionStatus === "past_due") {
+    return { kind: "payment-failed", planName: resolvePlan(user.plan).name };
+  }
+  const clinicLimit = user.clinicLimit ?? null;
+  if (clinicLimit !== null && user.clinic.writable === false) {
+    return { kind: "clinic-read-only", clinicLimit };
+  }
+  if (
+    clinicLimit !== null &&
+    user.overClinicLimit &&
+    !user.clinicChoiceMadeAt
+  ) {
+    return {
+      kind: "choose-clinics",
+      clinicCount: user.clinics?.length ?? 0,
+      clinicLimit,
+    };
+  }
+  if (paid) {
     const planName = resolvePlan(user.plan).name;
-    if (user.subscriptionStatus === "past_due") {
-      return { kind: "payment-failed", planName };
-    }
     if (user.subscriptionEndsAt) {
       return {
         kind: "subscription-ending",
@@ -38,10 +61,11 @@ export const accountStatus = (
     }
     return null;
   }
-  if (isReadOnly(user.plan, user.clinic.createdAt, now)) {
+  const freePeriodStartsAt = user.freePeriodStartsAt ?? undefined;
+  if (isReadOnly(user.plan, freePeriodStartsAt, now)) {
     return { kind: "free-period-over" };
   }
-  const daysLeft = freePeriodDaysLeft(user.clinic.createdAt, now);
+  const daysLeft = freePeriodDaysLeft(freePeriodStartsAt, now);
   return daysLeft <= WARNING_DAYS
     ? { kind: "free-period-ending", daysLeft }
     : null;

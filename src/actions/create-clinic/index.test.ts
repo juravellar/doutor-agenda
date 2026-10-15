@@ -2,8 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   const returning = vi.fn();
-  const values = vi.fn();
-  return { getSession: vi.fn(), values, returning };
+  const where = vi.fn();
+  return {
+    getSession: vi.fn(),
+    count: vi.fn(),
+    values: vi.fn(),
+    returning,
+    set: vi.fn(() => ({ where })),
+    execute: vi.fn(),
+  };
 });
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
@@ -16,11 +23,14 @@ vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mocks.getSession } },
 }));
 vi.mock("@/db", () => {
-  const tx = { insert: () => ({ values: mocks.values }) };
+  const tx = {
+    $count: mocks.count,
+    insert: () => ({ values: mocks.values }),
+    update: () => ({ set: mocks.set }),
+    execute: mocks.execute,
+  };
   return {
-    db: {
-      transaction: async (fn: (tx: unknown) => unknown) => fn(tx),
-    },
+    db: { transaction: async (fn: (tx: unknown) => unknown) => fn(tx) },
   };
 });
 
@@ -29,53 +39,78 @@ import { createClinic } from ".";
 describe("createClinic", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getSession.mockResolvedValue({ user: { id: "user_1" } });
-    mocks.returning.mockResolvedValue([{ id: "clinic_1" }]);
+    mocks.getSession.mockResolvedValue({ user: { id: "user_1", plan: null } });
+    mocks.returning.mockResolvedValue([{ id: "clinic_new" }]);
     mocks.values.mockImplementation((row: Record<string, unknown>) =>
       "name" in row ? { returning: mocks.returning } : Promise.resolve(),
     );
+    mocks.count.mockResolvedValue(0);
   });
 
-  it("creates the clinic and the membership in one transaction", async () => {
-    await expect(createClinic("Clínica")).rejects.toThrow(
-      "redirect:/dashboard",
-    );
+  it("creates the first clinic and makes it active", async () => {
+    await expect(createClinic("Centro")).rejects.toThrow("redirect:/dashboard");
 
-    expect(mocks.values).toHaveBeenCalledWith({ name: "Clínica" });
+    expect(mocks.values).toHaveBeenCalledWith({ name: "Centro" });
     expect(mocks.values).toHaveBeenCalledWith({
       userId: "user_1",
-      clinicId: "clinic_1",
+      clinicId: "clinic_new",
+    });
+    expect(mocks.set).toHaveBeenCalledWith({
+      activeClinicId: "clinic_new",
+      clinicChoiceMadeAt: null,
+      clinicChoiceChangedAt: null,
     });
   });
 
-  it("does not insert anything when the session already has a clinic", async () => {
+  it("clears an earlier choice of active clinics", async () => {
     mocks.getSession.mockResolvedValue({
-      user: { id: "user_1", clinic: { id: "clinic_1" } },
+      user: { id: "user_1", plan: "professional" },
     });
+    mocks.count.mockResolvedValue(2);
 
-    await expect(createClinic("Outra")).rejects.toThrow("redirect:/dashboard");
+    await expect(createClinic("Filial")).rejects.toThrow("redirect:/dashboard");
+
+    expect(mocks.set).toHaveBeenCalledWith({ keptInPlan: false });
+  });
+
+  it("refuses a blank or oversized name", async () => {
+    await expect(createClinic("   ")).rejects.toThrow();
+    await expect(createClinic("x".repeat(121))).rejects.toThrow();
     expect(mocks.values).not.toHaveBeenCalled();
   });
 
-  it("treats a concurrent submit that hit the unique index as done", async () => {
-    mocks.values.mockImplementation((row: Record<string, unknown>) =>
-      "name" in row
-        ? { returning: mocks.returning }
-        : Promise.reject(
-            Object.assign(new Error("duplicate"), { code: "23505" }),
-          ),
-    );
+  it("refuses a second clinic on the Free plan", async () => {
+    mocks.count.mockResolvedValue(1);
 
-    await expect(createClinic("Clínica")).rejects.toThrow(
-      "redirect:/dashboard",
-    );
+    await expect(createClinic("Norte")).rejects.toThrow("redirect:/clinics");
+    expect(mocks.values).not.toHaveBeenCalled();
   });
 
-  it("surfaces other database errors", async () => {
-    mocks.values.mockImplementation(() => {
-      throw new Error("connection lost");
+  it("allows a second clinic on the Essencial plan, but not a third", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: "user_1", plan: "essential" },
     });
+    mocks.count.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
 
-    await expect(createClinic("Clínica")).rejects.toThrow("connection lost");
+    await expect(createClinic("Norte")).rejects.toThrow("redirect:/dashboard");
+    await expect(createClinic("Sul")).rejects.toThrow("redirect:/clinics");
+    expect(mocks.values).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not limit clinics on the Profissional plan", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: "user_1", plan: "professional" },
+    });
+    mocks.count.mockResolvedValue(25);
+
+    await expect(createClinic("Filial")).rejects.toThrow("redirect:/dashboard");
+  });
+
+  it("counts clinics under the user's lock", async () => {
+    await expect(createClinic("Centro")).rejects.toThrow();
+
+    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.count.mock.invocationCallOrder[0],
+    );
   });
 });

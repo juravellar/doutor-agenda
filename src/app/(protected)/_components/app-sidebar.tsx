@@ -1,25 +1,34 @@
 "use client";
 
 import {
+  Building2,
   CalendarDays,
+  Check,
   ChevronDown,
   ChevronRight,
   Gem,
   LayoutDashboard,
   LogOut,
+  Plus,
+  Settings,
   Stethoscope,
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
+import { toast } from "sonner";
 
+import { switchClinic } from "@/actions/switch-clinic";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -35,6 +44,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 import { authClient } from "../../../lib/auth-client";
 
@@ -72,6 +82,21 @@ const otherItems = [
 export function AppSidebar() {
   const router = useRouter();
   const session = authClient.useSession();
+  const clinics = session.data?.user?.clinics ?? [];
+  const activeClinicId = session.data?.user?.clinic?.id;
+  const clinicLimit = session.data?.user?.clinicLimit;
+  const canAddClinic =
+    clinicLimit === null ||
+    (clinicLimit !== undefined && clinics.length < clinicLimit);
+  const switchClinicAction = useAction(switchClinic, {
+    onSuccess: () => {
+      session.refetch();
+      router.refresh();
+    },
+    onError: () => {
+      toast.error("Não foi possível trocar de clínica.");
+    },
+  });
   const pathname = usePathname();
   const [isOthersExpanded, setIsOthersExpanded] = useState(false);
 
@@ -187,17 +212,60 @@ export function AppSidebar() {
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  <div>
-                    <p className="text-sm">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm">
                       {session.data?.user?.clinic?.name}
                     </p>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground truncate text-sm">
                       {session.data?.user.email}
                     </p>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="w-64">
+                <DropdownMenuLabel>Clínicas</DropdownMenuLabel>
+                {clinics.map((clinic) => (
+                  <DropdownMenuItem
+                    key={clinic.id}
+                    disabled={switchClinicAction.isPending}
+                    onClick={() =>
+                      clinic.id !== activeClinicId &&
+                      switchClinicAction.execute({ clinicId: clinic.id })
+                    }
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        clinic.id === activeClinicId ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <span className="flex-1 truncate">{clinic.name}</span>
+                    {!clinic.writable && (
+                      <span className="text-muted-foreground ml-2 text-xs">
+                        Só leitura
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem
+                  disabled={!canAddClinic}
+                  onClick={() => router.push("/clinic-form")}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {canAddClinic ? "Nova clínica" : "Nova clínica (limite do plano)"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/clinics")}>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Minhas clínicas
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push("/clinic-settings")}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configurações da clínica
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
                   className="focus:bg-destructive/10 focus:text-destructive"

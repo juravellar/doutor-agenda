@@ -5,6 +5,7 @@ export const PAID_PLAN_IDS: PaidPlanId[] = ["essential", "professional"];
 
 // null means unlimited.
 export interface PlanLimits {
+  clinics: number | null;
   doctors: number | null;
   patients: number | null;
   appointmentsPerMonth: number | null;
@@ -23,9 +24,10 @@ export const PLANS: Record<PlanId, Plan> = {
     id: "free",
     name: "Free",
     description: "Para conhecer a plataforma por 3 meses",
-    limits: { doctors: 1, patients: 20, appointmentsPerMonth: 40 },
+    limits: { clinics: 1, doctors: 1, patients: 20, appointmentsPerMonth: 40 },
     features: [
       "Grátis por 3 meses",
+      "1 clínica",
       "1 médico",
       "Até 20 pacientes",
       "Até 40 agendamentos por mês",
@@ -36,11 +38,17 @@ export const PLANS: Record<PlanId, Plan> = {
     id: "essential",
     name: "Essencial",
     description: "Para profissionais autônomos ou pequenas clínicas",
-    limits: { doctors: 5, patients: 100, appointmentsPerMonth: 200 },
+    limits: {
+      clinics: 2,
+      doctors: 5,
+      patients: 100,
+      appointmentsPerMonth: 200,
+    },
     features: [
-      "Até 5 médicos",
-      "Até 100 pacientes",
-      "Até 200 agendamentos por mês",
+      "Até 2 clínicas",
+      "Até 5 médicos por clínica",
+      "Até 100 pacientes por clínica",
+      "Até 200 agendamentos por mês por clínica",
       "Dashboard com métricas",
       "Suporte por e-mail",
     ],
@@ -49,8 +57,14 @@ export const PLANS: Record<PlanId, Plan> = {
     id: "professional",
     name: "Profissional",
     description: "Para clínicas com uma equipe maior",
-    limits: { doctors: null, patients: null, appointmentsPerMonth: null },
+    limits: {
+      clinics: null,
+      doctors: null,
+      patients: null,
+      appointmentsPerMonth: null,
+    },
     features: [
+      "Clínicas ilimitadas",
       "Médicos ilimitados",
       "Pacientes ilimitados",
       "Agendamentos ilimitados",

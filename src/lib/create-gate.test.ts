@@ -6,27 +6,27 @@ const doctor = { one: "médico", many: "médicos" };
 
 describe("createGate", () => {
   it("shows usage and allows creating below the limit", () => {
-    expect(createGate({ used: 12, limit: 20 }, false, doctor)).toEqual({
+    expect(createGate({ used: 12, limit: 20 }, null, doctor)).toEqual({
       usageText: "12 de 20 médicos",
       blockedReason: null,
     });
   });
 
   it("blocks at the limit", () => {
-    expect(createGate({ used: 1, limit: 1 }, false, doctor)).toEqual({
+    expect(createGate({ used: 1, limit: 1 }, null, doctor)).toEqual({
       usageText: "1 de 1 médico",
       blockedReason: "Você atingiu o limite do seu plano.",
     });
   });
 
   it("blocks read-only clinics even below the limit", () => {
-    expect(createGate({ used: 0, limit: 1 }, true, doctor).blockedReason).toBe(
+    expect(createGate({ used: 0, limit: 1 }, "Seu período gratuito terminou.", doctor).blockedReason).toBe(
       "Seu período gratuito terminou.",
     );
   });
 
   it("hides usage for unlimited plans", () => {
-    expect(createGate({ used: 500, limit: null }, false, doctor)).toEqual({
+    expect(createGate({ used: 500, limit: null }, null, doctor)).toEqual({
       usageText: null,
       blockedReason: null,
     });
@@ -36,7 +36,7 @@ describe("createGate", () => {
     expect(
       createGate(
         { used: 38, limit: 40 },
-        false,
+        null,
         { one: "agendamento", many: "agendamentos" },
         " neste mês",
       ).usageText,

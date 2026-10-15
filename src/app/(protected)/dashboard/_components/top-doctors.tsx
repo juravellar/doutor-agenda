@@ -33,10 +33,10 @@ export default function TopDoctors({ doctors }: TopDoctorsProps) {
             {doctors.map((doctor) => (
               <div
                 key={doctor.id}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-10 w-10">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar className="h-10 w-10 shrink-0">
                     <AvatarFallback className="bg-gray-100 text-lg font-medium text-gray-600">
                       {doctor.name
                         .split(" ")
@@ -45,15 +45,15 @@ export default function TopDoctors({ doctors }: TopDoctorsProps) {
                         .slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h3 className="text-sm">{doctor.name}</h3>
-                    <p className="text-muted-foreground text-sm">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm">{doctor.name}</h3>
+                    <p className="text-muted-foreground truncate text-sm">
                       {doctor.specialty}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-muted-foreground text-sm font-medium">
+                <div className="shrink-0 text-right">
+                  <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">
                     {doctor.appointments} agend.
                   </span>
                 </div>

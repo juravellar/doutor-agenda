@@ -78,14 +78,14 @@ export default function TopSpecialties({
                   key={specialty.specialty}
                   className="flex items-center gap-2"
                 >
-                  <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
+                  <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
                     <Icon className="text-primary h-5 w-5" />
                   </div>
-                  <div className="flex w-full flex-col justify-center">
-                    <div className="flex w-full justify-between">
-                      <h3 className="text-sm">{specialty.specialty}</h3>
-                      <div className="text-right">
-                        <span className="text-muted-foreground text-sm font-medium">
+                  <div className="flex min-w-0 w-full flex-col justify-center">
+                    <div className="flex w-full justify-between gap-2">
+                      <h3 className="truncate text-sm">{specialty.specialty}</h3>
+                      <div className="shrink-0 text-right">
+                        <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">
                           {specialty.appointments} agend.
                         </span>
                       </div>

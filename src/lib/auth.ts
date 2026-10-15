@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { usersTable, usersToClinicsTable } from "@/db/schema";
+import { resolveClinicAccess } from "@/lib/clinic-access";
 
 export const auth = betterAuth({
   // Model names below are the exact schema keys (usersTable, ...), so no
@@ -24,7 +25,7 @@ export const auth = betterAuth({
   plugins: [
     customSession(async ({ user, session }) => {
       // TODO: colocar cache
-      const [userData, clinics] = await Promise.all([
+      const [userData, memberships] = await Promise.all([
         db.query.usersTable.findFirst({
           where: eq(usersTable.id, user.id),
         }),
@@ -32,25 +33,33 @@ export const auth = betterAuth({
           where: eq(usersToClinicsTable.userId, user.id),
           with: {
             clinic: true,
-            user: true,
           },
         }),
       ]);
-      // TODO: Ao adaptar para o usuário ter múltiplas clínicas, deve-se mudar esse código
-      const clinic = clinics?.[0];
+      const access = resolveClinicAccess(
+        memberships.map((membership) => ({
+          clinicId: membership.clinicId,
+          name: membership.clinic.name,
+          clinicCreatedAt: membership.clinic.createdAt,
+          memberSince: membership.createdAt,
+          keptInPlan: membership.keptInPlan,
+        })),
+        userData?.activeClinicId,
+        userData?.plan,
+      );
       return {
         user: {
           ...user,
           plan: userData?.plan,
           subscriptionStatus: userData?.subscriptionStatus,
           subscriptionEndsAt: userData?.subscriptionEndsAt,
-          clinic: clinic?.clinicId
-            ? {
-                id: clinic?.clinicId,
-                name: clinic?.clinic?.name,
-                createdAt: clinic?.clinic?.createdAt,
-              }
-            : undefined,
+          clinic: access.active ?? undefined,
+          clinics: access.clinics,
+          clinicLimit: access.clinicLimit,
+          overClinicLimit: access.overClinicLimit,
+          freePeriodStartsAt: access.freePeriodStartsAt,
+          clinicChoiceMadeAt: userData?.clinicChoiceMadeAt ?? null,
+          clinicChoiceChangedAt: userData?.clinicChoiceChangedAt ?? null,
         },
         session,
       };

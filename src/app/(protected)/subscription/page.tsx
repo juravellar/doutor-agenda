@@ -31,7 +31,11 @@ const SubscriptionPage = async () => {
   const currentPlan = resolvePlan(session.user.plan);
   const [prices, usage] = await Promise.all([
     getPlanPrices(),
-    getPlanUsage(session.user.clinic.id, session.user.plan),
+    getPlanUsage(
+      session.user.clinic.id,
+      session.user.plan,
+      session.user.clinics.length,
+    ),
   ]);
   const subscriptionNotice = {
     pastDue: session.user.subscriptionStatus === "past_due",

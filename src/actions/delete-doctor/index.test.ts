@@ -45,7 +45,8 @@ describe("deleteDoctor", () => {
     mocks.getSession.mockResolvedValue({
       user: {
         plan: null,
-        clinic: { id: CLINIC_ID, createdAt: new Date("2020-01-01T00:00:00Z") },
+        freePeriodStartsAt: new Date("2020-01-01T00:00:00Z"),
+        clinic: { id: CLINIC_ID, writable: true },
       },
     });
     vi.useFakeTimers({ toFake: ["Date"] });

@@ -69,6 +69,28 @@ export function AccountStatusBanner() {
           </a>
         </Banner>
       );
+    case "clinic-read-only":
+      return (
+        <Banner tone="warning">
+          Esta clínica está só leitura porque seu plano permite{" "}
+          {status.clinicLimit}{" "}
+          {status.clinicLimit === 1 ? "clínica" : "clínicas"}. Você pode ver os
+          dados, mas não cadastrar nem editar.{" "}
+          <Link href="/clinics" className={linkClass}>
+            Minhas clínicas
+          </Link>
+        </Banner>
+      );
+    case "choose-clinics":
+      return (
+        <Banner tone="warning">
+          Você tem {status.clinicCount} clínicas e seu plano permite{" "}
+          {status.clinicLimit}. Escolha quais continuam ativas.{" "}
+          <Link href="/clinics" className={linkClass}>
+            Escolher clínicas
+          </Link>
+        </Banner>
+      );
     case "subscription-ending":
       return (
         <Banner tone="info">

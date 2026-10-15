@@ -1,15 +1,20 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
-import { db } from "@/db";
-import { isUniqueViolation } from "@/db/clinic-lock";
-import { clinicsTable, usersToClinicsTable } from "@/db/schema";
+import { withUserLock } from "@/db/clinic-lock";
+import { clinicsTable, usersTable, usersToClinicsTable } from "@/db/schema";
+import { resolvePlan } from "@/lib/plans";
 
 import { auth } from "../../lib/auth";
 
-export const createClinic = async (name: string) => {
+const clinicNameSchema = z.string().trim().min(1).max(120);
+
+export const createClinic = async (rawName: string) => {
+  const name = clinicNameSchema.parse(rawName);
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -17,30 +22,45 @@ export const createClinic = async (name: string) => {
   if (!session?.user) {
     throw new Error("Unauthorized");
   }
-  if (session.user.clinic) {
-    redirect("/dashboard");
-  }
+  const clinicLimit = resolvePlan(session.user.plan).limits.clinics;
 
-  // One clinic per user is enforced by a unique index: a concurrent submit
-  // that lost the race rolls back, including its clinic row.
-  try {
-    await db.transaction(async (tx) => {
-      const [clinic] = await tx
-        .insert(clinicsTable)
-        .values({
-          name,
-        })
-        .returning();
-      await tx.insert(usersToClinicsTable).values({
-        userId: session.user.id,
-        clinicId: clinic.id,
-      });
-    });
-  } catch (error) {
-    if (!isUniqueViolation(error)) {
-      throw error;
+  // Counted in the database under the user's lock, so a double submit can't
+  // create more clinics than the plan allows.
+  const created = await withUserLock(session.user.id, async (tx) => {
+    const clinicCount = await tx.$count(
+      usersToClinicsTable,
+      eq(usersToClinicsTable.userId, session.user.id),
+    );
+    if (clinicLimit !== null && clinicCount >= clinicLimit) {
+      return false;
     }
-  }
+    const [clinic] = await tx
+      .insert(clinicsTable)
+      .values({
+        name,
+      })
+      .returning();
+    await tx.insert(usersToClinicsTable).values({
+      userId: session.user.id,
+      clinicId: clinic.id,
+    });
+    // A clinic can only be created within the plan's limit, where the earlier
+    // choice of active clinics has no effect. Clearing it means a later
+    // downgrade asks again, over the clinics the user has by then.
+    await tx
+      .update(usersToClinicsTable)
+      .set({ keptInPlan: false })
+      .where(eq(usersToClinicsTable.userId, session.user.id));
+    await tx
+      .update(usersTable)
+      .set({
+        activeClinicId: clinic.id,
+        clinicChoiceMadeAt: null,
+        clinicChoiceChangedAt: null,
+      })
+      .where(eq(usersTable.id, session.user.id));
+    return true;
+  });
 
-  redirect("/dashboard");
+  redirect(created ? "/dashboard" : "/clinics");
 };
