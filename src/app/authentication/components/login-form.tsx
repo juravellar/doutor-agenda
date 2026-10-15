@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -177,6 +178,18 @@ const LoginForm = () => {
                 </svg>
                 Entrar com Google
               </Button>
+              <p className="text-muted-foreground text-center text-xs">
+                Ao entrar com Google pela primeira vez, você cria uma conta e
+                concorda com os{" "}
+                <Link href="/termos" target="_blank" className="underline">
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link href="/privacidade" target="_blank" className="underline">
+                  Política de Privacidade
+                </Link>
+                .
+              </p>
             </div>
           </CardFooter>
         </form>

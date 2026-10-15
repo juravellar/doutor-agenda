@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ACCEPT_TERMS_HEADER, TERMS_VERSION } from "@/lib/terms";
 
 import { authClient } from "../../../lib/auth-client";
 
@@ -43,6 +45,11 @@ const registerSchema = z.object({
     .string()
     .min(8, { message: "Senha deve ter no mínimo 8 caracteres" })
     .max(128, { message: "Senha deve ter no máximo 128 caracteres" }),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({
+      message: "Aceite os Termos de Uso e a Política de Privacidade",
+    }),
+  }),
 });
 
 const SignUpForm = () => {
@@ -53,6 +60,7 @@ const SignUpForm = () => {
       username: "",
       email: "",
       password: "",
+      acceptTerms: false as unknown as true,
     },
   });
 
@@ -65,6 +73,8 @@ const SignUpForm = () => {
         callbackURL: "/dashboard",
       },
       {
+        // The server records the acceptance only with this header.
+        headers: { [ACCEPT_TERMS_HEADER]: TERMS_VERSION },
         onSuccess: (ctx) => {
           // Without a session token the account still needs its email
           // confirmed (only when an email provider is configured).
@@ -143,6 +153,51 @@ const SignUpForm = () => {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="acceptTerms"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-start gap-2">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        className="accent-primary mt-0.5 h-4 w-4 shrink-0"
+                        checked={field.value === true}
+                        onChange={(event) =>
+                          field.onChange(event.target.checked)
+                        }
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm leading-snug font-normal">
+                      <span>
+                        Li e aceito os{" "}
+                        <Link
+                          href="/termos"
+                          target="_blank"
+                          className="underline"
+                        >
+                          Termos de Uso
+                        </Link>{" "}
+                        e a{" "}
+                        <Link
+                          href="/privacidade"
+                          target="_blank"
+                          className="underline"
+                        >
+                          Política de Privacidade
+                        </Link>
+                        .
+                      </span>
+                    </FormLabel>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
