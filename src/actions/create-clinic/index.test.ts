@@ -55,7 +55,28 @@ describe("createClinic", () => {
       userId: "user_1",
       clinicId: "clinic_new",
     });
-    expect(mocks.set).toHaveBeenCalledWith({ activeClinicId: "clinic_new" });
+    expect(mocks.set).toHaveBeenCalledWith({
+      activeClinicId: "clinic_new",
+      clinicChoiceMadeAt: null,
+      clinicChoiceChangedAt: null,
+    });
+  });
+
+  it("clears an earlier choice of active clinics", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: "user_1", plan: "professional" },
+    });
+    mocks.count.mockResolvedValue(2);
+
+    await expect(createClinic("Filial")).rejects.toThrow("redirect:/dashboard");
+
+    expect(mocks.set).toHaveBeenCalledWith({ keptInPlan: false });
+  });
+
+  it("refuses a blank or oversized name", async () => {
+    await expect(createClinic("   ")).rejects.toThrow();
+    await expect(createClinic("x".repeat(121))).rejects.toThrow();
+    expect(mocks.values).not.toHaveBeenCalled();
   });
 
   it("refuses a second clinic on the Free plan", async () => {

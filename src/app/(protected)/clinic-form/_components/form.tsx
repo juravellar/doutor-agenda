@@ -22,7 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 
 const clinicFormSchema = z.object({
-  name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: "Nome é obrigatório" })
+    .max(120, { message: "Use até 120 caracteres" }),
 });
 
 type ClinicFormData = z.infer<typeof clinicFormSchema>;

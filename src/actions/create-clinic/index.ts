@@ -3,6 +3,7 @@
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { withUserLock } from "@/db/clinic-lock";
 import { clinicsTable, usersTable, usersToClinicsTable } from "@/db/schema";
@@ -10,7 +11,10 @@ import { resolvePlan } from "@/lib/plans";
 
 import { auth } from "../../lib/auth";
 
-export const createClinic = async (name: string) => {
+const clinicNameSchema = z.string().trim().min(1).max(120);
+
+export const createClinic = async (rawName: string) => {
+  const name = clinicNameSchema.parse(rawName);
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -40,9 +44,20 @@ export const createClinic = async (name: string) => {
       userId: session.user.id,
       clinicId: clinic.id,
     });
+    // A clinic can only be created within the plan's limit, where the earlier
+    // choice of active clinics has no effect. Clearing it means a later
+    // downgrade asks again, over the clinics the user has by then.
+    await tx
+      .update(usersToClinicsTable)
+      .set({ keptInPlan: false })
+      .where(eq(usersToClinicsTable.userId, session.user.id));
     await tx
       .update(usersTable)
-      .set({ activeClinicId: clinic.id })
+      .set({
+        activeClinicId: clinic.id,
+        clinicChoiceMadeAt: null,
+        clinicChoiceChangedAt: null,
+      })
       .where(eq(usersTable.id, session.user.id));
     return true;
   });

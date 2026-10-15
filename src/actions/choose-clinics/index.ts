@@ -26,9 +26,11 @@ export const chooseClinics = clinicActionClient
         "Seu plano já permite usar todas as suas clínicas.",
       );
     }
-    if (chosen.length > clinicLimit) {
+    // Exactly the plan's limit: with fewer, the free slots would go to the
+    // oldest clinics, which isn't what the user confirmed.
+    if (chosen.length !== clinicLimit) {
       throw new UserFacingError(
-        `Seu plano permite até ${clinicLimit} ${clinicLimit === 1 ? "clínica" : "clínicas"}.`,
+        `Escolha ${clinicLimit} ${clinicLimit === 1 ? "clínica" : "clínicas"}, o limite do seu plano.`,
       );
     }
     if (!chosen.every((id) => clinics.some((clinic) => clinic.id === id))) {

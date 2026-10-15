@@ -106,11 +106,23 @@ describe("chooseClinics", () => {
   it("refuses more clinics than the plan allows", async () => {
     const result = await chooseClinics({ clinicIds: [CENTRO, NORTE, SUL] });
 
-    expect(result?.serverError).toBe("Seu plano permite até 2 clínicas.");
+    expect(result?.serverError).toBe(
+      "Escolha 2 clínicas, o limite do seu plano.",
+    );
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+
+  it("refuses fewer clinics than the plan allows", async () => {
+    const result = await chooseClinics({ clinicIds: [SUL] });
+
+    expect(result?.serverError).toBe(
+      "Escolha 2 clínicas, o limite do seu plano.",
+    );
+    expect(mocks.set).not.toHaveBeenCalled();
   });
 
   it("refuses a clinic that isn't the user's", async () => {
-    const result = await chooseClinics({ clinicIds: [OTHER] });
+    const result = await chooseClinics({ clinicIds: [CENTRO, OTHER] });
 
     expect(result?.serverError).toBeDefined();
     expect(mocks.set).not.toHaveBeenCalled();

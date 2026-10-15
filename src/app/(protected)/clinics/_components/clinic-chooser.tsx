@@ -210,13 +210,15 @@ export function ClinicChooser({
       {choosing && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-muted-foreground text-sm">
-            {selected.length} de {limit} selecionadas
+            {selected.length === limit
+              ? `${selected.length} de ${limit} selecionadas`
+              : `Selecione ${limit - selected.length} ${limit - selected.length === 1 ? "clínica" : "clínicas"} (${selected.length} de ${limit})`}
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 disabled={
-                  selected.length === 0 ||
+                  selected.length !== limit ||
                   chooseAction.isPending ||
                   (unchanged && !firstChoice)
                 }
