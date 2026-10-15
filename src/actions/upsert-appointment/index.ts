@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { isUniqueViolation, withClinicLock } from "@/db/clinic-lock";
 import { appointmentsTable, patientsTable } from "@/db/schema";
+import { priceInCentsSchema } from "@/helpers/currency";
 import {
   clinicDateTimeToDate,
   clinicMonthRange,
@@ -28,7 +29,9 @@ export const upsertAppointment = clinicWriteActionClient
       doctorId: z.string().uuid(),
       date: z.date(),
       time: z.string(),
-      appointmentPriceInCents: z.number(),
+      appointmentPriceInCents: priceInCentsSchema(
+        "Valor da consulta é obrigatório.",
+      ),
     }),
   )
   .action(async ({ parsedInput, ctx }) => {

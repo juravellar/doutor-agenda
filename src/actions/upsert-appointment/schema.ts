@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { priceInCentsSchema } from "@/helpers/currency";
+
 export const upsertAppointmentSchema = z.object({
   id: z.string().uuid().optional(),
   patientId: z.string().uuid({
@@ -14,7 +16,7 @@ export const upsertAppointmentSchema = z.object({
   time: z.string().min(1, {
     message: "Horário é obrigatório.",
   }),
-  appointmentPriceInCents: z.number().min(1, {
-    message: "Valor da consulta é obrigatório.",
-  }),
+  appointmentPriceInCents: priceInCentsSchema(
+    "Valor da consulta é obrigatório.",
+  ),
 });

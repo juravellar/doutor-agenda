@@ -78,6 +78,8 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (veja a seção do Stripe abaixo) |
    | `NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL` | Link do portal do cliente do Stripe |
    | `SUPPORT_EMAIL` | E-mail de suporte mostrado a quem precisa alterar as clínicas ativas antes dos 30 dias (opcional) |
+   | `RESEND_API_KEY`, `EMAIL_FROM` | Envio de emails pelo [Resend](https://resend.com). Com as duas definidas, a conta só é liberada depois de confirmar o email (opcional) |
+   | `CRON_SECRET` | Segredo da limpeza diária de sessões expiradas (Vercel Cron). Sem ele, a limpeza não roda |
 
 3. Crie as tabelas no banco:
 

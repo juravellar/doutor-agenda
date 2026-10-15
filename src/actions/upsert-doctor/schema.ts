@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { priceInCentsSchema } from "@/helpers/currency";
+
 // Shared with the client form, whose fields have a different shape.
 export const timeRangeRule = {
   isValid: (from: string, to: string) => from < to,
@@ -15,9 +17,9 @@ export const upsertDoctorSchema = z
     specialty: z.string().trim().min(1, {
       message: "Especialidade é obrigatória.",
     }),
-    appointmentPriceInCents: z.number().min(1, {
-      message: "Preço da consulta é obrigatório.",
-    }),
+    appointmentPriceInCents: priceInCentsSchema(
+      "Preço da consulta é obrigatório.",
+    ),
     availableFromWeekDay: z.number().min(0).max(6),
     availableToWeekDay: z.number().min(0).max(6),
     availableFromTime: z.string().min(1, {

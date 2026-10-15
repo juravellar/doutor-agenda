@@ -68,6 +68,21 @@ describe("upsertAppointment", () => {
     ]);
   });
 
+  it.each([
+    ["negative", -500000],
+    ["fractional", 1500.5],
+    ["absurdly high", 100_000_000],
+  ])("refuses a %s price before touching the database", async (_, price) => {
+    const result = await upsertAppointment({
+      ...input,
+      appointmentPriceInCents: price,
+    });
+
+    expect(result?.validationErrors?.appointmentPriceInCents).toBeDefined();
+    expect(mocks.findPatient).not.toHaveBeenCalled();
+    expect(mocks.insertValues).not.toHaveBeenCalled();
+  });
+
   it("stores the appointment at the clinic-time instant", async () => {
     const result = await upsertAppointment(input);
 

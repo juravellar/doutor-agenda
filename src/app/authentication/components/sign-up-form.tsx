@@ -38,10 +38,11 @@ const registerSchema = z.object({
     .trim()
     .min(1, { message: "Email é obrigatório" })
     .email({ message: "Email inválido" }),
+  // Not trimmed: spaces are part of the password.
   password: z
     .string()
-    .trim()
-    .min(8, { message: "Senha deve ter no mínimo 8 caracteres" }),
+    .min(8, { message: "Senha deve ter no mínimo 8 caracteres" })
+    .max(128, { message: "Senha deve ter no máximo 128 caracteres" }),
 });
 
 const SignUpForm = () => {
@@ -61,9 +62,19 @@ const SignUpForm = () => {
         email: values.email,
         password: values.password,
         name: values.username,
+        callbackURL: "/dashboard",
       },
       {
-        onSuccess: () => {
+        onSuccess: (ctx) => {
+          // Without a session token the account still needs its email
+          // confirmed (only when an email provider is configured).
+          if (!ctx.data?.token) {
+            toast.success(
+              "Conta criada! Enviamos um link de confirmação para o seu email.",
+            );
+            form.reset();
+            return;
+          }
           router.push("/dashboard");
         },
         onError: (ctx) => {

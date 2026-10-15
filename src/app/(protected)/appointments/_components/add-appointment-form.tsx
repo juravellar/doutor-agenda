@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { reaisToCents } from "@/helpers/currency";
 import { inClinicTimezone, isWeekDayInRange } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
@@ -166,7 +167,7 @@ const UpsertAppointmentForm = ({
     upsertAppointmentAction.execute({
       ...values,
       id: appointment?.id,
-      appointmentPriceInCents: values.appointmentPrice * 100,
+      appointmentPriceInCents: reaisToCents(values.appointmentPrice),
     });
   };
 

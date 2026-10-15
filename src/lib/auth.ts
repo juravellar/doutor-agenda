@@ -7,6 +7,7 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { usersTable, usersToClinicsTable } from "@/db/schema";
 import { resolveClinicAccess } from "@/lib/clinic-access";
+import { isEmailConfigured, sendEmail, verificationEmail } from "@/lib/email";
 
 export const auth = betterAuth({
   // Model names below are the exact schema keys (usersTable, ...), so no
@@ -96,5 +97,20 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+    // Without verification anyone could sign up with someone else's email
+    // and enter patient data under that identity.
+    requireEmailVerification: isEmailConfigured(),
+  },
+  emailVerification: {
+    sendOnSignUp: isEmailConfigured(),
+    // Accounts created before verification existed get a link when they
+    // next sign in, instead of being locked out.
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail({ to: user.email, ...verificationEmail(url) });
+    },
   },
 });

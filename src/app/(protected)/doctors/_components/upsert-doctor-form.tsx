@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorsTable } from "@/db/schema";
+import { reaisToCents } from "@/helpers/currency";
 import { actionErrorMessage } from "@/lib/action-errors";
 
 import { medicalSpecialties } from "../_constants";
@@ -124,7 +125,7 @@ const UpsertDoctorForm = ({
       id: doctor?.id,
       availableFromWeekDay: parseInt(values.availableFromWeekDay),
       availableToWeekDay: parseInt(values.availableToWeekDay),
-      appointmentPriceInCents: values.appointmentPrice * 100,
+      appointmentPriceInCents: reaisToCents(values.appointmentPrice),
     });
   };
 
