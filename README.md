@@ -77,7 +77,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `STRIPE_PROFESSIONAL_PLAN_PRICE_ID` | ID do preço mensal do plano Profissional no Stripe |
    | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (veja a seção do Stripe abaixo) |
    | `NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL` | Link do portal do cliente do Stripe |
-   | `NEXT_PUBLIC_SUPPORT_EMAIL` | E-mail de suporte mostrado a quem precisa alterar as clínicas ativas antes dos 30 dias (opcional) |
+   | `SUPPORT_EMAIL` | E-mail de suporte mostrado a quem precisa alterar as clínicas ativas antes dos 30 dias (opcional) |
 
 3. Crie as tabelas no banco:
 

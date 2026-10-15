@@ -74,7 +74,7 @@ const ClinicsPage = async () => {
               ? inClinicTimezone(choice.nextChangeAt).format("DD/MM/YYYY")
               : null
           }
-          supportEmail={process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? null}
+          supportEmail={process.env.SUPPORT_EMAIL ?? null}
         />
       </PageContent>
     </PageContainer>
