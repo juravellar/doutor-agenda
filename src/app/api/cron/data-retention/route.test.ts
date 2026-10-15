@@ -10,32 +10,37 @@ vi.mock("@/db", () => ({
   },
 }));
 
-import { sessionsTable } from "@/db/schema";
+import { auditLogsTable, sessionsTable } from "@/db/schema";
 
 import { GET } from "./route";
 
 const request = (authorization?: string) =>
-  new Request("https://avelliq.vercel.app/api/cron/cleanup-sessions", {
+  new Request("https://avelliq.vercel.app/api/cron/data-retention", {
     headers: authorization ? { authorization } : {},
   });
 
-describe("cleanup-sessions cron", () => {
+describe("data-retention cron", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("CRON_SECRET", "s3cret");
     mocks.deleted.mockImplementation(async (table) =>
-      table === sessionsTable ? [{ id: "a" }, { id: "b" }] : [{ id: "c" }],
+      table === sessionsTable
+        ? [{ id: "a" }, { id: "b" }]
+        : table === auditLogsTable
+          ? []
+          : [{ id: "c" }],
     );
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("deletes expired sessions and verifications", async () => {
+  it("deletes expired sessions, verifications and old audit logs", async () => {
     const response = await GET(request("Bearer s3cret"));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       deletedSessions: 2,
       deletedVerifications: 1,
+      deletedAuditLogs: 0,
     });
   });
 
