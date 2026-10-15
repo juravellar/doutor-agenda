@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ContactEmail, LegalDocument } from "../_components/legal-document";
+import {
+  ContactEmail,
+  LegalDocument,
+  PROVIDER,
+} from "../_components/legal-document";
 
 export const metadata: Metadata = {
   title: "Termos de Uso | Avelliq",
@@ -12,8 +16,9 @@ export default function TermsOfUsePage() {
     <LegalDocument title="Termos de Uso">
       <p>
         Estes termos regem o uso do Avelliq, sistema de agendamento para
-        clínicas. Ao criar uma conta ou continuar usando o serviço, você
-        concorda com eles e com a{" "}
+        clínicas oferecido por {PROVIDER.legalName}, CNPJ {PROVIDER.cnpj}. Ao
+        criar uma conta ou continuar usando o serviço, você concorda com eles e
+        com a{" "}
         <Link href="/privacidade" className="underline">
           Política de Privacidade
         </Link>

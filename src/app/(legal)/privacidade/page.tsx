@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ContactEmail, LegalDocument } from "../_components/legal-document";
+import {
+  ContactEmail,
+  DATA_PROTECTION_OFFICER,
+  LegalDocument,
+  PROVIDER,
+} from "../_components/legal-document";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade | Avelliq",
@@ -18,6 +23,10 @@ export default function PrivacyPolicyPage() {
       </p>
 
       <h2>1. Quem é responsável por cada dado</h2>
+      <p>
+        O Avelliq é oferecido por <strong>{PROVIDER.legalName}</strong>,
+        inscrito no CNPJ sob o nº {PROVIDER.cnpj}.
+      </p>
       <ul>
         <li>
           <strong>Dados da sua conta</strong> (nome, email, senha, plano): o
@@ -180,7 +189,9 @@ export default function PrivacyPolicyPage() {
 
       <h2>8. Encarregado e contato</h2>
       <p>
-        Dúvidas sobre esta política ou sobre seus dados: <ContactEmail />.
+        A encarregada pelo tratamento de dados pessoais (art. 41 da LGPD) é{" "}
+        <strong>{DATA_PROTECTION_OFFICER}</strong>. Dúvidas sobre esta política
+        ou sobre seus dados: <ContactEmail />.
       </p>
 
       <h2>9. Alterações</h2>

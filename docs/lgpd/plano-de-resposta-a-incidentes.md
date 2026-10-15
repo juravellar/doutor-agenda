@@ -8,7 +8,7 @@ Base: art. 48 da LGPD e Resolução CD/ANPD nº 15/2024. **Revise com um advogad
 |---|---|
 | Coordenação e decisão de comunicar | _definir_ |
 | Técnico (contenção e investigação) | _definir_ |
-| Encarregado (DPO) | _definir_ |
+| Encarregado (DPO) | Júllia Rodrigues de Avellar |
 
 ## 2. O que é um incidente
 

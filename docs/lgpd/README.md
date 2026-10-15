@@ -2,7 +2,7 @@
 
 O Avelliq trata dados de saúde (agendamentos revelam que uma pessoa buscou atendimento médico), que a LGPD classifica como **dados pessoais sensíveis** (art. 5º, II). Este documento resume o que o sistema já faz e o que depende da empresa.
 
-> Os textos da Política de Privacidade, dos Termos de Uso e os modelos desta pasta foram escritos como ponto de partida. **Revise com um advogado antes de considerá-los definitivos.**
+> Os textos da Política de Privacidade, dos Termos de Uso e os modelos desta pasta não passaram por revisão jurídica. Vale revisá-los com um advogado quando o volume de clientes crescer.
 
 ## Papéis
 
@@ -27,8 +27,8 @@ O Avelliq trata dados de saúde (agendamentos revelam que uma pessoa buscou aten
 
 ## O que depende da empresa
 
-- [ ] **Identificação do controlador:** incluir razão social e CNPJ na Política de Privacidade.
-- [ ] **Encarregado (DPO):** nomear e publicar o contato (art. 41). Hoje a política aponta para `SUPPORT_EMAIL`.
+- [x] **Identificação do controlador:** razão social e CNPJ na Política de Privacidade e nos Termos.
+- [x] **Encarregado (DPO):** Júllia Rodrigues de Avellar, com contato pelo `SUPPORT_EMAIL` (art. 41).
 - [ ] **Contrato com as clínicas:** assinar o [acordo de tratamento de dados](acordo-de-tratamento-de-dados.md) ou incorporá-lo aos termos (art. 39).
 - [ ] **Fornecedores:** guardar os DPAs de Vercel, Neon, Stripe, Google e Resend.
 - [ ] **Incidentes:** adotar o [plano de resposta](plano-de-resposta-a-incidentes.md) e definir os responsáveis.

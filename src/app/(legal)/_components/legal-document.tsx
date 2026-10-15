@@ -2,6 +2,16 @@ import type { ReactNode } from "react";
 
 import { TERMS_VERSION } from "@/lib/terms";
 
+// Who provides Avelliq, as registered with the Receita Federal.
+export const PROVIDER = {
+  legalName: "62.496.531 JULLIA RODRIGUES DE AVELLAR",
+  cnpj: "62.496.531/0001-74",
+};
+
+// The person in charge of data protection (LGPD art. 41), whose identity and
+// contact must be public.
+export const DATA_PROTECTION_OFFICER = "Júllia Rodrigues de Avellar";
+
 export function ContactEmail() {
   const email = process.env.SUPPORT_EMAIL;
   return email ? (
