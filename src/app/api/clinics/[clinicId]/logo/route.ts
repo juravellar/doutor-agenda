@@ -9,7 +9,7 @@ import { getServerSession } from "@/lib/server-session";
 // links to it instead of embedding the data URL, which made every refresh of
 // the layout download the logo again.
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ clinicId: string }> },
 ) {
   const session = await getServerSession();
@@ -21,19 +21,26 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
   const clinic = await db.query.clinicsTable.findFirst({
-    columns: { logoDataUrl: true },
+    columns: { logoDataUrl: true, logoUpdatedAt: true },
     where: eq(clinicsTable.id, clinicId),
   });
   const logo = decodeLogo(clinic?.logoDataUrl);
   if (!logo) {
     return new Response("Not found", { status: 404 });
   }
+  // Revalidated on every use instead of cached for good, so a former member
+  // (or the next person on a shared computer) goes through the membership
+  // check above; an unchanged logo costs only a 304.
+  const etag = `"${clinic?.logoUpdatedAt?.getTime() ?? 0}"`;
+  const headers = {
+    "Cache-Control": "private, no-cache",
+    ETag: etag,
+    "X-Content-Type-Options": "nosniff",
+  };
+  if (request.headers.get("if-none-match") === etag) {
+    return new Response(null, { status: 304, headers });
+  }
   return new Response(Buffer.from(logo.base64, "base64"), {
-    headers: {
-      "Content-Type": logo.contentType,
-      // The URL carries the logo's version (see clinicLogoUrl).
-      "Cache-Control": "private, max-age=31536000, immutable",
-      "X-Content-Type-Options": "nosniff",
-    },
+    headers: { ...headers, "Content-Type": logo.contentType },
   });
 }

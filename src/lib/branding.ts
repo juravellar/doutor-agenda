@@ -25,8 +25,8 @@ export const decodeLogo = (dataUrl: string | null | undefined) => {
   };
 };
 
-// The version changes with the logo, so the browser can cache each URL for
-// good and fetches the image again only after a new upload.
+// The version changes with the logo, so a new upload gets a new URL; the
+// route revalidates each use (a 304 while it is the same logo).
 export const clinicLogoUrl = (clinicId: string, version: string) =>
   `/api/clinics/${clinicId}/logo?v=${version}`;
 

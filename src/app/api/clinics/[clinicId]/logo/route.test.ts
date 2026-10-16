@@ -9,8 +9,8 @@ vi.mock("@/db", () => ({
 
 import { GET } from "./route";
 
-const request = (clinicId: string) =>
-  GET(new Request("http://localhost"), {
+const request = (clinicId: string, headers?: HeadersInit) =>
+  GET(new Request("http://localhost", { headers }), {
     params: Promise.resolve({ clinicId }),
   });
 
@@ -22,15 +22,17 @@ describe("GET /api/clinics/[clinicId]/logo", () => {
     });
     findFirst.mockResolvedValue({
       logoDataUrl: "data:image/png;base64,iVBORw0KGgo=",
+      logoUpdatedAt: new Date(2_000),
     });
   });
 
-  it("serves the logo of a clinic the user belongs to, cacheable", async () => {
+  it("serves the logo of a clinic the user belongs to, revalidated on each use", async () => {
     const response = await request("mine");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/png");
-    expect(response.headers.get("Cache-Control")).toContain("immutable");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-cache");
+    expect(response.headers.get("ETag")).toBe('"2000"');
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(
       new Uint8Array(Buffer.from("iVBORw0KGgo=", "base64")),
     );
@@ -53,5 +55,20 @@ describe("GET /api/clinics/[clinicId]/logo", () => {
     findFirst.mockResolvedValue({ logoDataUrl: null });
 
     expect((await request("mine")).status).toBe(404);
+  });
+
+  it("answers 304 to a browser that already has this logo", async () => {
+    const response = await request("mine", { "If-None-Match": '"2000"' });
+
+    expect(response.status).toBe(304);
+    expect(await response.text()).toBe("");
+  });
+
+  it("still checks membership before a 304", async () => {
+    const response = await request("someone-else", {
+      "If-None-Match": '"2000"',
+    });
+
+    expect(response.status).toBe(404);
   });
 });
