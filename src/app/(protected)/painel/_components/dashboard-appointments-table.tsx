@@ -1,18 +1,19 @@
 "use client";
 
 import { DataTable } from "@/components/ui/data-table";
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { appointmentsTable, doctorsTable } from "@/db/schema";
 
+import type { PatientOption } from "../../agendamentos/_components/patient-option";
 import { createAppointmentsTableColumns } from "../../agendamentos/_components/table-columns";
 
 export type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
-  patient: typeof patientsTable.$inferSelect;
+  patient: PatientOption;
   doctor: typeof doctorsTable.$inferSelect;
 };
 
 interface DashboardAppointmentsTableProps {
   appointments: AppointmentWithRelations[];
-  patients: typeof patientsTable.$inferSelect[];
+  patients: PatientOption[];
   doctors: typeof doctorsTable.$inferSelect[];
 }
 

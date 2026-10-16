@@ -25,9 +25,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { appointmentsTable, doctorsTable } from "@/db/schema";
 
 import UpsertAppointmentForm from "./add-appointment-form";
+import type { PatientOption } from "./patient-option";
 
 type Appointment = typeof appointmentsTable.$inferSelect & {
   patient: { name: string };
@@ -36,7 +37,7 @@ type Appointment = typeof appointmentsTable.$inferSelect & {
 
 interface AppointmentTableActionsProps {
   appointment: Appointment;
-  patients: (typeof patientsTable.$inferSelect)[];
+  patients: PatientOption[];
   doctors: (typeof doctorsTable.$inferSelect)[];
 }
 

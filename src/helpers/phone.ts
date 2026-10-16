@@ -28,6 +28,13 @@ export const formatPhone = (value: string) => {
 export const isValidPhone = (value: string) =>
   [10, 11].includes(value.replace(/\D/g, "").length);
 
+// Valid, or the number already saved. Phones saved before the check existed
+// may be incomplete; they shouldn't block saving the rest of a form until
+// someone edits them.
+export const isAcceptablePhone = (value: string, saved?: string | null) =>
+  isValidPhone(value) ||
+  (!!saved && value.replace(/\D/g, "") === saved.replace(/\D/g, ""));
+
 /**
  * Applies one edit of the formatted phone field. `edited` is the field's text
  * after the keystroke and `caret` the cursor in it. Returns the digits to keep
@@ -41,14 +48,18 @@ export const editPhone = (
   previous: string,
   edited: string,
   caret: number,
-  erasingForward: boolean,
+  // How the edit was made: Delete instead of Backspace, and whether text was
+  // selected when the key was pressed.
+  { erasingForward = false, hadSelection = false } = {},
 ) => {
   let digits = phoneDigits(edited);
   let digitsBeforeCaret = countDigits(edited.slice(0, caret));
-  // Only a single erased character: deleting a selection that happened to
-  // hold just a separator must not take a digit with it.
+  // Only one character erased with nothing selected: deleting a selection
+  // that held just separators must not take a digit with it.
   const separatorErased =
-    digits === phoneDigits(previous) && previous.length - edited.length === 1;
+    !hadSelection &&
+    digits === phoneDigits(previous) &&
+    previous.length - edited.length === 1;
   if (separatorErased) {
     const index = erasingForward ? digitsBeforeCaret : digitsBeforeCaret - 1;
     if (index >= 0 && index < digits.length) {
