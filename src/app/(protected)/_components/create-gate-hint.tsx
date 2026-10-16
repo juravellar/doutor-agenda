@@ -19,7 +19,7 @@ export function CreateGateHint({ gate }: { gate: CreateGate }) {
       {gate.blockedReason ? (
         <>
           {" · "}
-          <Link href="/subscription" className="font-medium underline">
+          <Link href="/assinatura" className="font-medium underline">
             Ver planos
           </Link>
         </>

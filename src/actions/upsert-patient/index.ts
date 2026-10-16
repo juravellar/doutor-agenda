@@ -57,5 +57,5 @@ export const upsertPatient = clinicWriteActionClient
         tx,
       );
     });
-    revalidatePath("/patients");
+    revalidatePath("/pacientes");
   });

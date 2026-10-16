@@ -164,7 +164,7 @@ export default function PrivacyPolicyPage() {
       </p>
       <p>
         Em{" "}
-        <Link href="/account" className="underline">
+        <Link href="/minha-conta" className="underline">
           Minha conta
         </Link>
         , você baixa uma cópia de todos os seus dados e exclui sua conta. Os

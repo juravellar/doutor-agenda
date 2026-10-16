@@ -40,5 +40,5 @@ export const deleteAppointment = clinicWriteActionClient
         tx,
       );
     });
-    revalidatePath("/appointments");
+    revalidatePath("/agendamentos");
   });

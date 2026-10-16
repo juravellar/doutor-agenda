@@ -16,7 +16,7 @@ import { TermsGate } from "./_components/terms-gate";
 export default async function Layout({ children }: { children: ReactNode }) {
   const session = await getServerSession();
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   return (
     <SessionProvider user={session.user}>

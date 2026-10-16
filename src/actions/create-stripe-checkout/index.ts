@@ -183,8 +183,8 @@ export const createStripeCheckout = actionClient
         payment_method_types: ["card"],
         mode: "subscription",
         customer: customerId,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?assinatura=confirmada`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/painel?assinatura=confirmada`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura`,
         metadata: { plan: parsedInput.plan },
         subscription_data: {
           metadata: {

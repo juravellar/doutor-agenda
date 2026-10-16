@@ -56,22 +56,22 @@ import { useSessionUser } from "./session-provider";
 const items = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/painel",
     icon: LayoutDashboard,
   },
   {
     title: "Agendamentos",
-    url: "/appointments",
+    url: "/agendamentos",
     icon: CalendarDays,
   },
   {
     title: "Médicos",
-    url: "/doctors",
+    url: "/medicos",
     icon: Stethoscope,
   },
   {
     title: "Pacientes",
-    url: "/patients",
+    url: "/pacientes",
     icon: UsersRound,
   },
 ];
@@ -79,7 +79,7 @@ const items = [
 const otherItems = [
   {
     title: "Assinatura",
-    url: "/subscription",
+    url: "/assinatura",
     icon: Gem,
   },
 ];
@@ -117,7 +117,7 @@ export function AppSidebar() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/authentication");
+          router.push("/entrar");
         },
       },
     });
@@ -133,7 +133,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b p-4">
         <Link
-          href="/dashboard"
+          href="/painel"
           prefetch={false}
           aria-label="Avelliq, ir para o dashboard"
           className="inline-block"
@@ -272,17 +272,17 @@ export function AppSidebar() {
                   Nova clínica
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push("/clinics")}>
+                <DropdownMenuItem onClick={() => router.push("/clinicas")}>
                   <Building2 className="mr-2 h-4 w-4" />
                   Minhas clínicas
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => router.push("/clinic-settings")}
+                  onClick={() => router.push("/configuracoes-da-clinica")}
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   Configurações da clínica
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/account")}>
+                <DropdownMenuItem onClick={() => router.push("/minha-conta")}>
                   <UserRound className="mr-2 h-4 w-4" />
                   Minha conta
                 </DropdownMenuItem>

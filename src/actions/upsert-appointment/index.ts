@@ -139,5 +139,5 @@ export const upsertAppointment = clinicWriteActionClient
       throw error;
     }
 
-    revalidatePath("/appointments");
+    revalidatePath("/agendamentos");
   });

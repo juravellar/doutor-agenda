@@ -35,7 +35,7 @@ export function TermsGate() {
 
   const signOut = () =>
     authClient.signOut({
-      fetchOptions: { onSuccess: () => router.push("/authentication") },
+      fetchOptions: { onSuccess: () => router.push("/entrar") },
     });
 
   return (

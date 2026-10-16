@@ -65,5 +65,5 @@ export const upsertDoctor = clinicWriteActionClient
         tx,
       );
     });
-    revalidatePath("/doctors");
+    revalidatePath("/medicos");
   });

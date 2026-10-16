@@ -58,7 +58,7 @@ function InvalidLink() {
           <Link href="/esqueci-senha">Pedir um novo link</Link>
         </Button>
         <Button asChild variant="ghost" className="w-full">
-          <Link href="/authentication">Voltar para o login</Link>
+          <Link href="/entrar">Voltar para o login</Link>
         </Button>
       </CardFooter>
     </Card>
@@ -91,7 +91,7 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
       return;
     }
     toast.success("Senha alterada. Entre com a nova senha.");
-    router.push("/authentication");
+    router.push("/entrar");
   };
 
   return (

@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
           </CardHeader>
           <CardFooter>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/authentication">Voltar para o login</Link>
+              <Link href="/entrar">Voltar para o login</Link>
             </Button>
           </CardFooter>
         </Card>
