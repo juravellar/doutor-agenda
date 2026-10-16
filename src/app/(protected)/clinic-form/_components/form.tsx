@@ -41,11 +41,15 @@ const ClinicForm = ({ onCancel }: { onCancel?: () => void }) => {
 
   const onSubmit = async (data: ClinicFormData) => {
     try {
-      await createClinic(data.name);
-      toast.success("Clínica criada com sucesso");
-      form.reset();
+      const result = await createClinic(data.name);
+      if (result?.limitReached) {
+        toast.error("Seu plano não permite mais clínicas.");
+        onCancel?.();
+      }
     } catch (error) {
+      // Success redirects to the dashboard, which surfaces here as an error.
       if (isRedirectError(error)) {
+        toast.success("Clínica criada com sucesso");
         // The new clinic is now the active one; the sidebar reads it from the
         // client session, which the redirect alone doesn't refresh.
         session.refetch();

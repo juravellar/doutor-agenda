@@ -72,5 +72,10 @@ export const createClinic = async (rawName: string) => {
     return true;
   });
 
-  redirect(created ? "/dashboard" : "/clinics");
+  if (!created) {
+    // Reached only by a double submit or a plan change in another tab: the
+    // menu already checks the limit before opening the form.
+    return { limitReached: true };
+  }
+  redirect("/dashboard");
 };

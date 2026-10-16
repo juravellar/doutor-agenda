@@ -189,11 +189,13 @@ const UpsertAppointmentForm = ({
 
   const upsertAppointmentAction = useAction(upsertAppointment, {
     onSuccess: () => {
-      toast.success("Agendamento criado com sucesso.");
+      toast.success(
+        appointment ? "Agendamento salvo." : "Agendamento criado com sucesso.",
+      );
       onSuccess?.();
     },
     onError: ({ error }) => {
-      toast.error(actionErrorMessage(error, "Erro ao criar agendamento."));
+      toast.error(actionErrorMessage(error, "Erro ao salvar agendamento."));
     },
   });
 
