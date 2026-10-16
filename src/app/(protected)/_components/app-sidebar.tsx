@@ -92,7 +92,7 @@ const otherItems = [
 ];
 
 // With a logo, the clinic's brand replaces Avelliq's at the top of the menu.
-export function AppSidebar({ logoDataUrl }: { logoDataUrl: string | null }) {
+export function AppSidebar({ logoUrl }: { logoUrl: string | null }) {
   const router = useRouter();
   const user = useSessionUser();
   const clinics = user.clinics;
@@ -144,15 +144,15 @@ export function AppSidebar({ logoDataUrl }: { logoDataUrl: string | null }) {
         <Link
           href="/painel"
           prefetch={false}
-          aria-label={`${logoDataUrl && user.clinic ? user.clinic.name : "Avelliq"}, ir para o painel`}
+          aria-label={`${logoUrl && user.clinic ? user.clinic.name : "Avelliq"}, ir para o painel`}
           className="inline-block min-w-0"
         >
-          {logoDataUrl && user.clinic ? (
+          {logoUrl && user.clinic ? (
             <span className="flex min-w-0 items-center gap-2">
-              {/* A small data URL stored with the clinic; next/image adds nothing. */}
+              {/* A small logo served by the app; next/image adds nothing. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={logoDataUrl}
+                src={logoUrl}
                 alt=""
                 className="h-8 w-8 shrink-0 rounded-md object-contain"
               />

@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   BRAND_COLOR_PRESETS,
   brandStyle,
+  clinicLogoUrl,
   contrastRatio,
+  decodeLogo,
   LOGO_DATA_URL_PATTERN,
   readableTextOn,
 } from "./branding";
@@ -16,7 +18,9 @@ describe("readableTextOn", () => {
 
   it("keeps every preset readable (WCAG AA for large text)", () => {
     for (const color of BRAND_COLOR_PRESETS) {
-      expect(contrastRatio(readableTextOn(color), color)).toBeGreaterThanOrEqual(3);
+      expect(
+        contrastRatio(readableTextOn(color), color),
+      ).toBeGreaterThanOrEqual(3);
     }
   });
 });
@@ -37,11 +41,21 @@ describe("brandStyle", () => {
 
 describe("LOGO_DATA_URL_PATTERN", () => {
   it("accepts raster images only", () => {
-    expect(LOGO_DATA_URL_PATTERN.test("data:image/png;base64,iVBORw0KGgo=")).toBe(true);
-    expect(LOGO_DATA_URL_PATTERN.test("data:image/webp;base64,UklGRg==")).toBe(true);
-    expect(LOGO_DATA_URL_PATTERN.test("data:image/svg+xml;base64,PHN2Zz4=")).toBe(false);
-    expect(LOGO_DATA_URL_PATTERN.test("https://evil.example/logo.png")).toBe(false);
-    expect(LOGO_DATA_URL_PATTERN.test('data:image/png;base64,AAA" onerror="x')).toBe(false);
+    expect(
+      LOGO_DATA_URL_PATTERN.test("data:image/png;base64,iVBORw0KGgo="),
+    ).toBe(true);
+    expect(LOGO_DATA_URL_PATTERN.test("data:image/webp;base64,UklGRg==")).toBe(
+      true,
+    );
+    expect(
+      LOGO_DATA_URL_PATTERN.test("data:image/svg+xml;base64,PHN2Zz4="),
+    ).toBe(false);
+    expect(LOGO_DATA_URL_PATTERN.test("https://evil.example/logo.png")).toBe(
+      false,
+    );
+    expect(
+      LOGO_DATA_URL_PATTERN.test('data:image/png;base64,AAA" onerror="x'),
+    ).toBe(false);
   });
 });
 
@@ -57,5 +71,26 @@ describe("brandStylesheet", () => {
     const { brandStylesheet } = await import("./branding");
     expect(brandStylesheet("#fff}body{display:none")).toBeNull();
     expect(brandStylesheet("")).toBeNull();
+  });
+});
+
+describe("decodeLogo", () => {
+  it("turns a stored data URL into an image file", () => {
+    expect(decodeLogo("data:image/webp;base64,UklGRg==")).toEqual({
+      contentType: "image/webp",
+      base64: "UklGRg==",
+    });
+  });
+
+  it("refuses anything that is not an accepted raster format", () => {
+    expect(decodeLogo("data:image/svg+xml;base64,PHN2Zz4=")).toBeNull();
+    expect(decodeLogo("https://example.com/logo.png")).toBeNull();
+    expect(decodeLogo(null)).toBeNull();
+  });
+});
+
+describe("clinicLogoUrl", () => {
+  it("carries the version so a new logo gets a new URL", () => {
+    expect(clinicLogoUrl("c1", "abc")).toBe("/api/clinics/c1/logo?v=abc");
   });
 });

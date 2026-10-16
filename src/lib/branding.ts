@@ -13,13 +13,32 @@ export const LOGO_DATA_URL_PATTERN =
 // stops a crafted request from storing a huge string.
 export const MAX_LOGO_LENGTH = 150_000;
 
+// The stored logo as an image file, or null if it isn't one of the accepted
+// formats. Returns base64 so this module stays free of Node's Buffer.
+export const decodeLogo = (dataUrl: string | null | undefined) => {
+  if (!dataUrl || !LOGO_DATA_URL_PATTERN.test(dataUrl)) {
+    return null;
+  }
+  return {
+    contentType: dataUrl.slice("data:".length, dataUrl.indexOf(";")),
+    base64: dataUrl.slice(dataUrl.indexOf(",") + 1),
+  };
+};
+
+// The version changes with the logo, so the browser can cache each URL for
+// good and fetches the image again only after a new upload.
+export const clinicLogoUrl = (clinicId: string, version: string) =>
+  `/api/clinics/${clinicId}/logo?v=${version}`;
+
 const channel = (hex: string, offset: number) => {
   const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
   return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
 };
 
 const luminance = (hex: string) =>
-  0.2126 * channel(hex, 1) + 0.7152 * channel(hex, 3) + 0.0722 * channel(hex, 5);
+  0.2126 * channel(hex, 1) +
+  0.7152 * channel(hex, 3) +
+  0.0722 * channel(hex, 5);
 
 const contrast = (a: number, b: number) =>
   (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
