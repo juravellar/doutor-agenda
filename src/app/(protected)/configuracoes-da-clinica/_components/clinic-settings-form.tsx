@@ -234,11 +234,12 @@ export function ClinicSettingsForm({
                   <FormItem>
                     <FormLabel>Cor principal</FormLabel>
                     <div className="flex flex-wrap items-center gap-2">
-                      {BRAND_COLOR_PRESETS.map((color) => (
+                      {BRAND_COLOR_PRESETS.map(({ color, name }) => (
                         <button
                           key={color}
                           type="button"
-                          aria-label={`Usar a cor ${color}`}
+                          aria-label={`Usar a cor ${name}`}
+                          title={name}
                           aria-pressed={field.value === color}
                           onClick={() => field.onChange(color)}
                           className={cn(

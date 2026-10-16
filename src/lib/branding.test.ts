@@ -18,7 +18,7 @@ describe("readableTextOn", () => {
   });
 
   it("keeps every preset readable (WCAG AA for large text)", () => {
-    for (const color of BRAND_COLOR_PRESETS) {
+    for (const { color } of BRAND_COLOR_PRESETS) {
       expect(
         contrastRatio(readableTextOn(color), color),
       ).toBeGreaterThanOrEqual(3);
@@ -98,7 +98,7 @@ describe("clinicLogoUrl", () => {
 
 describe("brandColorWarning", () => {
   it("accepts every preset in both themes", () => {
-    for (const color of BRAND_COLOR_PRESETS) {
+    for (const { color } of BRAND_COLOR_PRESETS) {
       expect(brandColorWarning(color)).toBeNull();
     }
   });

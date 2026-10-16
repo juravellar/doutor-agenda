@@ -69,15 +69,16 @@ export const brandStyle = (color: string | null | undefined) => {
   } as CSSProperties;
 };
 
+// Named so screen readers announce "Azul", not "#2563eb".
 export const BRAND_COLOR_PRESETS = [
-  "#2563eb",
-  "#0d9488",
-  "#16a34a",
-  "#9333ea",
-  "#db2777",
-  "#dc2626",
-  "#ea580c",
-  "#64748b",
+  { color: "#2563eb", name: "Azul" },
+  { color: "#0d9488", name: "Verde-azulado" },
+  { color: "#16a34a", name: "Verde" },
+  { color: "#9333ea", name: "Roxo" },
+  { color: "#db2777", name: "Rosa" },
+  { color: "#dc2626", name: "Vermelho" },
+  { color: "#ea580c", name: "Laranja" },
+  { color: "#64748b", name: "Cinza-azulado" },
 ];
 
 // The page backgrounds of the light and dark themes. Icons, links and
