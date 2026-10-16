@@ -70,7 +70,7 @@ describe("createStripeCheckout", () => {
     mocks.createCustomer.mockResolvedValue({ id: "cus_new" });
     mocks.listSubscriptions.mockReturnValue(pages([]));
     mocks.listSessions.mockReturnValue(pages([]));
-    mocks.createSession.mockResolvedValue({ id: "cs_new" });
+    mocks.createSession.mockResolvedValue({ id: "cs_new", url: "https://checkout.stripe.com/c/pay/cs_new" });
   });
 
   afterEach(() => {
@@ -81,7 +81,7 @@ describe("createStripeCheckout", () => {
   it("opens a checkout for the plan, idempotent within a minute", async () => {
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.data).toEqual({ sessionId: "cs_new" });
+    expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_new" });
     expect(mocks.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         customer: "cus_1",
@@ -167,17 +167,17 @@ describe("createStripeCheckout", () => {
 
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.data).toEqual({ sessionId: "cs_new" });
+    expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_new" });
   });
 
   it("reuses the open checkout for the same plan", async () => {
     mocks.listSessions.mockReturnValue(
-      pages([{ id: "cs_open", metadata: { plan: "professional" } }]),
+      pages([{ id: "cs_open", url: "https://checkout.stripe.com/c/pay/cs_open", metadata: { plan: "professional" } }]),
     );
 
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.data).toEqual({ sessionId: "cs_open" });
+    expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_open" });
     expect(mocks.expireSession).not.toHaveBeenCalled();
     expect(mocks.createSession).not.toHaveBeenCalled();
   });
@@ -185,18 +185,18 @@ describe("createStripeCheckout", () => {
   it("expires open checkouts for another plan", async () => {
     mocks.listSessions
       .mockReturnValueOnce(
-        pages([{ id: "cs_other", metadata: { plan: "essential" } }]),
+        pages([{ id: "cs_other", url: "https://checkout.stripe.com/c/pay/cs_other", metadata: { plan: "essential" } }]),
       )
       .mockReturnValue(pages([]));
 
     const result = await createStripeCheckout({ plan: "professional" });
 
     expect(mocks.expireSession).toHaveBeenCalledWith("cs_other");
-    expect(result?.data).toEqual({ sessionId: "cs_new" });
+    expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_new" });
   });
 
   it("refuses to open a second checkout if an old one could not be expired", async () => {
-    const other = { id: "cs_other", metadata: { plan: "essential" } };
+    const other = { id: "cs_other", url: "https://checkout.stripe.com/c/pay/cs_other", metadata: { plan: "essential" } };
     mocks.listSessions.mockReturnValue(pages([other]));
     mocks.expireSession.mockRejectedValue(new Error("Stripe is unavailable"));
 
@@ -209,14 +209,14 @@ describe("createStripeCheckout", () => {
   it("ignores an expire error when the session already closed", async () => {
     mocks.listSessions
       .mockReturnValueOnce(
-        pages([{ id: "cs_paid", metadata: { plan: "essential" } }]),
+        pages([{ id: "cs_paid", url: "https://checkout.stripe.com/c/pay/cs_paid", metadata: { plan: "essential" } }]),
       )
       .mockReturnValue(pages([]));
     mocks.expireSession.mockRejectedValue(new Error("session is not open"));
 
     const result = await createStripeCheckout({ plan: "professional" });
 
-    expect(result?.data).toEqual({ sessionId: "cs_new" });
+    expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_new" });
   });
 
   it("refuses when the database already has a paid subscription", async () => {
@@ -245,7 +245,7 @@ describe("createStripeCheckout", () => {
     await createStripeCheckout({ plan: "professional" });
     mocks.listSessions
       .mockReturnValueOnce(
-        pages([{ id: "cs_b", metadata: { plan: "essential" } }]),
+        pages([{ id: "cs_b", url: "https://checkout.stripe.com/c/pay/cs_b", metadata: { plan: "essential" } }]),
       )
       .mockReturnValue(pages([]));
     await createStripeCheckout({ plan: "professional" });
@@ -260,7 +260,7 @@ describe("createStripeCheckout", () => {
     const keys: string[] = [];
     mocks.createSession.mockImplementation(async (_params, options) => {
       keys.push(options.idempotencyKey);
-      return { id: "cs_same" };
+      return { id: "cs_same", url: "https://checkout.stripe.com/c/pay/cs_same" };
     });
 
     await Promise.all([
