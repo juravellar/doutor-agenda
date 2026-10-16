@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { actionErrorMessage } from "@/lib/action-errors";
-import { authClient } from "@/lib/auth-client";
 
 export function ClinicSettingsForm({
   clinic,
@@ -35,7 +34,6 @@ export function ClinicSettingsForm({
   blockReason: string | null;
 }) {
   const router = useRouter();
-  const session = authClient.useSession();
   const form = useForm<UpdateClinicSchema>({
     resolver: zodResolver(updateClinicSchema),
     defaultValues: clinic,
@@ -43,7 +41,6 @@ export function ClinicSettingsForm({
   const updateAction = useAction(updateClinic, {
     onSuccess: () => {
       toast.success("Dados da clínica salvos.");
-      session.refetch();
       router.refresh();
     },
     onError: ({ error }) =>

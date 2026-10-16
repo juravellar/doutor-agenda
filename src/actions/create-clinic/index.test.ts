@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
 const audit = vi.hoisted(() => ({ recordAudit: vi.fn() }));
 vi.mock("@/lib/audit", () => audit);
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`redirect:${url}`);

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { type ReactNode, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 
 import { inClinicTimezone } from "@/helpers/time";
 import { accountStatus } from "@/lib/account-status";
-import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+
+import { useSessionUser } from "./session-provider";
 
 const customerPortalUrl = (email: string) =>
   `${process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL}?prefilled_email=${encodeURIComponent(email)}`;
@@ -36,33 +36,10 @@ function Banner({
 
 const linkClass = "font-medium underline";
 
-// Plan changes reach the database by Stripe webhook, sometimes after the page
-// loaded. Navigating doesn't reload the client session, so it is refreshed on
-// navigation, but at most once a minute instead of on every page change.
-const SESSION_REFRESH_MS = 60_000;
-
 export function AccountStatusBanner() {
-  const session = authClient.useSession();
-  const { refetch } = session;
-  const pathname = usePathname();
-  const visitedPath = useRef(pathname);
-  const lastRefresh = useRef(Date.now());
-
-  useEffect(() => {
-    if (visitedPath.current === pathname) {
-      return;
-    }
-    visitedPath.current = pathname;
-    if (Date.now() - lastRefresh.current < SESSION_REFRESH_MS) {
-      return;
-    }
-    lastRefresh.current = Date.now();
-    refetch();
-  }, [pathname, refetch]);
-
-  const user = session.data?.user;
-  const status = user ? accountStatus(user) : null;
-  if (!user || !status) {
+  const user = useSessionUser();
+  const status = accountStatus(user);
+  if (!status) {
     return null;
   }
 

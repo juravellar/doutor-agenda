@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -12,13 +11,13 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { clinicsTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
 import { writeBlockReason } from "@/lib/free-period";
+import { getServerSession } from "@/lib/server-session";
 
 import { ClinicSettingsForm } from "./_components/clinic-settings-form";
 
 const ClinicSettingsPage = async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session?.user) {
     redirect("/authentication");
   }

@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -8,14 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-session";
 
 import ClinicForm from "./_components/form";
 
 const ClinicFormPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
   if (!session) {
     redirect("/authentication");
   }

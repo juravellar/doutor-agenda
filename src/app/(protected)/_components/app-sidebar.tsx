@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { authClient } from "../../../lib/auth-client";
 import { BlockedCreateDialog } from "./blocked-create-dialog";
 import { NewClinicDialog } from "./new-clinic-dialog";
+import { useSessionUser } from "./session-provider";
 
 const items = [
   {
@@ -85,16 +86,15 @@ const otherItems = [
 
 export function AppSidebar() {
   const router = useRouter();
-  const session = authClient.useSession();
-  const clinics = session.data?.user?.clinics ?? [];
-  const activeClinicId = session.data?.user?.clinic?.id;
-  const clinicLimit = session.data?.user?.clinicLimit;
+  const user = useSessionUser();
+  const clinics = user.clinics;
+  const activeClinicId = user.clinic?.id;
+  const clinicLimit = user.clinicLimit;
   const canAddClinic =
     clinicLimit === null ||
     (clinicLimit !== undefined && clinics.length < clinicLimit);
   const switchClinicAction = useAction(switchClinic, {
     onSuccess: () => {
-      session.refetch();
       router.refresh();
     },
     onError: () => {
@@ -134,6 +134,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b p-4">
         <Link
           href="/dashboard"
+          prefetch={false}
           aria-label="Avelliq, ir para o dashboard"
           className="inline-block"
         >
@@ -161,7 +162,7 @@ export function AppSidebar() {
                         : "hover:!bg-primary/5 hover:[&>svg]:!text-primary hover:[&>span]:!text-primary"
                     }
                   >
-                    <Link href={item.url}>
+                    <Link href={item.url} prefetch={false}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -198,7 +199,7 @@ export function AppSidebar() {
                           : "hover:!bg-primary/5 hover:[&>svg]:!text-primary hover:[&>span]:!text-primary"
                       }
                     >
-                      <Link href={item.url}>
+                      <Link href={item.url} prefetch={false}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
@@ -217,20 +218,20 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   <Avatar>
-                    {session.data?.user?.image ? (
-                      <AvatarImage src={session.data.user.image} alt={session.data.user.email ?? "Avatar"} />
+                    {user.image ? (
+                      <AvatarImage src={user.image} alt={user.email} />
                     ) : (
                       <AvatarFallback>
-                        {session.data?.user?.email?.charAt(0).toUpperCase() ?? "?"}
+                        {user.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     )}
                   </Avatar>
                   <div className="min-w-0">
                     <p className="truncate text-sm">
-                      {session.data?.user?.clinic?.name}
+                      {user.clinic?.name}
                     </p>
                     <p className="text-muted-foreground truncate text-sm">
-                      {session.data?.user.email}
+                      {user.email}
                     </p>
                   </div>
                 </SidebarMenuButton>

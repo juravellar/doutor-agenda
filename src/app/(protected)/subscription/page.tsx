@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -10,18 +9,16 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { inClinicTimezone } from "@/helpers/time";
-import { auth } from "@/lib/auth";
 import { getPlanUsage } from "@/lib/plan-usage";
 import { PLANS, resolvePlan } from "@/lib/plans";
+import { getServerSession } from "@/lib/server-session";
 import { getPlanPrices } from "@/lib/stripe-plan";
 
 import { PlanCard } from "./_components/plan-card";
 import { PlanUsageCard } from "./_components/plan-usage-card";
 
 const SubscriptionPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
   if (!session) {
     redirect("/authentication");
   }

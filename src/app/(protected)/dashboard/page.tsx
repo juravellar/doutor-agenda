@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { Calendar } from "lucide-react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,10 +14,11 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { clinicToday } from "@/helpers/time";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-session";
 
 import { getDashboard } from "../../../../data/get-dashboard";
 import AppointmentsChart from "./_components/appointments-charts";
+import { CheckoutReturnRefresh } from "./_components/checkout-return-refresh";
 import DashboardAppointmentsTable from "./_components/dashboard-appointments-table";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
@@ -26,15 +27,13 @@ import TopSpecialties from "./_components/top-specialties";
 
 interface DashboardPageProps {
   searchParams: Promise<{
-    from: string;
-    to: string;
+    from?: string;
+    to?: string;
   }>;
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   if (!session?.user) {
     redirect("/authentication");
@@ -43,13 +42,13 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     redirect("/clinic-form");
   }
 
-  const { from, to } = await searchParams;
-
-  if (!from || !to) {
-    redirect(
-      `/dashboard?from=${clinicToday()}&to=${dayjs(clinicToday()).add(1, "month").format("YYYY-MM-DD")}`,
-    );
-  }
+  // Without dates the period defaults to the next month, rendered right away
+  // instead of redirecting to a URL that carries them (an extra round trip
+  // that left the page blank on client navigation).
+  const params = await searchParams;
+  const from = params.from || clinicToday();
+  const to =
+    params.to || dayjs(clinicToday()).add(1, "month").format("YYYY-MM-DD");
 
   const {
     totalRevenue,
@@ -75,6 +74,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   });
   return (
     <PageContainer>
+      <Suspense>
+        <CheckoutReturnRefresh />
+      </Suspense>
       <PageHeader>
         <PageHeaderContent>
           <PageTitle>Dashboard</PageTitle>
