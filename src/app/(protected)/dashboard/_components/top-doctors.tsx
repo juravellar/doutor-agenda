@@ -1,7 +1,9 @@
 import { Stethoscope } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+
+import { DashboardCardHeader } from "./dashboard-card-header";
 
 interface TopDoctorsProps {
   doctors: {
@@ -15,14 +17,9 @@ interface TopDoctorsProps {
 
 export default function TopDoctors({ doctors }: TopDoctorsProps) {
   return (
-    <Card className="mx-auto w-full">
+    <Card className="w-full">
+      <DashboardCardHeader icon={Stethoscope} title="Médicos" />
       <CardContent>
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Stethoscope className="text-primary h-4 w-4" />
-            <CardTitle className="text-base">Médicos</CardTitle>
-          </div>
-        </div>
 
         {doctors.length === 0 ? (
           <div className="text-muted-foreground py-8 text-center text-sm">

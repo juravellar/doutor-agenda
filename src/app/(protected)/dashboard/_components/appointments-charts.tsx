@@ -8,7 +8,7 @@ dayjs.locale("pt-br");
 import { DollarSign } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/chart";
 import { formatCurrencyInCents } from "@/helpers/currency";
 import { clinicToday } from "@/helpers/time";
+
+import { DashboardCardHeader } from "./dashboard-card-header";
 
 // The full format ("R$ 1.200,00") doesn't fit beside the chart on a phone.
 const compactCurrency = new Intl.NumberFormat("pt-BR", {
@@ -70,10 +72,7 @@ const AppointmentsChart = ({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center gap-2">
-        <DollarSign className="text-primary h-4 w-4" />
-        <CardTitle>Agendamentos e Faturamento</CardTitle>
-      </CardHeader>
+      <DashboardCardHeader icon={DollarSign} title="Agendamentos e Faturamento" />
       <CardContent>
         <ChartContainer
           config={chartConfig}
