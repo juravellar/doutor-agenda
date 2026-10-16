@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isEmailConfigured } from "@/lib/email";
 
 import { auth } from "../../lib/auth";
 import LoginForm from "./components/login-form";
@@ -24,7 +25,7 @@ const AuthenticationPage = async () => {
           <TabsTrigger value="register">Criar conta</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
-          <LoginForm />
+          <LoginForm canResetPassword={isEmailConfigured()} />
         </TabsContent>
         <TabsContent value="register">
           <SignUpForm />

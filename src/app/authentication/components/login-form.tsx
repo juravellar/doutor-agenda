@@ -39,7 +39,9 @@ const loginSchema = z.object({
   password: z.string().min(1, { message: "Senha é obrigatória" }),
 });
 
-const LoginForm = () => {
+// Password reset sends an email; without an email provider the link would
+// promise a message that never arrives, so it is hidden.
+const LoginForm = ({ canResetPassword }: { canResetPassword: boolean }) => {
   const router = useRouter();
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -119,7 +121,17 @@ const LoginForm = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Senha</FormLabel>
+                    {canResetPassword && (
+                      <Link
+                        href="/esqueci-senha"
+                        className="text-muted-foreground text-xs underline-offset-4 hover:underline"
+                      >
+                        Esqueci minha senha
+                      </Link>
+                    )}
+                  </div>
                   <FormControl>
                     <Input
                       type="password"

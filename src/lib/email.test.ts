@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { isEmailConfigured, sendEmail, verificationEmail } from "./email";
+import {
+  isEmailConfigured,
+  resetPasswordEmail,
+  sendEmail,
+  verificationEmail,
+} from "./email";
 
 describe("email", () => {
   afterEach(() => {
@@ -29,6 +34,12 @@ describe("email", () => {
 
     await expect(sending).rejects.toThrow("Email provider responded 422");
     await expect(sending).rejects.not.toThrow(/maria/);
+  });
+
+  it("says how long the reset link lasts and escapes it", () => {
+    const email = resetPasswordEmail('https://x/"><script>');
+    expect(email.text).toContain("1 hora");
+    expect(email.html).not.toContain("<script>");
   });
 
   it("escapes the link in the HTML body", () => {

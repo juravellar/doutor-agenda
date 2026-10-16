@@ -12,7 +12,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 
 ## ✨ Funcionalidades
 
-- **Autenticação** com e-mail e senha ou conta Google ([Better Auth](https://www.better-auth.com)).
+- **Autenticação** com e-mail e senha ou conta Google ([Better Auth](https://www.better-auth.com)), com recuperação de senha por e-mail.
 - **Clínica:** cada usuário trabalha dentro da sua clínica, e os dados de uma clínica não são visíveis para outra.
 - **Médicos:** especialidade, valor da consulta, dias da semana e horário de atendimento.
 - **Pacientes:** cadastro e listagem.
@@ -32,7 +32,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | Agendamentos por mês (por clínica) | 40 | 200 | Ilimitados |
 
 - **Limites:** os limites são verificados no servidor, ao cadastrar médicos, pacientes e agendamentos. Ficam em [`src/lib/plans.ts`](src/lib/plans.ts).
-- **Visibilidade:** a página de assinatura mostra o uso de cada limite. Os botões de cadastro mostram o uso e ficam desativados no limite. Um aviso no topo das páginas informa cancelamento agendado, pagamento pendente e o fim do período gratuito.
+- **Visibilidade:** a página de assinatura mostra o uso de cada limite. Os botões de cadastro mostram o uso e, no limite, abrem um aviso explicando o motivo, com o caminho para o plano maior. Um aviso no topo das páginas informa cancelamento agendado, pagamento pendente e o fim do período gratuito.
 - **Preços:** o valor exibido de cada plano pago vem do próprio Stripe, então é sempre o mesmo cobrado no checkout.
 - **No banco:** um usuário sem assinatura tem `plan` vazio e é tratado como Free.
 - **Várias clínicas:** o seletor no rodapé do menu troca a clínica aberta; cada clínica tem seus próprios médicos, pacientes e agendamentos. Em **Minhas clínicas**, quem tem mais clínicas do que o plano permite (depois de um downgrade) escolhe quais continuam ativas; as outras ficam só leitura, sem perder dados. A primeira escolha é livre e, depois, vale uma alteração a cada 30 dias; para mais, o usuário fala com o suporte.
@@ -80,7 +80,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
    | `NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL` | Link do portal do cliente do Stripe |
    | `SUPPORT_EMAIL` | E-mail de suporte e canal de privacidade, mostrado na Política de Privacidade, nos Termos e a quem precisa alterar as clínicas ativas antes dos 30 dias. Use um e-mail do domínio, não um pessoal |
    | `LEGAL_CNPJ` | CNPJ mostrado na Política de Privacidade e nos Termos (opcional). Fica fora do código porque o repositório é público |
-   | `RESEND_API_KEY`, `EMAIL_FROM` | Envio de emails pelo [Resend](https://resend.com). Com as duas definidas, a conta só é liberada depois de confirmar o email (opcional) |
+   | `RESEND_API_KEY`, `EMAIL_FROM` | Envio de emails pelo [Resend](https://resend.com). Com as duas definidas, a conta só é liberada depois de confirmar o email e o "Esqueci minha senha" fica disponível (opcional) |
    | `CRON_SECRET` | Segredo da limpeza diária (Vercel Cron) de sessões expiradas e registros de auditoria com mais de 5 anos. Sem ele, a limpeza não roda |
 
 3. Crie as tabelas no banco a partir do schema:
