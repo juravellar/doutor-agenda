@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { BRAZILIAN_STATES, isValidCpf, onlyDigits } from "@/helpers/cpf";
 import { isValidPhone } from "@/helpers/phone";
-import { clinicToday } from "@/helpers/time";
+import { clinicToday, isCalendarDay } from "@/helpers/time";
 
 const text = (max: number) =>
   z
@@ -12,9 +12,7 @@ const text = (max: number) =>
     .optional();
 
 const isValidBirthDate = (value: string) =>
-  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-  value >= "1900-01-01" &&
-  value <= clinicToday();
+  isCalendarDay(value) && value >= "1900-01-01" && value <= clinicToday();
 
 // Shared by the form and the server action, so both apply the same rules.
 export const upsertPatientSchema = z.object({

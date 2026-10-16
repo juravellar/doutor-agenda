@@ -148,6 +148,13 @@ describe("upsertPatient", () => {
     expect(mocks.values).not.toHaveBeenCalled();
   });
 
+  it("refuses a birth date that doesn't exist", async () => {
+    const result = await upsertPatient({ ...input, birthDate: "1990-02-31" });
+
+    expect(result?.validationErrors?.birthDate).toBeDefined();
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
   it("explains a CPF already used in the clinic", async () => {
     mocks.onConflictDoUpdate.mockImplementationOnce(() => ({
       returning: async () => {
