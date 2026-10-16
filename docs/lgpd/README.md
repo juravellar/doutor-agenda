@@ -30,7 +30,7 @@ O Avelliq trata dados de saúde (agendamentos revelam que uma pessoa buscou aten
 - [x] **Identificação:** as páginas mostram o CNPJ só se `LEGAL_CNPJ` estiver definido na Vercel. **Nenhum dado pessoal da responsável vai para o repositório, que é público.**
 - [x] **Canal de comunicação:** como agente de pequeno porte, o Avelliq é dispensado de indicar encarregado (Resolução CD/ANPD nº 2/2022, art. 11). A política aponta para `SUPPORT_EMAIL`, que deve ser um e-mail do domínio, não pessoal. Reavaliar se o tratamento passar a ser de alto risco (por exemplo, grande volume de dados de saúde).
 - [ ] **Contrato com as clínicas:** assinar o [acordo de tratamento de dados](acordo-de-tratamento-de-dados.md) ou incorporá-lo aos termos (art. 39).
-- [ ] **Fornecedores:** guardar os DPAs de Vercel, Neon, Stripe, Google e Resend.
+- [ ] **Fornecedores:** guardar os DPAs de Vercel, Neon, Stripe, Google e Resend. O ViaCEP (consulta pública de CEP) recebe só o CEP digitado no cadastro de paciente e está listado na Política de Privacidade.
 - [ ] **Incidentes:** adotar o [plano de resposta](plano-de-resposta-a-incidentes.md) e definir os responsáveis.
 - [ ] **Backups:** confirmar no Neon o período de retenção do histórico e que ele fica na mesma região.
 - [ ] **Registro das operações de tratamento (art. 37):** manter este documento atualizado.
