@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createGate } from "./create-gate";
+import { BLOCKED_COPY, createGate } from "./create-gate";
 
 const doctor = { one: "médico", many: "médicos" };
 
@@ -22,23 +22,33 @@ describe("createGate", () => {
   });
 
   it("blocks read-only clinics even below the limit", () => {
-    expect(createGate({ used: 0, limit: 1 }, "Seu período gratuito terminou.", doctor).blockedReason).toBe(
-      "Seu período gratuito terminou.",
-    );
+    expect(
+      createGate(
+        { used: 0, limit: 1 },
+        { kind: "free-period-over", message: "Seu período gratuito terminou." },
+        doctor,
+      ),
+    ).toEqual({
+      usageText: "0 de 1 médico",
+      blockedReason: "Seu período gratuito terminou.",
+      blockedKind: "free-period-over",
+    });
   });
 
-  it("tells a read-only clinic apart from an ended free period", () => {
+  it("takes the kind from the block, not from its wording", () => {
     expect(
       createGate(
         { used: 0, limit: 5 },
-        "Esta clínica está só leitura no seu plano atual.",
+        { kind: "read-only", message: "Qualquer texto" },
         doctor,
       ).blockedKind,
     ).toBe("read-only");
-    expect(
-      createGate({ used: 0, limit: 1 }, "Seu período gratuito terminou.", doctor)
-        .blockedKind,
-    ).toBe("free-period-over");
+  });
+
+  it("sends each kind of block to where it can be solved", () => {
+    expect(BLOCKED_COPY["read-only"].href).toBe("/clinicas");
+    expect(BLOCKED_COPY["free-period-over"].href).toBe("/assinatura");
+    expect(BLOCKED_COPY.limit.href).toBe("/assinatura");
   });
 
   it("hides usage for unlimited plans", () => {

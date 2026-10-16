@@ -1,10 +1,36 @@
-import { CLINIC_READ_ONLY_MESSAGE } from "@/lib/free-period";
+import type { WriteBlock } from "@/lib/free-period";
 import { isAtLimit, type Usage } from "@/lib/plan-usage-types";
 
 // Why creating is blocked, which decides how the app explains it and where it
 // sends the user: plans for a limit or an ended free period, the clinic list
 // for a clinic that is read-only on the current plan.
-export type BlockedKind = "limit" | "free-period-over" | "read-only";
+export type BlockedKind = "limit" | WriteBlock["kind"];
+
+// Shared by the dialog and the hint under the button, so both send the user
+// to the same place.
+export const BLOCKED_COPY: Record<
+  BlockedKind,
+  { title: string; next: string; href: string; action: string }
+> = {
+  limit: {
+    title: "Limite do plano atingido",
+    next: "Para cadastrar mais, escolha um plano maior.",
+    href: "/assinatura",
+    action: "Ver planos",
+  },
+  "free-period-over": {
+    title: "Período gratuito encerrado",
+    next: "Seus dados continuam disponíveis. Para voltar a cadastrar e editar, assine um plano.",
+    href: "/assinatura",
+    action: "Ver planos",
+  },
+  "read-only": {
+    title: "Clínica só leitura",
+    next: "Escolha quais clínicas ficam ativas no seu plano ou faça upgrade.",
+    href: "/clinicas",
+    action: "Minhas clínicas",
+  },
+};
 
 export interface CreateGate {
   // e.g. "12 de 20 pacientes"; null when the plan has no limit.
@@ -19,7 +45,7 @@ export const LIMIT_REACHED_MESSAGE = "Você atingiu o limite do seu plano.";
 export const createGate = (
   usage: Usage,
   // Why writing is blocked for the whole clinic (e.g. free period over).
-  blockReason: string | null,
+  block: WriteBlock | null,
   noun: { one: string; many: string },
   period = "",
 ): CreateGate => {
@@ -27,15 +53,8 @@ export const createGate = (
     usage.limit === null
       ? null
       : `${usage.used} de ${usage.limit} ${usage.limit === 1 ? noun.one : noun.many}${period}`;
-  if (blockReason) {
-    return {
-      usageText,
-      blockedReason: blockReason,
-      blockedKind:
-        blockReason === CLINIC_READ_ONLY_MESSAGE
-          ? "read-only"
-          : "free-period-over",
-    };
+  if (block) {
+    return { usageText, blockedReason: block.message, blockedKind: block.kind };
   }
   if (isAtLimit(usage)) {
     return {

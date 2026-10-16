@@ -15,6 +15,7 @@ import {
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { patientsTable } from "@/db/schema";
+import { formatPhone } from "@/helpers/phone";
 
 import UpsertPatientForm from "./upsert-patient-form";
 
@@ -30,16 +31,6 @@ const PatientCard = ({ patient }: PatientCardProps) => {
     .split(" ")
     .map((name) => name[0])
     .join("");
-
-  const formatPhoneNumber = (phone: string) => {
-    // Remove all non-numeric characters
-    const cleaned = phone.replace(/\D/g, "");
-    // Format as (XX) XXXXX-XXXX
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    return phone;
-  };
 
   const getSexLabel = (sex: "male" | "female") => {
     return sex === "male" ? "Masculino" : "Feminino";
@@ -68,7 +59,7 @@ const PatientCard = ({ patient }: PatientCardProps) => {
         </Badge>
         <Badge variant="outline">
           <Phone className="mr-1 h-3 w-3" />
-          {formatPhoneNumber(patient.phoneNumber)}
+          {formatPhone(patient.phoneNumber)}
         </Badge>
         <Badge variant="outline">
           <User className="mr-1 h-3 w-3" />

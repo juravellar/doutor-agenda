@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 import { patientsTable } from "@/db/schema";
+import { formatPhone } from "@/helpers/phone";
 
 import { PatientTableActions } from "./table-actions";
 
@@ -24,8 +25,7 @@ export const patientsTableColumns: ColumnDef<Patient>[] = [
     accessorKey: "phoneNumber",
     header: "Telefone",
     cell: (params) => {
-      const phoneNumber = params.row.original.phoneNumber;
-      return phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+      return formatPhone(params.row.original.phoneNumber);
     },
   },
   {
