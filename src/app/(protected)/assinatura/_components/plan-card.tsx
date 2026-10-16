@@ -148,7 +148,16 @@ export function PlanCard({
             para o Free.
           </p>
         )}
-        {plan.id === "free" ? (
+        {isCurrent && plan.id !== "free" ? (
+          // The switch above shows prices to subscribe; this subscription may
+          // be billed either way, which only Stripe knows.
+          <div className="min-h-16">
+            <p className="text-muted-foreground text-sm">
+              Valor e forma de pagamento (mensal ou anual) em Gerenciar
+              assinatura.
+            </p>
+          </div>
+        ) : plan.id === "free" ? (
           <div className="min-h-16">
             <span className="text-3xl font-bold text-foreground">Grátis</span>
             <p className="text-muted-foreground text-sm">
