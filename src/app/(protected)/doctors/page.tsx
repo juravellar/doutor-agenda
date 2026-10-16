@@ -14,7 +14,7 @@ import {
 import { db } from "@/db";
 import { doctorsTable } from "@/db/schema";
 import { createGate } from "@/lib/create-gate";
-import { writeBlockReason } from "@/lib/free-period";
+import { writeBlock } from "@/lib/free-period";
 import { getPlanUsage } from "@/lib/plan-usage";
 
 import { auth } from "../../../lib/auth";
@@ -27,7 +27,6 @@ const DoctorsPage = async () => {
   if (!session?.user) {
     redirect("/authentication");
   }
-
 
   if (!session?.user.clinic) {
     redirect("/clinic-form");
@@ -44,7 +43,7 @@ const DoctorsPage = async () => {
     session.user.plan,
     session.user.clinics.length,
   );
-  const blockReason = writeBlockReason(session.user);
+  const block = writeBlock(session.user);
   return (
     <PageContainer>
       <PageHeader>
@@ -54,7 +53,7 @@ const DoctorsPage = async () => {
         </PageHeaderContent>
         <PageActions>
           <AddDoctorButton
-            gate={createGate(usage.doctors, blockReason, {
+            gate={createGate(usage.doctors, block, {
               one: "médico",
               many: "médicos",
             })}
@@ -69,8 +68,8 @@ const DoctorsPage = async () => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 w-full">
-            <span className="text-muted-foreground text-lg mb-4">
+          <div className="flex w-full flex-col items-center justify-center py-16">
+            <span className="text-muted-foreground mb-4 text-lg">
               Nenhum médico cadastrado.
             </span>
           </div>

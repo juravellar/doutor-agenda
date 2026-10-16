@@ -16,7 +16,7 @@ import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { createGate } from "@/lib/create-gate";
-import { writeBlockReason } from "@/lib/free-period";
+import { writeBlock } from "@/lib/free-period";
 import { getPlanUsage } from "@/lib/plan-usage";
 
 import AddPatientButton from "./_components/add-patient-button";
@@ -40,7 +40,7 @@ const PatientsPage = async () => {
     session.user.plan,
     session.user.clinics.length,
   );
-  const blockReason = writeBlockReason(session.user);
+  const block = writeBlock(session.user);
   return (
     <PageContainer>
       <PageHeader>
@@ -52,7 +52,7 @@ const PatientsPage = async () => {
         </PageHeaderContent>
         <PageActions>
           <AddPatientButton
-            gate={createGate(usage.patients, blockReason, {
+            gate={createGate(usage.patients, block, {
               one: "paciente",
               many: "pacientes",
             })}

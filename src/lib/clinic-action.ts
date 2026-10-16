@@ -1,10 +1,7 @@
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
-import {
-  CLINIC_READ_ONLY_MESSAGE,
-  writeBlockReason,
-} from "@/lib/free-period";
+import { writeBlock } from "@/lib/free-period";
 import { actionClient } from "@/lib/next-safe-action";
 import { PlanLimitError } from "@/lib/plan-limits";
 
@@ -26,12 +23,12 @@ export const clinicActionClient = actionClient.use(async ({ next }) => {
 // client, so Free clinics past their period stay read-only in one place.
 export const clinicWriteActionClient = clinicActionClient.use(
   async ({ next, ctx }) => {
-    const reason = writeBlockReason(ctx.user);
-    if (reason) {
+    const block = writeBlock(ctx.user);
+    if (block) {
       throw new PlanLimitError(
-        reason === CLINIC_READ_ONLY_MESSAGE
-          ? `${reason} Escolha as clínicas ativas em Minhas clínicas ou faça upgrade.`
-          : `${reason} Assine um plano para voltar a cadastrar e editar.`,
+        block.kind === "read-only"
+          ? `${block.message} Escolha as clínicas ativas em Minhas clínicas ou faça upgrade.`
+          : `${block.message} Assine um plano para voltar a cadastrar e editar.`,
       );
     }
     return next();

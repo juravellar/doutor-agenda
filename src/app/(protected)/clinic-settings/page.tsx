@@ -13,7 +13,7 @@ import {
 import { db } from "@/db";
 import { clinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { writeBlockReason } from "@/lib/free-period";
+import { writeBlock } from "@/lib/free-period";
 
 import { ClinicSettingsForm } from "./_components/clinic-settings-form";
 
@@ -51,7 +51,7 @@ const ClinicSettingsPage = async () => {
             address: clinic.address ?? "",
             phoneNumber: clinic.phoneNumber ?? "",
           }}
-          blockReason={writeBlockReason(session.user)}
+          block={writeBlock(session.user)}
         />
       </PageContent>
     </PageContainer>
