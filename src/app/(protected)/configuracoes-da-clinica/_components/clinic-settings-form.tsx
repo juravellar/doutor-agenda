@@ -1,9 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
@@ -18,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,15 +28,25 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { actionErrorMessage } from "@/lib/action-errors";
+import { BRAND_COLOR_PRESETS, brandStyle } from "@/lib/branding";
+import { resizeLogo } from "@/lib/resize-logo";
+import { cn } from "@/lib/utils";
 
 export function ClinicSettingsForm({
   clinic,
   blockReason,
 }: {
-  clinic: { name: string; address: string; phoneNumber: string };
+  clinic: {
+    name: string;
+    address: string;
+    phoneNumber: string;
+    brandColor: string;
+    logoDataUrl: string;
+  };
   blockReason: string | null;
 }) {
   const router = useRouter();
+  const logoInput = useRef<HTMLInputElement>(null);
   const form = useForm<UpdateClinicSchema>({
     resolver: zodResolver(updateClinicSchema),
     defaultValues: clinic,
@@ -114,6 +127,145 @@ export function ClinicSettingsForm({
                         customInput={Input}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </fieldset>
+            <fieldset disabled={disabled} className="space-y-4 border-t pt-6">
+              <legend className="sr-only">Marca da clínica</legend>
+              <div>
+                <h3 className="text-sm font-medium">Marca da clínica</h3>
+                <p className="text-muted-foreground text-sm">
+                  O logo e a cor aparecem no menu e nos botões para quem usa
+                  esta clínica.
+                </p>
+              </div>
+              <FormField
+                control={form.control}
+                name="logoDataUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo</FormLabel>
+                    <div className="flex items-center gap-4">
+                      <div className="bg-muted flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
+                        {field.value ? (
+                          // A local data URL: next/image adds nothing here.
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={field.value}
+                            alt="Logo da clínica"
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <ImageIcon
+                            className="text-muted-foreground h-6 w-6"
+                            aria-hidden
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => logoInput.current?.click()}
+                        >
+                          {field.value ? "Trocar logo" : "Enviar logo"}
+                        </Button>
+                        {field.value && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => field.onChange("")}
+                          >
+                            Remover
+                          </Button>
+                        )}
+                        <input
+                          ref={logoInput}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0];
+                            event.target.value = "";
+                            if (!file) {
+                              return;
+                            }
+                            try {
+                              field.onChange(await resizeLogo(file));
+                            } catch (error) {
+                              toast.error((error as Error).message);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <FormDescription>
+                      PNG, JPG ou WebP. A imagem é reduzida para 128 px.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="brandColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cor principal</FormLabel>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {BRAND_COLOR_PRESETS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          aria-label={`Usar a cor ${color}`}
+                          aria-pressed={field.value === color}
+                          onClick={() => field.onChange(color)}
+                          className={cn(
+                            "h-8 w-8 rounded-full border-2 transition-transform duration-100 active:scale-90",
+                            field.value === color
+                              ? "border-foreground"
+                              : "border-transparent",
+                          )}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                      <FormControl>
+                        <input
+                          type="color"
+                          aria-label="Escolher outra cor"
+                          value={field.value || "#2563eb"}
+                          onChange={(event) => field.onChange(event.target.value)}
+                          className="h-8 w-10 cursor-pointer rounded border bg-transparent"
+                        />
+                      </FormControl>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => field.onChange("")}
+                        >
+                          Usar a cor do Avelliq
+                        </Button>
+                      )}
+                    </div>
+                    {field.value && (
+                      <div
+                        style={brandStyle(field.value)}
+                        className="flex items-center gap-2 pt-1"
+                      >
+                        <span className="text-muted-foreground text-xs">
+                          Prévia:
+                        </span>
+                        <span className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs font-medium">
+                          Novo agendamento
+                        </span>
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

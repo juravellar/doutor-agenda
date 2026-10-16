@@ -91,6 +91,10 @@ export const clinicsTable = pgTable("clinics", {
   name: text("name").notNull(),
   address: text("address"),
   phoneNumber: text("phone_number"),
+  // White label: the clinic's color (#rrggbb) and logo, a small raster image
+  // stored as a data URL (resized in the browser; SVG is refused).
+  brandColor: text("brand_color"),
+  logoDataUrl: text("logo_data_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

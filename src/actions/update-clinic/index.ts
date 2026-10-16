@@ -20,6 +20,8 @@ export const updateClinic = clinicWriteActionClient
           name: parsedInput.name,
           address: parsedInput.address || null,
           phoneNumber: parsedInput.phoneNumber || null,
+          brandColor: parsedInput.brandColor?.toLowerCase() || null,
+          logoDataUrl: parsedInput.logoDataUrl || null,
         })
         .where(eq(clinicsTable.id, ctx.clinic.id));
       await recordAudit(
