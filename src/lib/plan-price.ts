@@ -1,3 +1,5 @@
+import { formatCurrencyInCents } from "@/helpers/currency";
+
 // Price shapes and arithmetic with no server dependency, so client
 // components (the plan cards) can use them without bundling the Stripe SDK.
 export interface PlanPrice {
@@ -29,7 +31,4 @@ export const yearlySavingsPercent = (
 };
 
 export const monthlyEquivalent = (price: PlanPrice) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(price.cents / price.months / 100);
+  formatCurrencyInCents(price.cents / price.months);
