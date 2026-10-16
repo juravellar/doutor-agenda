@@ -44,6 +44,7 @@ Ao mudar a lista de dados coletados, a Política de Privacidade muda junto, e `T
 
 ## Limites conhecidos
 
+- **Limite de tentativas de login e de redefinição de senha:** o Better Auth limita (3 a cada 10 s no login, 3 por minuto na redefinição), mas guarda o contador na memória de cada instância da Vercel, então o limite real é aproximado. Guardar no banco (`rateLimit.storage: "database"`) exige uma tabela nova e uma escrita a cada requisição de autenticação; vale fazer quando houver tráfego que justifique.
 - **Auditoria:** registra alterações, não leituras. Registrar cada visualização exigiria outra estrutura de logs.
 - **Médico excluído:** os agendamentos dele são apagados junto. A exclusão fica na auditoria, mas o histórico de faturamento daquele médico se perde.
 - **CSP:** não restringe scripts. Isso exigiria nonce por requisição e liberar o Stripe.js.
