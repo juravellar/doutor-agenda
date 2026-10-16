@@ -19,7 +19,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/lib/auth-client";
 
 const clinicFormSchema = z.object({
   name: z
@@ -30,8 +29,15 @@ const clinicFormSchema = z.object({
 });
 
 type ClinicFormData = z.infer<typeof clinicFormSchema>;
-const ClinicForm = ({ onCancel }: { onCancel?: () => void }) => {
-  const session = authClient.useSession();
+const ClinicForm = ({
+  onCancel,
+  onCreated,
+}: {
+  onCancel?: () => void;
+  // The sidebar's dialog outlives the redirect to the dashboard, so it has to
+  // be told to close.
+  onCreated?: () => void;
+}) => {
   const form = useForm<ClinicFormData>({
     resolver: zodResolver(clinicFormSchema),
     defaultValues: {
@@ -46,9 +52,7 @@ const ClinicForm = ({ onCancel }: { onCancel?: () => void }) => {
       form.reset();
     } catch (error) {
       if (isRedirectError(error)) {
-        // The new clinic is now the active one; the sidebar reads it from the
-        // client session, which the redirect alone doesn't refresh.
-        session.refetch();
+        onCreated?.();
         return;
       }
       console.error(error);
