@@ -90,6 +90,10 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
       toast.error("Não foi possível salvar a nova senha. Tente de novo.");
       return;
     }
+    // The reset revokes every session, but a signed cookie on this device can
+    // still pass for up to 5 minutes and the sign-in page would send the user
+    // straight back in. Clear it, even when no one was signed in here.
+    await authClient.signOut().catch(() => undefined);
     toast.success("Senha alterada. Entre com a nova senha.");
     router.push("/authentication");
   };
