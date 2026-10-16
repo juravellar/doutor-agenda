@@ -15,7 +15,7 @@ import { db } from "@/db";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { createGate } from "@/lib/create-gate";
-import { writeBlockReason } from "@/lib/free-period";
+import { writeBlock } from "@/lib/free-period";
 import { getPlanUsage } from "@/lib/plan-usage";
 
 import AddAppointmentButton from "./_components/add-appointments-button";
@@ -33,7 +33,6 @@ const AppointmentsPage = async () => {
   if (!session.user.clinic) {
     redirect("/clinic-form");
   }
-
 
   const clinicId = session.user.clinic.id;
 
@@ -58,7 +57,7 @@ const AppointmentsPage = async () => {
     session.user.plan,
     session.user.clinics.length,
   );
-  const blockReason = writeBlockReason(session.user);
+  const block = writeBlock(session.user);
   return (
     <PageContainer>
       <PageHeader>
@@ -74,7 +73,7 @@ const AppointmentsPage = async () => {
             doctors={doctors}
             gate={createGate(
               usage.appointmentsPerMonth,
-              blockReason,
+              block,
               { one: "agendamento", many: "agendamentos" },
               " neste mês",
             )}

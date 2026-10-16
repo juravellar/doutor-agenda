@@ -7,9 +7,8 @@ import { ptBR } from "date-fns/locale";
 import dayjs from "dayjs";
 import { CalendarIcon } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -17,6 +16,7 @@ import { getAvailableTimes } from "@/actions/get-available-times";
 import { upsertAppointment } from "@/actions/upsert-appointment";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   DialogContent,
   DialogDescription,
@@ -32,7 +32,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -46,7 +45,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
-import { reaisToCents } from "@/helpers/currency";
+import { priceInCentsForDoctor } from "@/helpers/appointment-price";
+import { formatReais, priceInReaisSchema, reaisToCents } from "@/helpers/currency";
 import { inClinicTimezone, isWeekDayInRange } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
@@ -58,9 +58,7 @@ const formSchema = z.object({
   doctorId: z.string().min(1, {
     message: "Médico é obrigatório.",
   }),
-  appointmentPrice: z.number().min(1, {
-    message: "Valor da consulta é obrigatório.",
-  }),
+  appointmentPrice: priceInReaisSchema("Valor da consulta é obrigatório."),
   date: z.date({
     message: "Data é obrigatória.",
   }),
@@ -75,6 +73,42 @@ interface UpsertAppointmentFormProps {
   doctors: (typeof doctorsTable.$inferSelect)[];
   appointment?: typeof appointmentsTable.$inferSelect;
   onSuccess?: () => void;
+}
+
+// Shows the doctor's default price under the field and offers it back when the
+// typed price differs (a discount, or a price booked before it changed).
+function DoctorPriceHint({
+  doctor,
+  priceInReais,
+  onUseDefault,
+}: {
+  doctor: typeof doctorsTable.$inferSelect | undefined;
+  priceInReais: number | undefined;
+  onUseDefault: (reais: number) => void;
+}) {
+  if (!doctor) {
+    return null;
+  }
+  const defaultReais = doctor.appointmentPriceInCents / 100;
+  if (reaisToCents(priceInReais ?? 0) === doctor.appointmentPriceInCents) {
+    return (
+      <p className="text-muted-foreground text-xs">
+        Valor padrão de {doctor.name}.
+      </p>
+    );
+  }
+  return (
+    <p className="text-muted-foreground text-xs">
+      Valor padrão de {doctor.name}: {formatReais(defaultReais)}.{" "}
+      <button
+        type="button"
+        className="text-primary font-medium underline"
+        onClick={() => onUseDefault(defaultReais)}
+      >
+        Usar valor padrão
+      </button>
+    </p>
+  );
 }
 
 const UpsertAppointmentForm = ({
@@ -100,6 +134,9 @@ const UpsertAppointmentForm = ({
     },
   });
 
+  // Once the user types a price, picking another doctor keeps it instead of
+  // overwriting it with that doctor's default.
+  const [priceEdited, setPriceEdited] = useState(false);
   const selectedDoctorId = form.watch("doctorId");
   const selectedPatientId = form.watch("patientId");
   const selectedDate = form.watch("date");
@@ -120,25 +157,22 @@ const UpsertAppointmentForm = ({
     enabled: !!selectedDate && !!selectedDoctorId,
   });
 
-  useEffect(() => {
-    if (selectedDoctorId) {
-      const selectedDoctor = doctors.find(
-        (doctor) => doctor.id === selectedDoctorId,
-      );
-      if (selectedDoctor) {
-        // An appointment keeps the price it was booked with until its doctor
-        // is changed.
-        const priceInCents =
-          appointment && appointment.doctorId === selectedDoctorId
-            ? appointment.appointmentPriceInCents
-            : selectedDoctor.appointmentPriceInCents;
-        form.setValue("appointmentPrice", priceInCents / 100);
-      }
+  // Runs only when the user picks a doctor. An effect would also run after
+  // every price edit and put the old price back.
+  const fillPriceForDoctor = (doctorId: string) => {
+    const doctor = doctors.find(({ id }) => id === doctorId);
+    if (!doctor) {
+      return;
     }
-  }, [selectedDoctorId, doctors, form, appointment]);
+    const cents = priceInCentsForDoctor(doctor, appointment, priceEdited);
+    if (cents !== null) {
+      form.setValue("appointmentPrice", cents / 100);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
+      setPriceEdited(false);
       form.reset({
         patientId: appointment?.patientId ?? "",
         doctorId: appointment?.doctorId ?? "",
@@ -155,11 +189,13 @@ const UpsertAppointmentForm = ({
 
   const upsertAppointmentAction = useAction(upsertAppointment, {
     onSuccess: () => {
-      toast.success("Agendamento criado com sucesso.");
+      toast.success(
+        appointment ? "Agendamento salvo." : "Agendamento criado com sucesso.",
+      );
       onSuccess?.();
     },
     onError: ({ error }) => {
-      toast.error(actionErrorMessage(error, "Erro ao criar agendamento."));
+      toast.error(actionErrorMessage(error, "Erro ao salvar agendamento."));
     },
   });
 
@@ -235,7 +271,10 @@ const UpsertAppointmentForm = ({
               <FormItem>
                 <FormLabel>Médico</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(doctorId) => {
+                    field.onChange(doctorId);
+                    fillPriceForDoctor(doctorId);
+                  }}
                   value={field.value}
                   defaultValue={field.value}
                 >
@@ -263,19 +302,29 @@ const UpsertAppointmentForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Valor da consulta</FormLabel>
-                <NumericFormat
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value.floatValue);
+                <FormControl>
+                  <CurrencyInput
+                    value={field.value}
+                    onValueChange={(reais) => {
+                      setPriceEdited(true);
+                      field.onChange(reais);
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    disabled={!selectedDoctorId}
+                    placeholder={
+                      selectedDoctorId ? "R$ 0,00" : "Escolha o médico primeiro"
+                    }
+                  />
+                </FormControl>
+                <DoctorPriceHint
+                  doctor={doctors.find(({ id }) => id === selectedDoctorId)}
+                  priceInReais={field.value}
+                  onUseDefault={(reais) => {
+                    setPriceEdited(false);
+                    field.onChange(reais);
                   }}
-                  decimalScale={2}
-                  fixedDecimalScale
-                  decimalSeparator=","
-                  thousandSeparator="."
-                  prefix="R$ "
-                  allowNegative={false}
-                  disabled={!selectedDoctorId}
-                  customInput={Input}
                 />
                 <FormMessage />
               </FormItem>

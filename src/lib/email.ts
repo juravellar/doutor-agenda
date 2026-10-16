@@ -42,3 +42,11 @@ export const verificationEmail = (url: string) => ({
 <p><a href="${escapeHtml(url)}">Confirmar meu email</a></p>
 <p>Se você não criou uma conta, ignore este email.</p>`,
 });
+
+export const resetPasswordEmail = (url: string) => ({
+  subject: "Redefinir sua senha no Avelliq",
+  text: `Recebemos um pedido para redefinir a senha da sua conta no Avelliq. Para criar uma nova senha, abra este link (vale por 1 hora):\n\n${url}\n\nSe você não pediu, ignore este email: sua senha continua a mesma.`,
+  html: `<p>Recebemos um pedido para redefinir a senha da sua conta no Avelliq.</p>
+<p><a href="${escapeHtml(url)}">Criar uma nova senha</a> (o link vale por 1 hora)</p>
+<p>Se você não pediu, ignore este email: sua senha continua a mesma.</p>`,
+});

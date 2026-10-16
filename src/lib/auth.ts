@@ -2,15 +2,27 @@ import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
+import { after } from "next/server";
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { usersTable, usersToClinicsTable } from "@/db/schema";
 import { resolveClinicAccess } from "@/lib/clinic-access";
-import { isEmailConfigured, sendEmail, verificationEmail } from "@/lib/email";
+import {
+  isEmailConfigured,
+  resetPasswordEmail,
+  sendEmail,
+  verificationEmail,
+} from "@/lib/email";
 import { ACCEPT_TERMS_HEADER, termsAcceptanceForNewUser } from "@/lib/terms";
 
 export const auth = betterAuth({
+  advanced: {
+    // Emails are sent after the response. Awaiting them made a password reset
+    // for an existing account answer later than one for an unknown email,
+    // which told an attacker which emails have accounts.
+    backgroundTasks: { handler: (task) => after(task) },
+  },
   // Model names below are the exact schema keys (usersTable, ...), so no
   // pluralization: better-auth 1.7 would turn them into usersTables and fail
   // its schema check on every auth request.
@@ -149,6 +161,11 @@ export const auth = betterAuth({
     // Without verification anyone could sign up with someone else's email
     // and enter patient data under that identity.
     requireEmailVerification: isEmailConfigured(),
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail({ to: user.email, ...resetPasswordEmail(url) });
+    },
+    // A new password signs out every other device, in case the old one leaked.
+    revokeSessionsOnPasswordReset: true,
   },
   emailVerification: {
     sendOnSignUp: isEmailConfigured(),

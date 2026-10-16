@@ -2,13 +2,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { upsertDoctor } from "@/actions/upsert-doctor";
 import { timeRangeRule } from "@/actions/upsert-doctor/schema";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   DialogContent,
   DialogDescription,
@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorsTable } from "@/db/schema";
-import { reaisToCents } from "@/helpers/currency";
+import { priceInReaisSchema, reaisToCents } from "@/helpers/currency";
 import { actionErrorMessage } from "@/lib/action-errors";
 
 import { medicalSpecialties } from "../_constants";
@@ -48,9 +48,7 @@ const formSchema = z
     specialty: z.string().trim().min(1, {
       message: "Especialidade é obrigatória.",
     }),
-    appointmentPrice: z.number().min(1, {
-      message: "Preço da consulta é obrigatório.",
-    }),
+    appointmentPrice: priceInReaisSchema("Preço da consulta é obrigatório."),
     availableFromWeekDay: z.string(),
     availableToWeekDay: z.string(),
     availableFromTime: z.string().min(1, {
@@ -111,11 +109,13 @@ const UpsertDoctorForm = ({
 
   const upsertDoctorAction = useAction(upsertDoctor, {
     onSuccess: () => {
-      toast.success("Médico adicionado com sucesso.");
+      toast.success(
+        doctor ? "Médico salvo." : "Médico adicionado com sucesso.",
+      );
       onSuccess?.();
     },
     onError: ({ error }) => {
-      toast.error(actionErrorMessage(error, "Erro ao adicionar médico."));
+      toast.error(actionErrorMessage(error, "Erro ao salvar médico."));
     },
   });
 
@@ -187,20 +187,15 @@ const UpsertDoctorForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Preço da consulta</FormLabel>
-                <NumericFormat
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value.floatValue);
-                  }}
-                  decimalScale={2}
-                  fixedDecimalScale
-                  decimalSeparator=","
-                  allowNegative={false}
-                  allowLeadingZeros={false}
-                  thousandSeparator="."
-                  customInput={Input}
-                  prefix="R$"
-                />
+                <FormControl>
+                  <CurrencyInput
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
