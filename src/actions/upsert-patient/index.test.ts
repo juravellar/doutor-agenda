@@ -148,6 +148,13 @@ describe("upsertPatient", () => {
     expect(mocks.values).not.toHaveBeenCalled();
   });
 
+  it("refuses a birth date that doesn't exist", async () => {
+    const result = await upsertPatient({ ...input, birthDate: "1990-02-31" });
+
+    expect(result?.validationErrors?.birthDate).toBeDefined();
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
   it("explains a CPF already used in the clinic", async () => {
     mocks.onConflictDoUpdate.mockImplementationOnce(() => ({
       returning: async () => {
@@ -180,5 +187,24 @@ describe("upsertPatient", () => {
     expect(result?.serverError).not.toBe(
       "Já existe um paciente com este CPF nesta clínica.",
     );
+  });
+
+  it("keeps accepting an incomplete phone saved before the check existed", async () => {
+    mocks.findPatient.mockResolvedValue({
+      id: PATIENT_ID,
+      clinicId: CLINIC_ID,
+      phoneNumber: "1199",
+    });
+
+    const result = await upsertPatient({ ...input, phoneNumber: "1199" });
+
+    expect(result?.serverError).toBeUndefined();
+  });
+
+  it("refuses an incomplete phone that wasn't saved before", async () => {
+    const result = await upsertPatient({ ...input, phoneNumber: "119" });
+
+    expect(result?.serverError).toBe("Telefone inválido.");
+    expect(mocks.values).not.toHaveBeenCalled();
   });
 });

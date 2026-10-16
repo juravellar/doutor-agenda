@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 
 import { upsertPatient } from "@/actions/upsert-patient";
-import { upsertPatientSchema } from "@/actions/upsert-patient/schema";
+import { patientFormSchema } from "@/actions/upsert-patient/schema";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -43,8 +43,7 @@ import { BRAZILIAN_STATES, onlyDigits } from "@/helpers/cpf";
 import { clinicToday } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 
-const formSchema = upsertPatientSchema.omit({ id: true });
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof patientFormSchema>>;
 type Patient = typeof patientsTable.$inferSelect;
 type AddressField =
   | "addressStreet"
@@ -218,7 +217,7 @@ const UpsertPatientForm = ({
   isOpen,
 }: UpsertPatientFormProps) => {
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(patientFormSchema(patient?.phoneNumber)),
     defaultValues: toFormValues(patient),
   });
 

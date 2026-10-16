@@ -19,6 +19,7 @@ import { getServerSession } from "@/lib/server-session";
 
 import AddAppointmentButton from "./_components/add-appointments-button";
 import { AppointmentsTable } from "./_components/appointments-table";
+import { PATIENT_OPTION_COLUMNS } from "./_components/patient-option";
 
 const AppointmentsPage = async () => {
   const session = await getServerSession();
@@ -36,6 +37,7 @@ const AppointmentsPage = async () => {
   const [patients, doctors, appointments] = await Promise.all([
     db.query.patientsTable.findMany({
       where: eq(patientsTable.clinicId, clinicId),
+      columns: PATIENT_OPTION_COLUMNS,
     }),
     db.query.doctorsTable.findMany({
       where: eq(doctorsTable.clinicId, clinicId),
@@ -43,7 +45,7 @@ const AppointmentsPage = async () => {
     db.query.appointmentsTable.findMany({
       where: eq(appointmentsTable.clinicId, clinicId),
       with: {
-        patient: true,
+        patient: { columns: PATIENT_OPTION_COLUMNS },
         doctor: true,
       },
     }),

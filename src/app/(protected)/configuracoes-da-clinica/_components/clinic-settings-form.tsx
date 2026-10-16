@@ -11,8 +11,8 @@ import { toast } from "sonner";
 
 import { updateClinic } from "@/actions/update-clinic";
 import {
+  clinicFormSchema,
   type UpdateClinicSchema,
-  updateClinicSchema,
 } from "@/actions/update-clinic/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,7 +54,7 @@ export function ClinicSettingsForm({
   const router = useRouter();
   const logoInput = useRef<HTMLInputElement>(null);
   const form = useForm<UpdateClinicSchema>({
-    resolver: zodResolver(updateClinicSchema),
+    resolver: zodResolver(clinicFormSchema(clinic.phoneNumber)),
     defaultValues: clinic,
   });
   const updateAction = useAction(updateClinic, {

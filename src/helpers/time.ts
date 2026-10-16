@@ -55,3 +55,10 @@ export const generateTimeSlots = () => {
   }
   return slots;
 };
+
+// A real calendar day written as YYYY-MM-DD. dayjs rolls 2026-02-31 over to
+// March, so the round trip rejects it.
+export const isCalendarDay = (value: string | undefined): value is string =>
+  !!value &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  dayjs(value).format("YYYY-MM-DD") === value;

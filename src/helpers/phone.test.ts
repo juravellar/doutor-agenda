@@ -4,6 +4,7 @@ import {
   caretAfterDigits,
   editPhone,
   formatPhone,
+  isAcceptablePhone,
   isValidPhone,
   phoneDigits,
 } from "./phone";
@@ -39,6 +40,15 @@ describe("phoneDigits", () => {
   });
 });
 
+describe("isAcceptablePhone", () => {
+  it("accepts a valid number or the incomplete one already saved", () => {
+    expect(isAcceptablePhone("1133334444")).toBe(true);
+    expect(isAcceptablePhone("1199", "1199")).toBe(true);
+    expect(isAcceptablePhone("1198", "1199")).toBe(false);
+    expect(isAcceptablePhone("119")).toBe(false);
+  });
+});
+
 describe("isValidPhone", () => {
   it("accepts landlines and mobiles only", () => {
     expect(isValidPhone("1133334444")).toBe(true);
@@ -50,7 +60,7 @@ describe("isValidPhone", () => {
 describe("editPhone", () => {
   it("erases the digit before a separator erased with backspace", () => {
     // "(11) 3333-|4444" → backspace removes the "-"
-    expect(editPhone("(11) 3333-4444", "(11) 33334444", 9, false)).toEqual({
+    expect(editPhone("(11) 3333-4444", "(11) 33334444", 9)).toEqual({
       digits: "113334444",
       digitsBeforeCaret: 5,
     });
@@ -58,7 +68,11 @@ describe("editPhone", () => {
 
   it("erases the digit after a separator erased with delete", () => {
     // "(11) 3333|-4444" → delete removes the "-"
-    expect(editPhone("(11) 3333-4444", "(11) 33334444", 9, true)).toEqual({
+    expect(
+      editPhone("(11) 3333-4444", "(11) 33334444", 9, {
+        erasingForward: true,
+      }),
+    ).toEqual({
       digits: "113333444",
       digitsBeforeCaret: 6,
     });
@@ -66,7 +80,7 @@ describe("editPhone", () => {
 
   it("keeps the cursor after a digit typed in the middle", () => {
     // "(11) 33|33-4444" → types "5"
-    expect(editPhone("(11) 3333-4444", "(11) 33533-4444", 8, false)).toEqual({
+    expect(editPhone("(11) 3333-4444", "(11) 33533-4444", 8)).toEqual({
       digits: "11335334444",
       digitsBeforeCaret: 5,
     });
@@ -76,10 +90,20 @@ describe("editPhone", () => {
 describe("editPhone with a selection", () => {
   it("doesn't take a digit along when a selection held only separators", () => {
     // ") " selected in "(11) 3333-4444" and erased
-    expect(editPhone("(11) 3333-4444", "(113333-4444", 3, false)).toEqual({
+    expect(
+      editPhone("(11) 3333-4444", "(113333-4444", 3, { hadSelection: true }),
+    ).toEqual({
       digits: "1133334444",
       digitsBeforeCaret: 2,
     });
+  });
+});
+
+describe("editPhone with only the hyphen selected", () => {
+  it("erases the hyphen and keeps every digit", () => {
+    expect(
+      editPhone("(11) 3333-4444", "(11) 33334444", 9, { hadSelection: true }),
+    ).toEqual({ digits: "1133334444", digitsBeforeCaret: 6 });
   });
 });
 

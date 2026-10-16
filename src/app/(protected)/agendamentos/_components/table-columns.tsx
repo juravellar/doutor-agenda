@@ -4,18 +4,13 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { appointmentsTable, doctorsTable } from "@/db/schema";
 
+import type { PatientOption } from "./patient-option";
 import { AppointmentsTableActions } from "./table-actions";
 
 type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
-  patient: {
-    id: string;
-    name: string;
-    email: string;
-    phoneNumber: string;
-    sex: "male" | "female";
-  };
+  patient: PatientOption;
   doctor: {
     id: string;
     name: string;
@@ -24,7 +19,7 @@ type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
 };
 
 interface CreateAppointmentsTableColumnsParams {
-  patients: (typeof patientsTable.$inferSelect)[];
+  patients: PatientOption[];
   doctors: (typeof doctorsTable.$inferSelect)[];
 }
 

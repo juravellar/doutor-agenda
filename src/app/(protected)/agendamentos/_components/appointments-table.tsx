@@ -1,18 +1,13 @@
 "use client";
 
 import { DataTable } from "@/components/ui/data-table";
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { appointmentsTable, doctorsTable } from "@/db/schema";
 
+import type { PatientOption } from "./patient-option";
 import { createAppointmentsTableColumns } from "./table-columns";
 
 type Appointment = typeof appointmentsTable.$inferSelect & {
-  patient: {
-    id: string;
-    name: string;
-    email: string;
-    phoneNumber: string;
-    sex: "male" | "female";
-  };
+  patient: PatientOption;
   doctor: {
     id: string;
     name: string;
@@ -22,7 +17,7 @@ type Appointment = typeof appointmentsTable.$inferSelect & {
 
 interface AppointmentsTableProps {
   appointments: Appointment[];
-  patients: (typeof patientsTable.$inferSelect)[];
+  patients: PatientOption[];
   doctors: (typeof doctorsTable.$inferSelect)[];
 }
 

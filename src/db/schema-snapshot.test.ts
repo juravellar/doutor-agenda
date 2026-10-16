@@ -2,7 +2,10 @@ import { is } from "drizzle-orm";
 import { getTableConfig, PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import { snapshotColumns } from "../../scripts/snapshot-columns.mjs";
+import {
+  snapshotColumns,
+  snapshotIndexes,
+} from "../../scripts/snapshot-columns.mjs";
 import * as schema from "./schema";
 
 // The build checks the production database against the latest drizzle-kit
@@ -18,5 +21,23 @@ describe("drizzle snapshot", () => {
       });
 
     expect(snapshotColumns("drizzle").sort()).toEqual(schemaColumns.sort());
+  });
+
+  it("has every index and unique constraint of the schema", () => {
+    const schemaIndexes = Object.values(schema)
+      .filter((value) => is(value, PgTable))
+      .flatMap((table) => {
+        const { columns, indexes, uniqueConstraints } = getTableConfig(table);
+        return [
+          ...indexes.map((index) => index.config.name),
+          ...uniqueConstraints.map((constraint) => constraint.getName()),
+          // .unique() on a single column
+          ...columns
+            .filter((column) => column.isUnique)
+            .map((column) => column.uniqueName),
+        ];
+      });
+
+    expect(snapshotIndexes("drizzle").sort()).toEqual(schemaIndexes.sort());
   });
 });
