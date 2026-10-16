@@ -103,7 +103,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | Comando | O que faz |
 |---|---|
 | `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção |
+| `npm run build` | Build de produção. Na Vercel (produção), antes confere se o banco tem todas as colunas do schema |
 | `npm start` | Sobe o build de produção |
 | `npm run lint` | ESLint |
 | `npm test` | Testes com Vitest |
@@ -136,6 +136,8 @@ O banco de produção foi criado com `drizzle-kit push` e não tem o histórico 
 ```bash
 psql "$DATABASE_URL" -P pager=off -f drizzle/000X_nome.sql
 ```
+
+Se a migração for esquecida, o deploy não chega a ir ao ar: no build de produção da Vercel, [`scripts/check-db-schema.mjs`](scripts/check-db-schema.mjs) compara as colunas do schema com as do banco e falha o build listando as que faltam, e a versão anterior continua no ar. Para rodar a mesma verificação localmente: `CHECK_DB_SCHEMA=1 npm run build`.
 
 Não cole a `DATABASE_URL` em chats, issues ou commits.
 
