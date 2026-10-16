@@ -146,9 +146,11 @@ function MaskedField({
               onBlur={field.onBlur}
               name={field.name}
               getInputRef={field.ref}
-              onValueChange={({ value }) => {
+              onValueChange={({ value }, { source }) => {
                 field.onChange(value);
-                if (value.length === digits) {
+                // "prop" changes come from form.reset when the edit dialog
+                // opens; only a value the user typed should call ViaCEP.
+                if (source === "event" && value.length === digits) {
                   onComplete?.(value);
                 }
               }}
