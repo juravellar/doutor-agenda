@@ -8,7 +8,7 @@ import {
 import {
   CLINIC_READ_ONLY_MESSAGE,
   FREE_PERIOD_OVER_MESSAGE,
-  writeBlockReason,
+  writeBlock,
 } from "./free-period";
 
 const membership = (
@@ -99,17 +99,17 @@ describe("resolveClinicAccess", () => {
   });
 });
 
-describe("writeBlockReason", () => {
+describe("writeBlock", () => {
   const recent = new Date();
 
   it("blocks a read-only clinic", () => {
     expect(
-      writeBlockReason({
+      writeBlock({
         plan: "essential",
         freePeriodStartsAt: recent,
         clinic: { writable: false },
       }),
-    ).toBe(CLINIC_READ_ONLY_MESSAGE);
+    ).toEqual({ kind: "read-only", message: CLINIC_READ_ONLY_MESSAGE });
   });
 
   afterEach(() => {
@@ -120,17 +120,20 @@ describe("writeBlockReason", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-06-01T00:00:00Z"));
     expect(
-      writeBlockReason({
+      writeBlock({
         plan: null,
         freePeriodStartsAt: "2020-01-01T00:00:00Z",
         clinic: { writable: true },
       }),
-    ).toBe(FREE_PERIOD_OVER_MESSAGE);
+    ).toEqual({
+      kind: "free-period-over",
+      message: FREE_PERIOD_OVER_MESSAGE,
+    });
   });
 
   it("allows writing otherwise", () => {
     expect(
-      writeBlockReason({
+      writeBlock({
         plan: null,
         freePeriodStartsAt: recent,
         clinic: { writable: true },

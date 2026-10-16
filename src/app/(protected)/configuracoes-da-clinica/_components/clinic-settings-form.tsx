@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
-import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
 
 import { updateClinic } from "@/actions/update-clinic";
@@ -27,14 +26,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { BRAND_COLOR_PRESETS, brandStyle } from "@/lib/branding";
+import { BLOCKED_COPY } from "@/lib/create-gate";
+import type { WriteBlock } from "@/lib/free-period";
 import { resizeLogo } from "@/lib/resize-logo";
 import { cn } from "@/lib/utils";
 
 export function ClinicSettingsForm({
   clinic,
-  blockReason,
+  block,
 }: {
   clinic: {
     name: string;
@@ -43,7 +45,7 @@ export function ClinicSettingsForm({
     brandColor: string;
     logoDataUrl: string;
   };
-  blockReason: string | null;
+  block: WriteBlock | null;
 }) {
   const router = useRouter();
   const logoInput = useRef<HTMLInputElement>(null);
@@ -61,16 +63,19 @@ export function ClinicSettingsForm({
         actionErrorMessage(error, "Não foi possível salvar os dados."),
       ),
   });
-  const disabled = Boolean(blockReason);
+  const disabled = Boolean(block);
 
   return (
     <Card className="max-w-xl">
       <CardContent className="pt-6">
-        {blockReason && (
-          <p className="mb-4 rounded-md border border-warning-border bg-warning-muted p-3 text-sm text-warning-foreground">
-            {blockReason}{" "}
-            <Link href="/clinicas" className="font-medium underline">
-              Minhas clínicas
+        {block && (
+          <p className="border-warning-border bg-warning-muted text-warning-foreground mb-4 rounded-md border p-3 text-sm">
+            {block.message}{" "}
+            <Link
+              href={BLOCKED_COPY[block.kind].href}
+              className="font-medium underline"
+            >
+              {BLOCKED_COPY[block.kind].action}
             </Link>
           </p>
         )}
@@ -118,13 +123,12 @@ export function ClinicSettingsForm({
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <PatternFormat
-                        format="(##) #####-####"
-                        mask="_"
-                        placeholder="(11) 99999-9999"
+                      <PhoneInput
                         value={field.value}
-                        onValueChange={(value) => field.onChange(value.value)}
-                        customInput={Input}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />
