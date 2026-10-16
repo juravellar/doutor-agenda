@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/select";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 import { priceInCentsForDoctor } from "@/helpers/appointment-price";
-import { formatReais, reaisToCents } from "@/helpers/currency";
+import { formatReais, priceInReaisSchema, reaisToCents } from "@/helpers/currency";
 import { inClinicTimezone, isWeekDayInRange } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
@@ -58,9 +58,7 @@ const formSchema = z.object({
   doctorId: z.string().min(1, {
     message: "Médico é obrigatório.",
   }),
-  appointmentPrice: z.number().min(1, {
-    message: "Valor da consulta é obrigatório.",
-  }),
+  appointmentPrice: priceInReaisSchema("Valor da consulta é obrigatório."),
   date: z.date({
     message: "Data é obrigatória.",
   }),
