@@ -23,6 +23,8 @@ export function PhoneInput({
   ...props
 }: PhoneInputProps) {
   const input = React.useRef<HTMLInputElement | null>(null);
+  // Read at keydown, before the edit replaces the selection.
+  const hadSelection = React.useRef(false);
   const formatted = formatPhone(value ?? "");
 
   const setRefs = (element: HTMLInputElement | null) => {
@@ -43,14 +45,24 @@ export function PhoneInput({
       autoComplete="off"
       placeholder={placeholder}
       value={formatted}
+      onKeyDown={(event) => {
+        const { selectionStart, selectionEnd } = event.currentTarget;
+        hadSelection.current = selectionStart !== selectionEnd;
+        props.onKeyDown?.(event);
+      }}
       onChange={(event) => {
         const { digits, digitsBeforeCaret } = editPhone(
           formatted,
           event.target.value,
           event.target.selectionStart ?? event.target.value.length,
-          (event.nativeEvent as InputEvent).inputType ===
-            "deleteContentForward",
+          {
+            erasingForward:
+              (event.nativeEvent as InputEvent).inputType ===
+              "deleteContentForward",
+            hadSelection: hadSelection.current,
+          },
         );
+        hadSelection.current = false;
         onValueChange(digits);
         // Reformatting moves the cursor to the end; once the new text is on
         // screen, put it back after the same digit.

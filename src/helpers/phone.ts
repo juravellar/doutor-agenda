@@ -41,14 +41,18 @@ export const editPhone = (
   previous: string,
   edited: string,
   caret: number,
-  erasingForward: boolean,
+  // How the edit was made: Delete instead of Backspace, and whether text was
+  // selected when the key was pressed.
+  { erasingForward = false, hadSelection = false } = {},
 ) => {
   let digits = phoneDigits(edited);
   let digitsBeforeCaret = countDigits(edited.slice(0, caret));
-  // Only a single erased character: deleting a selection that happened to
-  // hold just a separator must not take a digit with it.
+  // Only one character erased with nothing selected: deleting a selection
+  // that held just separators must not take a digit with it.
   const separatorErased =
-    digits === phoneDigits(previous) && previous.length - edited.length === 1;
+    !hadSelection &&
+    digits === phoneDigits(previous) &&
+    previous.length - edited.length === 1;
   if (separatorErased) {
     const index = erasingForward ? digitsBeforeCaret : digitsBeforeCaret - 1;
     if (index >= 0 && index < digits.length) {
