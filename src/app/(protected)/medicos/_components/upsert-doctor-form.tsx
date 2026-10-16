@@ -109,11 +109,13 @@ const UpsertDoctorForm = ({
 
   const upsertDoctorAction = useAction(upsertDoctor, {
     onSuccess: () => {
-      toast.success("Médico adicionado com sucesso.");
+      toast.success(
+        doctor ? "Médico salvo." : "Médico adicionado com sucesso.",
+      );
       onSuccess?.();
     },
     onError: ({ error }) => {
-      toast.error(actionErrorMessage(error, "Erro ao adicionar médico."));
+      toast.error(actionErrorMessage(error, "Erro ao salvar médico."));
     },
   });
 
