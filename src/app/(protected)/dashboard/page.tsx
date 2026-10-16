@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { Calendar } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -13,6 +12,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { dashboardRange } from "@/helpers/dashboard-range";
 import { clinicToday } from "@/helpers/time";
 import { getServerSession } from "@/lib/server-session";
 
@@ -43,13 +43,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     redirect("/clinic-form");
   }
 
-  // Without dates the period defaults to the next month, rendered right away
-  // instead of redirecting to a URL that carries them (an extra round trip
-  // that left the page blank on client navigation).
-  const params = await searchParams;
-  const from = params.from || clinicToday();
-  const to =
-    params.to || dayjs(clinicToday()).add(1, "month").format("YYYY-MM-DD");
+  // Missing dates are filled in here and rendered right away, instead of
+  // redirecting to a URL that carries them (an extra round trip that left the
+  // page blank on client navigation).
+  const { from, to } = dashboardRange(await searchParams, clinicToday());
 
   const {
     totalRevenue,
@@ -86,7 +83,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <DatePicker />
+          <DatePicker from={from} to={to} />
         </PageActions>
       </PageHeader>
       <PageContent>

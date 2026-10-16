@@ -25,13 +25,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { actionErrorMessage } from "@/lib/action-errors";
+import { BLOCKED_COPY } from "@/lib/create-gate";
+import type { WriteBlock } from "@/lib/free-period";
 
 export function ClinicSettingsForm({
   clinic,
-  blockReason,
+  block,
 }: {
   clinic: { name: string; address: string; phoneNumber: string };
-  blockReason: string | null;
+  block: WriteBlock | null;
 }) {
   const router = useRouter();
   const form = useForm<UpdateClinicSchema>({
@@ -48,16 +50,19 @@ export function ClinicSettingsForm({
         actionErrorMessage(error, "Não foi possível salvar os dados."),
       ),
   });
-  const disabled = Boolean(blockReason);
+  const disabled = Boolean(block);
 
   return (
     <Card className="max-w-xl">
       <CardContent className="pt-6">
-        {blockReason && (
+        {block && (
           <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            {blockReason}{" "}
-            <Link href="/clinics" className="font-medium underline">
-              Minhas clínicas
+            {block.message}{" "}
+            <Link
+              href={BLOCKED_COPY[block.kind].href}
+              className="font-medium underline"
+            >
+              {BLOCKED_COPY[block.kind].action}
             </Link>
           </p>
         )}

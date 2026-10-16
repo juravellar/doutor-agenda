@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { priceInCentsForDoctor } from "@/helpers/appointment-price";
 import { formatReais, reaisToCents } from "@/helpers/currency";
 import { inClinicTimezone, isWeekDayInRange } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
@@ -158,28 +159,18 @@ const UpsertAppointmentForm = ({
     enabled: !!selectedDate && !!selectedDoctorId,
   });
 
-  useEffect(() => {
-    if (selectedDoctorId) {
-      const selectedDoctor = doctors.find(
-        (doctor) => doctor.id === selectedDoctorId,
-      );
-      if (selectedDoctor) {
-        // An appointment keeps the price it was booked with until its doctor
-        // is changed.
-        if (appointment && appointment.doctorId === selectedDoctorId) {
-          form.setValue(
-            "appointmentPrice",
-            appointment.appointmentPriceInCents / 100,
-          );
-        } else if (!priceEdited) {
-          form.setValue(
-            "appointmentPrice",
-            selectedDoctor.appointmentPriceInCents / 100,
-          );
-        }
-      }
+  // Runs only when the user picks a doctor. An effect would also run after
+  // every price edit and put the old price back.
+  const fillPriceForDoctor = (doctorId: string) => {
+    const doctor = doctors.find(({ id }) => id === doctorId);
+    if (!doctor) {
+      return;
     }
-  }, [selectedDoctorId, doctors, form, appointment, priceEdited]);
+    const cents = priceInCentsForDoctor(doctor, appointment, priceEdited);
+    if (cents !== null) {
+      form.setValue("appointmentPrice", cents / 100);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -280,7 +271,10 @@ const UpsertAppointmentForm = ({
               <FormItem>
                 <FormLabel>Médico</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(doctorId) => {
+                    field.onChange(doctorId);
+                    fillPriceForDoctor(doctorId);
+                  }}
                   value={field.value}
                   defaultValue={field.value}
                 >
