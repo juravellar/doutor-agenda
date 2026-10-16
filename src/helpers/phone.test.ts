@@ -73,6 +73,16 @@ describe("editPhone", () => {
   });
 });
 
+describe("editPhone with a selection", () => {
+  it("doesn't take a digit along when a selection held only separators", () => {
+    // ") " selected in "(11) 3333-4444" and erased
+    expect(editPhone("(11) 3333-4444", "(113333-4444", 3, false)).toEqual({
+      digits: "1133334444",
+      digitsBeforeCaret: 2,
+    });
+  });
+});
+
 describe("caretAfterDigits", () => {
   it("puts the cursor right after the nth digit", () => {
     expect(caretAfterDigits("(11) 33533-4444", 5)).toBe(8);
