@@ -222,13 +222,21 @@ const UpsertPatientForm = ({
     defaultValues: toFormValues(patient),
   });
 
-  // What the last CEP lookup wrote, so a corrected CEP can replace it.
+  // Address values a CEP lookup may replace: the saved ones and those the
+  // last lookup wrote.
   const autofilled = useRef<Partial<Record<AddressField, string>>>({});
 
   useEffect(() => {
     if (isOpen) {
       form.reset(toFormValues(patient));
-      autofilled.current = {};
+      // The saved address belongs to the saved CEP, so a new CEP replaces it
+      // too; only what is typed in this dialog is kept.
+      autofilled.current = {
+        addressStreet: patient?.addressStreet ?? undefined,
+        addressDistrict: patient?.addressDistrict ?? undefined,
+        addressCity: patient?.addressCity ?? undefined,
+        addressState: patient?.addressState ?? undefined,
+      };
     }
   }, [isOpen, form, patient]);
 
