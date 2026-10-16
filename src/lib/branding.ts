@@ -77,8 +77,29 @@ export const BRAND_COLOR_PRESETS = [
   "#db2777",
   "#dc2626",
   "#ea580c",
-  "#334155",
+  "#64748b",
 ];
+
+// The page backgrounds of the light and dark themes. Icons, links and
+// borders use the brand color on them, so it needs 3:1 against each (WCAG
+// for non-text elements); white or black text on buttons is handled apart.
+const THEME_BACKGROUNDS = { claro: "#ffffff", escuro: "#09090b" } as const;
+const MIN_CONTRAST = 3;
+
+// Why the color would be hard to see, or null when it reads well in both
+// themes.
+export const brandColorWarning = (color: string) => {
+  if (!BRAND_COLOR_PATTERN.test(color)) {
+    return null;
+  }
+  const weak = Object.entries(THEME_BACKGROUNDS)
+    .filter(([, background]) => contrastRatio(color, background) < MIN_CONTRAST)
+    .map(([theme]) => theme);
+  if (weak.length === 0) {
+    return null;
+  }
+  return `Essa cor fica pouco visível em ícones e links no tema ${weak.join(" e no ")}. Prefira um tom ${weak[0] === "claro" ? "mais escuro" : "mais claro"}.`;
+};
 
 // The same override as a stylesheet on the document root, so it reaches the
 // dialogs and menus Radix renders outside the layout. `:root.dark` outranks

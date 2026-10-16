@@ -28,7 +28,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { actionErrorMessage } from "@/lib/action-errors";
-import { BRAND_COLOR_PRESETS, brandStyle } from "@/lib/branding";
+import {
+  BRAND_COLOR_PRESETS,
+  brandColorWarning,
+  brandStyle,
+} from "@/lib/branding";
 import { BLOCKED_COPY } from "@/lib/create-gate";
 import type { WriteBlock } from "@/lib/free-period";
 import { resizeLogo } from "@/lib/resize-logo";
@@ -257,6 +261,11 @@ export function ClinicSettingsForm({
                         </Button>
                       )}
                     </div>
+                    {field.value && brandColorWarning(field.value) && (
+                      <p className="text-warning-foreground text-sm">
+                        {brandColorWarning(field.value)}
+                      </p>
+                    )}
                     {field.value && (
                       <div
                         style={brandStyle(field.value)}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   BRAND_COLOR_PRESETS,
+  brandColorWarning,
   brandStyle,
   clinicLogoUrl,
   contrastRatio,
@@ -92,5 +93,18 @@ describe("decodeLogo", () => {
 describe("clinicLogoUrl", () => {
   it("carries the version so a new logo gets a new URL", () => {
     expect(clinicLogoUrl("c1", "abc")).toBe("/api/clinics/c1/logo?v=abc");
+  });
+});
+
+describe("brandColorWarning", () => {
+  it("accepts every preset in both themes", () => {
+    for (const color of BRAND_COLOR_PRESETS) {
+      expect(brandColorWarning(color)).toBeNull();
+    }
+  });
+
+  it("warns about colors too light for the light theme or too dark for the dark one", () => {
+    expect(brandColorWarning("#fde047")).toContain("tema claro");
+    expect(brandColorWarning("#1e293b")).toContain("tema escuro");
   });
 });
