@@ -45,8 +45,10 @@ export const editPhone = (
 ) => {
   let digits = phoneDigits(edited);
   let digitsBeforeCaret = countDigits(edited.slice(0, caret));
+  // Only a single erased character: deleting a selection that happened to
+  // hold just a separator must not take a digit with it.
   const separatorErased =
-    digits === phoneDigits(previous) && edited.length < previous.length;
+    digits === phoneDigits(previous) && previous.length - edited.length === 1;
   if (separatorErased) {
     const index = erasingForward ? digitsBeforeCaret : digitsBeforeCaret - 1;
     if (index >= 0 && index < digits.length) {
