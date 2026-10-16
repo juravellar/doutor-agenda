@@ -101,7 +101,7 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
           <CardHeader>
             <CardTitle>Criar nova senha</CardTitle>
             <CardDescription>
-              Depois de salvar, você sai de todos os outros aparelhos.
+              Depois de salvar, os outros aparelhos são desconectados em até 5 minutos.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
