@@ -28,6 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
   Select,
   SelectContent,
@@ -155,6 +156,38 @@ function MaskedField({
                 }
               }}
               customInput={Input}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+function PhoneField({
+  control,
+  name,
+  label,
+}: {
+  control: Control<FormValues>;
+  name: FieldPath<FormValues>;
+  label: string;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <PhoneInput
+              value={field.value ?? ""}
+              onValueChange={field.onChange}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
             />
           </FormControl>
           <FormMessage />
@@ -308,13 +341,7 @@ const UpsertPatientForm = ({
                 </FormItem>
               )}
             />
-            <MaskedField
-              control={control}
-              name="phoneNumber"
-              label="Telefone"
-              format="(##) #####-####"
-              placeholder="(11) 99999-9999"
-            />
+            <PhoneField control={control} name="phoneNumber" label="Telefone" />
           </Section>
 
           <Section title="Endereço">
@@ -391,12 +418,10 @@ const UpsertPatientForm = ({
               name="emergencyContactName"
               label="Nome"
             />
-            <MaskedField
+            <PhoneField
               control={control}
               name="emergencyContactPhone"
               label="Telefone"
-              format="(##) #####-####"
-              placeholder="(11) 99999-9999"
             />
           </Section>
 

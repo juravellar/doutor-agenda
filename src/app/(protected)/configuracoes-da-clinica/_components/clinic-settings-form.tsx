@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
-import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
 
 import { updateClinic } from "@/actions/update-clinic";
@@ -24,6 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { BLOCKED_COPY } from "@/lib/create-gate";
 import type { WriteBlock } from "@/lib/free-period";
@@ -56,7 +56,7 @@ export function ClinicSettingsForm({
     <Card className="max-w-xl">
       <CardContent className="pt-6">
         {block && (
-          <p className="mb-4 rounded-md border border-warning-border bg-warning-muted p-3 text-sm text-warning-foreground">
+          <p className="border-warning-border bg-warning-muted text-warning-foreground mb-4 rounded-md border p-3 text-sm">
             {block.message}{" "}
             <Link
               href={BLOCKED_COPY[block.kind].href}
@@ -110,13 +110,12 @@ export function ClinicSettingsForm({
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <PatternFormat
-                        format="(##) #####-####"
-                        mask="_"
-                        placeholder="(11) 99999-9999"
+                      <PhoneInput
                         value={field.value}
-                        onValueChange={(value) => field.onChange(value.value)}
-                        customInput={Input}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />
