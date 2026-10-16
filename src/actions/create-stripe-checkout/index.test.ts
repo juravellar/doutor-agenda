@@ -85,7 +85,7 @@ describe("createStripeCheckout", () => {
     expect(mocks.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         customer: "cus_1",
-        metadata: { plan: "professional" },
+        metadata: { plan: "professional", interval: "monthly" },
         line_items: [{ price: "price_professional", quantity: 1 }],
       }),
       { idempotencyKey: expect.stringMatching(/^checkout:[0-9a-f]{64}$/) },
@@ -180,6 +180,51 @@ describe("createStripeCheckout", () => {
     expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_open" });
     expect(mocks.expireSession).not.toHaveBeenCalled();
     expect(mocks.createSession).not.toHaveBeenCalled();
+  });
+
+  it("charges the yearly price when the user picks yearly", async () => {
+    vi.stubEnv("STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID", "price_professional_year");
+
+    await createStripeCheckout({ plan: "professional", interval: "yearly" });
+
+    expect(mocks.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { plan: "professional", interval: "yearly" },
+        line_items: [{ price: "price_professional_year", quantity: 1 }],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("explains when yearly billing isn't offered for the plan", async () => {
+    vi.stubEnv("STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID", "");
+
+    const result = await createStripeCheckout({
+      plan: "professional",
+      interval: "yearly",
+    });
+
+    expect(result?.serverError).toBe(
+      "O pagamento anual não está disponível para este plano.",
+    );
+    expect(mocks.createSession).not.toHaveBeenCalled();
+  });
+
+  it("doesn't reuse an open monthly checkout for a yearly one", async () => {
+    vi.stubEnv("STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID", "price_professional_year");
+    mocks.listSessions
+      .mockReturnValueOnce(
+        pages([{ id: "cs_month", url: "https://checkout.stripe.com/c/pay/cs_month", metadata: { plan: "professional" } }]),
+      )
+      .mockReturnValue(pages([]));
+
+    const result = await createStripeCheckout({
+      plan: "professional",
+      interval: "yearly",
+    });
+
+    expect(mocks.expireSession).toHaveBeenCalledWith("cs_month");
+    expect(result?.data).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_new" });
   });
 
   it("expires open checkouts for another plan", async () => {

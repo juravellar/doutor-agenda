@@ -10,15 +10,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { actionErrorMessage } from "@/lib/action-errors";
+import {
+  type BillingInterval,
+  monthlyEquivalent,
+  type PlanPrice,
+  yearlySavingsPercent,
+} from "@/lib/plan-price";
 import type { Plan, PlanId } from "@/lib/plans";
-import type { PlanPrice } from "@/lib/stripe-plan";
 import { cn } from "@/lib/utils";
 
 const STRIPE_CHECKOUT_ORIGIN = "https://checkout.stripe.com";
 
 interface PlanCardProps {
   plan: Plan;
-  price: PlanPrice | null;
+  prices: Record<BillingInterval, PlanPrice | null> | null;
+  interval: BillingInterval;
+  recommended?: boolean;
   currentPlanId: PlanId;
   userEmail: string;
   // State of the current paid subscription, shown on its card.
@@ -28,7 +35,9 @@ interface PlanCardProps {
 
 export function PlanCard({
   plan,
-  price,
+  prices,
+  interval,
+  recommended = false,
   currentPlanId,
   userEmail,
   subscriptionNotice,
@@ -53,6 +62,15 @@ export function PlanCard({
       );
     },
   });
+
+  // A plan without a yearly price stays monthly even when "Anual" is picked.
+  const billedInterval: BillingInterval =
+    interval === "yearly" && prices?.yearly ? "yearly" : "monthly";
+  const price = prices?.[billedInterval] ?? null;
+  const savings = yearlySavingsPercent(
+    prices?.monthly ?? null,
+    prices?.yearly ?? null,
+  );
 
   const isCurrent = plan.id === currentPlanId;
   const hasPaidPlan = currentPlanId !== "free";
@@ -86,18 +104,26 @@ export function PlanCard({
     const paidPlanId = plan.id;
     return {
       label: `Assinar ${plan.name}`,
-      onClick: () => createStripeCheckoutAction.execute({ plan: paidPlanId }),
+      onClick: () =>
+        createStripeCheckoutAction.execute({
+          plan: paidPlanId,
+          interval: billedInterval,
+        }),
     };
   })();
 
   return (
     <Card
       className={cn(
-        "flex flex-col",
+        "relative flex flex-col",
+        recommended && !isCurrent && "border-primary ring-primary ring-1",
         isCurrent && "border-success ring-1 ring-success",
         className,
       )}
     >
+      {recommended && !isCurrent && (
+        <Badge className="absolute -top-3 left-6 shadow-sm">Recomendado</Badge>
+      )}
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
@@ -114,24 +140,58 @@ export function PlanCard({
               </Badge>
             ))}
         </div>
-        <p className="text-muted-foreground">{plan.description}</p>
+        {/* Two lines tall on every card, so the prices line up. */}
+        <p className="text-muted-foreground @4xl:min-h-12">{plan.description}</p>
         {isCurrent && subscriptionNotice?.endsOn && (
           <p className="text-sm text-warning-foreground">
             Acesso até {subscriptionNotice.endsOn}. Depois disso, a conta volta
             para o Free.
           </p>
         )}
-        {plan.id === "free" ? (
-          <span className="text-3xl font-bold text-foreground">Grátis</span>
+        {isCurrent && plan.id !== "free" ? (
+          // The switch above shows prices to subscribe; this subscription may
+          // be billed either way, which only Stripe knows.
+          <div className="min-h-16">
+            <p className="text-muted-foreground text-sm">
+              Valor e forma de pagamento (mensal ou anual) em Gerenciar
+              assinatura.
+            </p>
+          </div>
+        ) : plan.id === "free" ? (
+          <div className="min-h-16">
+            <span className="text-3xl font-bold text-foreground">Grátis</span>
+            <p className="text-muted-foreground text-sm">
+              Sem cartão de crédito.
+            </p>
+          </div>
         ) : (
           price && (
-            <div className="flex items-baseline">
-              <span className="text-3xl font-bold text-foreground">
-                {price.amount}
-              </span>
-              {price.interval && (
-                <span className="ml-1 text-muted-foreground">/ {price.interval}</span>
-              )}
+            <div className="min-h-16">
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold text-foreground">
+                  {price.amount}
+                </span>
+                {price.interval && (
+                  <span className="ml-1 text-muted-foreground">
+                    / {price.interval}
+                  </span>
+                )}
+              </div>
+              {billedInterval === "yearly" ? (
+                <p className="text-muted-foreground text-sm">
+                  equivale a {monthlyEquivalent(price)}/mês
+                  {savings ? (
+                    <span className="text-success-foreground font-medium">
+                      {" "}
+                      · economize {savings}%
+                    </span>
+                  ) : null}
+                </p>
+              ) : interval === "yearly" ? (
+                <p className="text-muted-foreground text-sm">
+                  Disponível só no mensal.
+                </p>
+              ) : null}
             </div>
           )
         )}

@@ -1,7 +1,24 @@
 import { unstable_cache } from "next/cache";
 import Stripe from "stripe";
 
+import {
+  BILLING_INTERVALS,
+  type BillingInterval,
+  type PlanPrice,
+} from "@/lib/plan-price";
 import { PAID_PLAN_IDS, type PaidPlanId } from "@/lib/plans";
+
+export {
+  BILLING_INTERVALS,
+  type BillingInterval,
+  monthlyEquivalent,
+  type PlanPrice,
+  yearlySavingsPercent,
+} from "@/lib/plan-price";
+
+const MONTHS_PER_INTERVAL: Partial<
+  Record<Stripe.Price.Recurring.Interval, number>
+> = { month: 1, year: 12 };
 
 const INTERVAL_LABELS: Record<Stripe.Price.Recurring.Interval, string> = {
   day: "dia",
@@ -9,11 +26,6 @@ const INTERVAL_LABELS: Record<Stripe.Price.Recurring.Interval, string> = {
   month: "mês",
   year: "ano",
 };
-
-export interface PlanPrice {
-  amount: string;
-  interval: string | null;
-}
 
 export const formatPlanPrice = (price: Stripe.Price): PlanPrice | null => {
   if (price.unit_amount === null) {
@@ -27,19 +39,41 @@ export const formatPlanPrice = (price: Stripe.Price): PlanPrice | null => {
   const interval = price.recurring
     ? INTERVAL_LABELS[price.recurring.interval]
     : null;
-  return { amount, interval };
+  const months = price.recurring
+    ? (MONTHS_PER_INTERVAL[price.recurring.interval] ?? 1) *
+      (price.recurring.interval_count ?? 1)
+    : 1;
+  return { amount, interval, cents: price.unit_amount, months };
 };
 
-export const priceIdForPlan = (plan: PaidPlanId) =>
-  plan === "essential"
-    ? process.env.STRIPE_ESSENTIAL_PLAN_PRICE_ID
-    : process.env.STRIPE_PROFESSIONAL_PLAN_PRICE_ID;
+// The yearly prices are optional: without them the page offers monthly only.
+const PRICE_ENV: Record<PaidPlanId, Record<BillingInterval, string>> = {
+  essential: {
+    monthly: "STRIPE_ESSENTIAL_PLAN_PRICE_ID",
+    yearly: "STRIPE_ESSENTIAL_ANNUAL_PRICE_ID",
+  },
+  professional: {
+    monthly: "STRIPE_PROFESSIONAL_PLAN_PRICE_ID",
+    yearly: "STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID",
+  },
+};
 
+export const priceIdForPlan = (
+  plan: PaidPlanId,
+  interval: BillingInterval = "monthly",
+) => process.env[PRICE_ENV[plan][interval]] || undefined;
+
+// A subscription on either billing period grants the same plan.
 export const planForPriceId = (
   priceId: string | null | undefined,
 ): PaidPlanId | null =>
-  PAID_PLAN_IDS.find((plan) => priceId && priceIdForPlan(plan) === priceId) ??
-  null;
+  PAID_PLAN_IDS.find(
+    (plan) =>
+      priceId &&
+      BILLING_INTERVALS.some(
+        (interval) => priceIdForPlan(plan, interval) === priceId,
+      ),
+  ) ?? null;
 
 // The price id is an argument, so it is part of the cache key: changing the
 // env var takes effect at once. Failures throw and are therefore not cached.
@@ -65,34 +99,49 @@ const reportMissingConfig = (name: string) => {
   }
 };
 
-const loadPlanPrice = async (plan: PaidPlanId): Promise<PlanPrice | null> => {
+const loadPlanPrice = async (
+  plan: PaidPlanId,
+  interval: BillingInterval,
+): Promise<PlanPrice | null> => {
   if (!process.env.STRIPE_SECRET_KEY) {
     reportMissingConfig("STRIPE_SECRET_KEY");
     return null;
   }
-  const priceId = priceIdForPlan(plan);
+  const priceId = priceIdForPlan(plan, interval);
   if (!priceId) {
-    reportMissingConfig(
-      plan === "essential"
-        ? "STRIPE_ESSENTIAL_PLAN_PRICE_ID"
-        : "STRIPE_PROFESSIONAL_PLAN_PRICE_ID",
-    );
+    // Yearly prices are optional, so only a missing monthly one is reported.
+    if (interval === "monthly") {
+      reportMissingConfig(PRICE_ENV[plan].monthly);
+    }
     return null;
   }
   try {
     return await fetchPriceById(priceId);
   } catch (error) {
-    console.error(`Failed to load the Stripe price of plan ${plan}`, error);
+    console.error(
+      `Failed to load the ${interval} Stripe price of plan ${plan}`,
+      error,
+    );
     return null;
   }
 };
 
+export type PlanPrices = Record<
+  PaidPlanId,
+  Record<BillingInterval, PlanPrice | null>
+>;
+
 // Checkout charges these Stripe prices, so the plan cards must show the same.
-export const getPlanPrices = async (): Promise<
-  Record<PaidPlanId, PlanPrice | null>
-> => {
-  const [essential, professional] = await Promise.all(
-    PAID_PLAN_IDS.map(loadPlanPrice),
-  );
-  return { essential, professional };
+export const getPlanPrices = async (): Promise<PlanPrices> => {
+  const [essentialMonthly, essentialYearly, proMonthly, proYearly] =
+    await Promise.all([
+      loadPlanPrice("essential", "monthly"),
+      loadPlanPrice("essential", "yearly"),
+      loadPlanPrice("professional", "monthly"),
+      loadPlanPrice("professional", "yearly"),
+    ]);
+  return {
+    essential: { monthly: essentialMonthly, yearly: essentialYearly },
+    professional: { monthly: proMonthly, yearly: proYearly },
+  };
 };

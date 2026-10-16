@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-export const formatCurrencyInCents = (amount: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(amount / 100);
-};
+const brl = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+export const formatCurrencyInCents = (amount: number) =>
+  brl.format(amount / 100);
 
 // R$ 100.000,00: far above any consultation, low enough to catch a typo or a
 // forged request before it skews the revenue on the dashboard.
@@ -31,11 +32,6 @@ export const priceInReaisSchema = (requiredMessage: string) =>
 // Reais typed in the form to cents. Rounded because 150.1 * 100 is
 // 15009.999... in floating point.
 export const reaisToCents = (reais: number) => Math.round(reais * 100);
-
-const brl = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 // Typed digits fill the value from the right, like a bank app: 1 → R$ 0,01,
 // 15000 → R$ 150,00. No cursor jumps, no comma to type.
