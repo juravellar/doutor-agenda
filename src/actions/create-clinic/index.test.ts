@@ -85,7 +85,9 @@ describe("createClinic", () => {
   it("refuses a second clinic on the Free plan", async () => {
     mocks.count.mockResolvedValue(1);
 
-    await expect(createClinic("Norte")).rejects.toThrow("redirect:/clinicas");
+    await expect(createClinic("Norte")).resolves.toEqual({
+      limitReached: true,
+    });
     expect(mocks.values).not.toHaveBeenCalled();
   });
 
@@ -96,7 +98,7 @@ describe("createClinic", () => {
     mocks.count.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
 
     await expect(createClinic("Norte")).rejects.toThrow("redirect:/painel");
-    await expect(createClinic("Sul")).rejects.toThrow("redirect:/clinicas");
+    await expect(createClinic("Sul")).resolves.toEqual({ limitReached: true });
     expect(mocks.values).toHaveBeenCalledTimes(2);
   });
 
