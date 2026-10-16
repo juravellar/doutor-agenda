@@ -126,7 +126,12 @@ export default function PrivacyPolicyPage() {
         </li>
         <li>
           <strong>Resend</strong> (envio de emails do sistema, como a
-          confirmação de cadastro).
+          confirmação de cadastro);
+        </li>
+        <li>
+          <strong>ViaCEP</strong> (serviço público de consulta de endereço): ao
+          preencher o cadastro de um paciente, recebe apenas o CEP digitado,
+          para completar rua, bairro, cidade e UF.
         </li>
       </ul>
       <p>
