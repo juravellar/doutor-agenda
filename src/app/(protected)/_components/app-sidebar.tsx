@@ -19,7 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { switchClinic } from "@/actions/switch-clinic";
@@ -44,10 +44,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 import { authClient } from "../../../lib/auth-client";
+import { BlockedCreateDialog } from "./blocked-create-dialog";
 import { NewClinicDialog } from "./new-clinic-dialog";
 
 const items = [
@@ -100,6 +102,14 @@ export function AppSidebar() {
     },
   });
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  const [clinicLimitOpen, setClinicLimitOpen] = useState(false);
+
+  // On a phone the menu is a sheet over the page; once a page is chosen it
+  // must get out of the way. Covers links and the footer menu alike.
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
   const [isOthersExpanded, setIsOthersExpanded] = useState(false);
   const [newClinicOpen, setNewClinicOpen] = useState(false);
 
@@ -251,11 +261,14 @@ export function AppSidebar() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem
-                  disabled={!canAddClinic}
-                  onClick={() => setNewClinicOpen(true)}
+                  onClick={() =>
+                    canAddClinic
+                      ? setNewClinicOpen(true)
+                      : setClinicLimitOpen(true)
+                  }
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  {canAddClinic ? "Nova clínica" : "Nova clínica (limite do plano)"}
+                  Nova clínica
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push("/clinics")}>
@@ -285,6 +298,14 @@ export function AppSidebar() {
             <NewClinicDialog
               open={newClinicOpen}
               onOpenChange={setNewClinicOpen}
+            />
+            <BlockedCreateDialog
+              open={clinicLimitOpen}
+              onOpenChange={setClinicLimitOpen}
+              kind="limit"
+              usageText={
+                clinicLimit ? `${clinics.length} de ${clinicLimit} clínicas` : null
+              }
             />
           </SidebarMenuItem>
         </SidebarMenu>
