@@ -1,10 +1,9 @@
 "use client";
 
-import { addMonths, format } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { parseAsIsoDate, useQueryState } from "nuqs";
-import * as React from "react";
+import { createParser, useQueryStates } from "nuqs";
 import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -15,78 +14,62 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 
-export function DatePicker({
-  className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+const DATE = "yyyy-MM-dd";
+
+const parseDay = (value: string) => parse(value, DATE, new Date());
+
+// Dates in the URL are calendar days. nuqs' parseAsIsoDate reads them as UTC
+// midnight, which in Brazil is the evening before, so the picker showed the
+// previous day.
+const parseAsDay = createParser({
+  parse: (value) => {
+    const date = parseDay(value);
+    return isValid(date) ? date : null;
+  },
+  serialize: (date) => format(date, DATE),
+  eq: (a, b) => a.getTime() === b.getTime(),
+});
+
+// from and to come from the server, which decides the period the page shows;
+// the URL is only written, so the picker never shows dates the page didn't
+// load (e.g. an end before the start, which the server corrects).
+export function DatePicker({ from, to }: { from: string; to: string }) {
   const isMobile = useIsMobile();
-  const [from, setFrom] = useQueryState(
-    "from",
-    parseAsIsoDate.withDefault(new Date()),
+  const [, setRange] = useQueryStates(
+    { from: parseAsDay, to: parseAsDay },
+    { shallow: false },
   );
+  const range = { from: parseDay(from), to: parseDay(to) };
 
-  const [to, setTo] = useQueryState(
-    "to",
-    parseAsIsoDate.withDefault(addMonths(new Date(), 1)),
-  );
-
-  const handleDateSelect = (dateRange: DateRange | undefined) => {
-    if (dateRange?.from) {
-      setFrom(dateRange.from, {
-        shallow: false,
-      });
+  // Both ends are written together: a start alone would be paired on the
+  // server with an end that may come before it.
+  const handleDateSelect = (selected: DateRange | undefined) => {
+    if (selected?.from) {
+      setRange({ from: selected.from, to: selected.to ?? selected.from });
     }
-    if (dateRange?.to) {
-      setTo(dateRange.to, {
-        shallow: false,
-      });
-    }
-  };
-
-  const date = {
-    from,
-    to,
   };
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className="grid gap-2">
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
-            variant={"outline"}
-            className={cn(
-              "justify-start text-left font-normal",
-              !date && "text-muted-foreground",
-            )}
+            variant="outline"
+            className="justify-start text-left font-normal"
           >
             <CalendarIcon className="text-primary h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y", {
-                    locale: ptBR,
-                  })}{" "}
-                  -{" "}
-                  {format(date.to, "LLL dd, y", {
-                    locale: ptBR,
-                  })}
-                </>
-              ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date</span>
-            )}
+            {format(range.from, "LLL dd, y", { locale: ptBR })} -{" "}
+            {format(range.to, "LLL dd, y", { locale: ptBR })}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             autoFocus
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
+            defaultMonth={range.from}
+            selected={range}
             onSelect={handleDateSelect}
             numberOfMonths={isMobile ? 1 : 2}
             locale={ptBR}

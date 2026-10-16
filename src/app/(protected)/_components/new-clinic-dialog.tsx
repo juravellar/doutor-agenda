@@ -28,7 +28,12 @@ export function NewClinicDialog({
             A nova clínica fica ativa assim que for criada.
           </DialogDescription>
         </DialogHeader>
-        {open && <ClinicForm onCancel={() => onOpenChange(false)} />}
+        {open && (
+          <ClinicForm
+            onCancel={() => onOpenChange(false)}
+            onCreated={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { actionErrorMessage } from "@/lib/action-errors";
-import { authClient } from "@/lib/auth-client";
 import { BLOCKED_COPY } from "@/lib/create-gate";
 import type { WriteBlock } from "@/lib/free-period";
 
@@ -37,7 +36,6 @@ export function ClinicSettingsForm({
   block: WriteBlock | null;
 }) {
   const router = useRouter();
-  const session = authClient.useSession();
   const form = useForm<UpdateClinicSchema>({
     resolver: zodResolver(updateClinicSchema),
     defaultValues: clinic,
@@ -45,7 +43,6 @@ export function ClinicSettingsForm({
   const updateAction = useAction(updateClinic, {
     onSuccess: () => {
       toast.success("Dados da clínica salvos.");
-      session.refetch();
       router.refresh();
     },
     onError: ({ error }) =>

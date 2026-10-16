@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -13,15 +12,15 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { inClinicTimezone } from "@/helpers/time";
-import { auth } from "@/lib/auth";
 import { clinicChoiceStatus } from "@/lib/clinic-access";
 import { resolvePlan } from "@/lib/plans";
+import { getServerSession } from "@/lib/server-session";
 
 import { ClinicChooser } from "./_components/clinic-chooser";
 import { NewClinicButton } from "./_components/new-clinic-button";
 
 const ClinicsPage = async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session?.user) {
     redirect("/authentication");
   }

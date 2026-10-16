@@ -23,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { actionErrorMessage } from "@/lib/action-errors";
-import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 interface ClinicItem {
@@ -54,12 +53,10 @@ export function ClinicChooser({
   supportEmail,
 }: ClinicChooserProps) {
   const router = useRouter();
-  const session = authClient.useSession();
   const [selected, setSelected] = useState<string[]>(
     clinics.filter(({ writable }) => writable).map(({ id }) => id),
   );
   const refresh = () => {
-    session.refetch();
     router.refresh();
   };
 

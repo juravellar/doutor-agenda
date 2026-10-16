@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -13,15 +12,15 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { inClinicTimezone } from "@/helpers/time";
-import { auth } from "@/lib/auth";
 import { isPaidPlan } from "@/lib/plans";
+import { getServerSession } from "@/lib/server-session";
 
 import { DeleteAccountCard } from "./_components/delete-account-card";
 
 // Works without a clinic: deleting the account or downloading the data must
 // not depend on having finished the sign-up.
 const AccountPage = async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session?.user) {
     redirect("/authentication");
   }

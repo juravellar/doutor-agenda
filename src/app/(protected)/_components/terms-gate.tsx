@@ -18,17 +18,18 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { needsTermsAcceptance, TERMS_VERSION } from "@/lib/terms";
 
+import { useSessionUser } from "./session-provider";
+
 // Accounts created before the terms existed, or that accepted an older
 // version, must accept the current one before using the app.
 export function TermsGate() {
   const router = useRouter();
-  const session = authClient.useSession();
+  const user = useSessionUser();
   const accept = useAction(acceptTerms, {
-    onSuccess: () => session.refetch(),
+    onSuccess: () => router.refresh(),
     onError: () => toast.error("Não foi possível registrar o aceite."),
   });
-  const user = session.data?.user;
-  if (!user || !needsTermsAcceptance(user.termsVersion)) {
+  if (!needsTermsAcceptance(user.termsVersion)) {
     return null;
   }
 

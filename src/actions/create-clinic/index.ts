@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -77,5 +78,7 @@ export const createClinic = async (rawName: string) => {
     // menu already checks the limit before opening the form.
     return { limitReached: true };
   }
+  // The new clinic becomes the active one, which the layout reads.
+  revalidatePath("/", "layout");
   redirect("/dashboard");
 };
