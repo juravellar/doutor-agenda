@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorsTable } from "@/db/schema";
-import { reaisToCents } from "@/helpers/currency";
+import { priceInReaisSchema, reaisToCents } from "@/helpers/currency";
 import { actionErrorMessage } from "@/lib/action-errors";
 
 import { medicalSpecialties } from "../_constants";
@@ -48,9 +48,7 @@ const formSchema = z
     specialty: z.string().trim().min(1, {
       message: "Especialidade é obrigatória.",
     }),
-    appointmentPrice: z.number().min(1, {
-      message: "Preço da consulta é obrigatório.",
-    }),
+    appointmentPrice: priceInReaisSchema("Preço da consulta é obrigatório."),
     availableFromWeekDay: z.string(),
     availableToWeekDay: z.string(),
     availableFromTime: z.string().min(1, {
