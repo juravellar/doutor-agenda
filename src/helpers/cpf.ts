@@ -11,7 +11,10 @@ export const isValidCpf = (value: string) => {
     const sum = cpf
       .slice(0, length)
       .split("")
-      .reduce((total, char, index) => total + Number(char) * (length + 1 - index), 0);
+      .reduce(
+        (total, char, index) => total + Number(char) * (length + 1 - index),
+        0,
+      );
     const rest = (sum * 10) % 11;
     return rest === 10 ? 0 : rest;
   };
@@ -22,7 +25,31 @@ export const formatCpf = (digits: string) =>
   digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
 
 export const BRAZILIAN_STATES = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
-  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE",
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
   "TO",
 ] as const;

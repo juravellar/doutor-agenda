@@ -246,7 +246,9 @@ export function ClinicSettingsForm({
                           type="color"
                           aria-label="Escolher outra cor"
                           value={field.value || "#2563eb"}
-                          onChange={(event) => field.onChange(event.target.value)}
+                          onChange={(event) =>
+                            field.onChange(event.target.value)
+                          }
                           className="h-8 w-10 cursor-pointer rounded border bg-transparent"
                         />
                       </FormControl>

@@ -25,7 +25,10 @@ export async function resizeLogo(file: File): Promise<string> {
   bitmap.close();
   // Browsers that can't encode WebP fall back to PNG on their own.
   const dataUrl = canvas.toDataURL("image/webp", 0.9);
-  if (dataUrl.length > MAX_LOGO_LENGTH || !LOGO_DATA_URL_PATTERN.test(dataUrl)) {
+  if (
+    dataUrl.length > MAX_LOGO_LENGTH ||
+    !LOGO_DATA_URL_PATTERN.test(dataUrl)
+  ) {
     throw new Error("Essa imagem ficou grande demais. Tente outra.");
   }
   return dataUrl;

@@ -5,7 +5,9 @@ import { pageTitle } from "./routes";
 describe("pageTitle", () => {
   it("names each page by its first path segment", () => {
     expect(pageTitle("/medicos")).toBe("Médicos");
-    expect(pageTitle("/configuracoes-da-clinica")).toBe("Configurações da clínica");
+    expect(pageTitle("/configuracoes-da-clinica")).toBe(
+      "Configurações da clínica",
+    );
   });
 
   it("ignores query and deeper segments", () => {
