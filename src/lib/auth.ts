@@ -14,7 +14,10 @@ import {
   sendEmail,
   verificationEmail,
 } from "@/lib/email";
-import { loadSessionMemberships } from "@/lib/session-memberships";
+import {
+  loadSessionMemberships,
+  sessionBranding,
+} from "@/lib/session-memberships";
 import { ACCEPT_TERMS_HEADER, termsAcceptanceForNewUser } from "@/lib/terms";
 
 export const auth = betterAuth({
@@ -77,6 +80,7 @@ export const auth = betterAuth({
           clinicChoiceMadeAt: userData?.clinicChoiceMadeAt ?? null,
           clinicChoiceChangedAt: userData?.clinicChoiceChangedAt ?? null,
           termsVersion: userData?.termsVersion ?? null,
+          branding: sessionBranding(memberships, access.active?.id),
         },
         session,
       };

@@ -5,7 +5,7 @@ vi.mock("@/db", () => ({
   db: { query: { usersToClinicsTable: { findMany } } },
 }));
 
-import { loadSessionMemberships } from "./session-memberships";
+import { loadSessionMemberships, sessionBranding } from "./session-memberships";
 
 describe("loadSessionMemberships", () => {
   it("never loads the clinics' logos, only the columns the session uses", async () => {
@@ -16,7 +16,38 @@ describe("loadSessionMemberships", () => {
       id: true,
       name: true,
       createdAt: true,
+      updatedAt: true,
+      brandColor: true,
     });
     expect(relations.clinic.columns).not.toHaveProperty("logoDataUrl");
+  });
+});
+
+describe("sessionBranding", () => {
+  const membership = (clinicId: string, hasLogo: boolean) => ({
+    clinicId,
+    createdAt: new Date(0),
+    keptInPlan: false,
+    clinic: {
+      id: clinicId,
+      name: clinicId,
+      createdAt: new Date(1_000),
+      updatedAt: new Date(2_000),
+      brandColor: "#16a34a",
+      hasLogo,
+    },
+  });
+
+  it("gives the active clinic's color and a logo version that changes with each update", () => {
+    expect(
+      sessionBranding([membership("a", false), membership("b", true)], "b"),
+    ).toEqual({ brandColor: "#16a34a", logoVersion: "2000" });
+  });
+
+  it("has no logo version without a logo, and nothing without an active clinic", () => {
+    expect(sessionBranding([membership("a", false)], "a")?.logoVersion).toBe(
+      null,
+    );
+    expect(sessionBranding([membership("a", true)], undefined)).toBeNull();
   });
 });
