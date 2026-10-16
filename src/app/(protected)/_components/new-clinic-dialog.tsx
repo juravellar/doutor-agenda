@@ -11,7 +11,7 @@ import {
 import ClinicForm from "../nova-clinica/_components/form";
 
 // Opens over the current page, so what the user was looking at stays behind
-// the dialog. The /clinic-form page is only for the first clinic.
+// the dialog. The /nova-clinica page is only for the first clinic.
 export function NewClinicDialog({
   open,
   onOpenChange,
