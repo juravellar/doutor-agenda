@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { BRAZILIAN_STATES, isValidCpf, onlyDigits } from "@/helpers/cpf";
+import { isValidPhone } from "@/helpers/phone";
 import { clinicToday } from "@/helpers/time";
 
 const text = (max: number) =>
@@ -24,9 +25,11 @@ export const upsertPatientSchema = z.object({
   email: z.string().email({
     message: "Email inválido.",
   }),
-  phoneNumber: z.string().trim().min(1, {
-    message: "Número de telefone é obrigatório.",
-  }),
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(1, { message: "Número de telefone é obrigatório." })
+    .refine(isValidPhone, { message: "Telefone inválido." }),
   sex: z.enum(["male", "female"], {
     required_error: "Sexo é obrigatório.",
   }),
@@ -67,7 +70,7 @@ export const upsertPatientSchema = z.object({
   emergencyContactPhone: z
     .string()
     .optional()
-    .refine((value) => !value || [10, 11].includes(onlyDigits(value).length), {
+    .refine((value) => !value || isValidPhone(value), {
       message: "Telefone inválido.",
     }),
   notes: text(1000),
@@ -84,7 +87,7 @@ const digitsOrNull = (value: string | undefined) =>
 export const patientColumns = (input: Omit<UpsertPatientSchema, "id">) => ({
   name: input.name,
   email: input.email,
-  phoneNumber: input.phoneNumber,
+  phoneNumber: onlyDigits(input.phoneNumber),
   sex: input.sex,
   birthDate: orNull(input.birthDate),
   cpf: digitsOrNull(input.cpf),
