@@ -9,6 +9,7 @@ describe("createGate", () => {
     expect(createGate({ used: 12, limit: 20 }, null, doctor)).toEqual({
       usageText: "12 de 20 médicos",
       blockedReason: null,
+      blockedKind: null,
     });
   });
 
@@ -16,6 +17,7 @@ describe("createGate", () => {
     expect(createGate({ used: 1, limit: 1 }, null, doctor)).toEqual({
       usageText: "1 de 1 médico",
       blockedReason: "Você atingiu o limite do seu plano.",
+      blockedKind: "limit",
     });
   });
 
@@ -25,10 +27,25 @@ describe("createGate", () => {
     );
   });
 
+  it("tells a read-only clinic apart from an ended free period", () => {
+    expect(
+      createGate(
+        { used: 0, limit: 5 },
+        "Esta clínica está só leitura no seu plano atual.",
+        doctor,
+      ).blockedKind,
+    ).toBe("read-only");
+    expect(
+      createGate({ used: 0, limit: 1 }, "Seu período gratuito terminou.", doctor)
+        .blockedKind,
+    ).toBe("free-period-over");
+  });
+
   it("hides usage for unlimited plans", () => {
     expect(createGate({ used: 500, limit: null }, null, doctor)).toEqual({
       usageText: null,
       blockedReason: null,
+      blockedKind: null,
     });
   });
 
