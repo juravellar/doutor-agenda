@@ -76,9 +76,11 @@ export default function TermsOfUsePage() {
           continuam visíveis, mas cadastrar e editar exige um plano pago.
         </li>
         <li>
-          Os planos pagos são cobrados mensalmente pelo Stripe, com os limites
-          descritos na página de assinatura. A assinatura pode ser cancelada a
-          qualquer momento e vale até o fim do período já pago.
+          Os planos pagos são cobrados pelo Stripe, por mês ou por ano, com os
+          limites descritos na página de assinatura. No plano anual, o ano
+          inteiro é cobrado de uma vez, com desconto em relação ao mensal. A
+          assinatura pode ser cancelada a qualquer momento e vale até o fim do
+          período já pago, seja o mês ou o ano.
         </li>
       </ul>
 
