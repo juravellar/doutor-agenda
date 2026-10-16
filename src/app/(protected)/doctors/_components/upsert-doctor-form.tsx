@@ -2,13 +2,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { upsertDoctor } from "@/actions/upsert-doctor";
 import { timeRangeRule } from "@/actions/upsert-doctor/schema";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   DialogContent,
   DialogDescription,
@@ -187,20 +187,15 @@ const UpsertDoctorForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Preço da consulta</FormLabel>
-                <NumericFormat
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value.floatValue);
-                  }}
-                  decimalScale={2}
-                  fixedDecimalScale
-                  decimalSeparator=","
-                  allowNegative={false}
-                  allowLeadingZeros={false}
-                  thousandSeparator="."
-                  customInput={Input}
-                  prefix="R$"
-                />
+                <FormControl>
+                  <CurrencyInput
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
