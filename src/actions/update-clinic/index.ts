@@ -10,6 +10,11 @@ import { clinicWriteActionClient } from "@/lib/clinic-action";
 
 import { updateClinicSchema } from "./schema";
 
+// An empty field clears the column; a field left out of the call (undefined,
+// which Drizzle skips) keeps what is stored.
+const optional = (value: string | undefined) =>
+  value === undefined ? undefined : value || null;
+
 export const updateClinic = clinicWriteActionClient
   .schema(updateClinicSchema)
   .action(async ({ parsedInput, ctx }) => {
@@ -18,10 +23,10 @@ export const updateClinic = clinicWriteActionClient
         .update(clinicsTable)
         .set({
           name: parsedInput.name,
-          address: parsedInput.address || null,
-          phoneNumber: parsedInput.phoneNumber || null,
-          brandColor: parsedInput.brandColor?.toLowerCase() || null,
-          logoDataUrl: parsedInput.logoDataUrl || null,
+          address: optional(parsedInput.address),
+          phoneNumber: optional(parsedInput.phoneNumber),
+          brandColor: optional(parsedInput.brandColor?.toLowerCase()),
+          logoDataUrl: optional(parsedInput.logoDataUrl),
         })
         .where(eq(clinicsTable.id, ctx.clinic.id));
       await recordAudit(

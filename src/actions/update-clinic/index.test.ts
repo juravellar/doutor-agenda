@@ -47,13 +47,19 @@ describe("updateClinic", () => {
       name: "Clínica Centro",
       address: "Rua A, 10",
       phoneNumber: "11999999999",
-      brandColor: null,
-      logoDataUrl: null,
+      brandColor: undefined,
+      logoDataUrl: undefined,
     });
   });
 
   it("stores empty optional fields as null", async () => {
-    await updateClinic({ name: "Centro", address: "", phoneNumber: "" });
+    await updateClinic({
+      name: "Centro",
+      address: "",
+      phoneNumber: "",
+      brandColor: "",
+      logoDataUrl: "",
+    });
 
     expect(mocks.set).toHaveBeenCalledWith({
       name: "Centro",
@@ -61,6 +67,19 @@ describe("updateClinic", () => {
       phoneNumber: null,
       brandColor: null,
       logoDataUrl: null,
+    });
+  });
+
+  it("keeps the branding when a call leaves it out", async () => {
+    await updateClinic({ name: "Centro" });
+
+    // Drizzle leaves undefined columns out of the UPDATE.
+    expect(mocks.set).toHaveBeenCalledWith({
+      name: "Centro",
+      address: undefined,
+      phoneNumber: undefined,
+      brandColor: undefined,
+      logoDataUrl: undefined,
     });
   });
 
