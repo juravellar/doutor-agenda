@@ -130,8 +130,9 @@ export default function PrivacyPolicyPage() {
         </li>
         <li>
           <strong>ViaCEP</strong> (serviço público de consulta de endereço): ao
-          preencher o cadastro de um paciente, recebe apenas o CEP digitado,
-          para completar rua, bairro, cidade e UF.
+          preencher o cadastro de um paciente, recebe apenas o CEP digitado (e,
+          como em qualquer acesso pela internet, o endereço IP de quem
+          preenche), para completar rua, bairro, cidade e UF.
         </li>
       </ul>
       <p>
