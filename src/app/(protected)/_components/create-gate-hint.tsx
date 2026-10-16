@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { CreateGate } from "@/lib/create-gate";
+import { BLOCKED_COPY, type CreateGate } from "@/lib/create-gate";
 import { cn } from "@/lib/utils";
 
 export function CreateGateHint({ gate }: { gate: CreateGate }) {
@@ -16,11 +16,14 @@ export function CreateGateHint({ gate }: { gate: CreateGate }) {
     >
       {gate.blockedReason ? `${gate.blockedReason} ` : null}
       {gate.usageText}
-      {gate.blockedReason ? (
+      {gate.blockedKind ? (
         <>
           {" · "}
-          <Link href="/assinatura" className="font-medium underline">
-            Ver planos
+          <Link
+            href={BLOCKED_COPY[gate.blockedKind].href}
+            className="font-medium underline"
+          >
+            {BLOCKED_COPY[gate.blockedKind].action}
           </Link>
         </>
       ) : null}

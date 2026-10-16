@@ -12,31 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { BlockedKind } from "@/lib/create-gate";
-
-const COPY: Record<
-  BlockedKind,
-  { title: string; next: string; href: string; action: string }
-> = {
-  limit: {
-    title: "Limite do plano atingido",
-    next: "Para cadastrar mais, escolha um plano maior.",
-    href: "/assinatura",
-    action: "Ver planos",
-  },
-  "free-period-over": {
-    title: "Período gratuito encerrado",
-    next: "Seus dados continuam disponíveis. Para voltar a cadastrar e editar, assine um plano.",
-    href: "/assinatura",
-    action: "Ver planos",
-  },
-  "read-only": {
-    title: "Clínica só leitura",
-    next: "Escolha quais clínicas ficam ativas no seu plano ou faça upgrade.",
-    href: "/clinicas",
-    action: "Minhas clínicas",
-  },
-};
+import { BLOCKED_COPY, type BlockedKind } from "@/lib/create-gate";
 
 // Explains why something can't be created instead of a silently disabled
 // button, and points to the way out.
@@ -51,7 +27,7 @@ export function BlockedCreateDialog({
   kind: BlockedKind;
   usageText: string | null;
 }) {
-  const copy = COPY[kind];
+  const copy = BLOCKED_COPY[kind];
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
