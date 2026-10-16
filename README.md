@@ -27,7 +27,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 
 | | Free | Essencial | Profissional |
 |---|---|---|---|
-| Duração | 3 meses | Mensal | Mensal |
+| Cobrança | Grátis por 3 meses | Mensal ou anual | Mensal ou anual |
 | Clínicas | 1 | 2 | Ilimitadas |
 | Médicos (por clínica) | 1 | 5 | Ilimitados |
 | Pacientes (por clínica) | 20 | 100 | Ilimitados |
@@ -36,6 +36,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 - **Limites:** os limites são verificados no servidor, ao cadastrar médicos, pacientes e agendamentos. Ficam em [`src/lib/plans.ts`](src/lib/plans.ts).
 - **Visibilidade:** a página de assinatura mostra o uso de cada limite. Os botões de cadastro mostram o uso e, no limite, abrem um aviso explicando o motivo, com o caminho para o plano maior. Um aviso no topo das páginas informa cancelamento agendado, pagamento pendente e o fim do período gratuito.
 - **Preços:** o valor exibido de cada plano pago vem do próprio Stripe, então é sempre o mesmo cobrado no checkout.
+- **Plano anual:** opcional. Com os preços anuais configurados (`STRIPE_*_ANNUAL_PRICE_ID`), a página de assinatura ganha a escolha Mensal/Anual e mostra a economia em relação a 12 meses do mensal. Sem eles, só o mensal aparece.
 - **No banco:** um usuário sem assinatura tem `plan` vazio e é tratado como Free.
 - **Várias clínicas:** o seletor no rodapé do menu troca a clínica aberta; cada clínica tem seus próprios médicos, pacientes e agendamentos. Em **Minhas clínicas**, quem tem mais clínicas do que o plano permite (depois de um downgrade) escolhe quais continuam ativas; as outras ficam só leitura, sem perder dados. A primeira escolha é livre e, depois, vale uma alteração a cada 30 dias; para mais, o usuário fala com o suporte.
 - **Fim do Free:** 3 meses depois da criação da clínica, a conta fica só leitura. Dá para ver os dados, mas cadastrar, editar e excluir exige um plano pago. Clínicas criadas antes dessa regra contam os 3 meses a partir de 15/10/2026. O prazo é controlado pelo app, não pelo Stripe.
