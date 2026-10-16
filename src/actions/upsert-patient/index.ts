@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-import { isUniqueViolation, withClinicLock } from "@/db/clinic-lock";
+import { violatedConstraint, withClinicLock } from "@/db/clinic-lock";
 import { patientsTable } from "@/db/schema";
 import { UserFacingError } from "@/lib/action-errors";
 import { recordAudit } from "@/lib/audit";
@@ -61,9 +61,7 @@ export const upsertPatient = clinicWriteActionClient
         );
       });
     } catch (error) {
-      // The only unique key a patient can collide on, besides its id, is the
-      // CPF within the clinic.
-      if (isUniqueViolation(error)) {
+      if (violatedConstraint(error) === "patients_clinic_cpf_unique") {
         throw new UserFacingError(
           "Já existe um paciente com este CPF nesta clínica.",
         );

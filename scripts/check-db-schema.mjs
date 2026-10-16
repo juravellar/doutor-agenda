@@ -18,7 +18,13 @@ const expected = snapshotColumns(
   fileURLToPath(new URL("../drizzle", import.meta.url)),
 );
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+// An unreachable database fails the build within seconds instead of leaving
+// it hanging until the platform's build timeout.
+const client = new pg.Client({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 15_000,
+  query_timeout: 15_000,
+});
 await client.connect();
 const { rows } = await client.query(
   `select table_name || '.' || column_name as column

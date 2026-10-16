@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { Input } from "@/components/ui/input";
-import { formatPhone, phoneDigits } from "@/helpers/phone";
+import { caretAfterDigits, editPhone, formatPhone } from "@/helpers/phone";
 
 type PhoneInputProps = Omit<
   React.ComponentProps<typeof Input>,
@@ -19,28 +19,48 @@ export function PhoneInput({
   value,
   onValueChange,
   placeholder = "(11) 99999-9999",
+  ref,
   ...props
 }: PhoneInputProps) {
+  const input = React.useRef<HTMLInputElement | null>(null);
   const formatted = formatPhone(value ?? "");
+
+  const setRefs = (element: HTMLInputElement | null) => {
+    input.current = element;
+    if (typeof ref === "function") {
+      ref(element);
+    } else if (ref) {
+      ref.current = element;
+    }
+  };
+
   return (
     <Input
       {...props}
+      ref={setRefs}
       type="tel"
       inputMode="numeric"
       autoComplete="off"
       placeholder={placeholder}
       value={formatted}
       onChange={(event) => {
-        let digits = phoneDigits(event.target.value);
-        // Erasing a "(", ")", space or "-" leaves the digits as they were, so
-        // the formatting would put it right back; erase the digit before it.
-        if (
-          digits === phoneDigits(formatted) &&
-          event.target.value.length < formatted.length
-        ) {
-          digits = digits.slice(0, -1);
-        }
+        const { digits, digitsBeforeCaret } = editPhone(
+          formatted,
+          event.target.value,
+          event.target.selectionStart ?? event.target.value.length,
+          (event.nativeEvent as InputEvent).inputType ===
+            "deleteContentForward",
+        );
         onValueChange(digits);
+        // Reformatting moves the cursor to the end; once the new text is on
+        // screen, put it back after the same digit.
+        requestAnimationFrame(() => {
+          const element = input.current;
+          if (element && document.activeElement === element) {
+            const position = caretAfterDigits(element.value, digitsBeforeCaret);
+            element.setSelectionRange(position, position);
+          }
+        });
       }}
     />
   );

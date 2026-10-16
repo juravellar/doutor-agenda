@@ -32,3 +32,15 @@ export const isUniqueViolation = (error: unknown) => {
   const causeCode = (error as { cause?: { code?: string } })?.cause?.code;
   return code === "23505" || causeCode === "23505";
 };
+
+// The unique constraint a unique_violation hit, possibly wrapped by Drizzle.
+export const violatedConstraint = (error: unknown) => {
+  if (!isUniqueViolation(error)) {
+    return null;
+  }
+  const wrapped = error as {
+    constraint?: string;
+    cause?: { constraint?: string };
+  };
+  return wrapped.constraint ?? wrapped.cause?.constraint ?? null;
+};

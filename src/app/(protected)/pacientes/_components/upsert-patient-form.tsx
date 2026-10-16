@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { type Control, type FieldPath, useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
@@ -39,13 +39,22 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { patientsTable } from "@/db/schema";
 import { fetchAddressByCep } from "@/helpers/cep";
-import { BRAZILIAN_STATES } from "@/helpers/cpf";
+import { BRAZILIAN_STATES, onlyDigits } from "@/helpers/cpf";
 import { clinicToday } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 
 const formSchema = upsertPatientSchema.omit({ id: true });
 type FormValues = z.infer<typeof formSchema>;
 type Patient = typeof patientsTable.$inferSelect;
+type AddressField =
+  | "addressStreet"
+  | "addressDistrict"
+  | "addressCity"
+  | "addressState";
+
+// Radix Select can't have an item with an empty value, so "no state" uses
+// this one and is stored as empty.
+const NO_STATE = "none";
 
 // Stored nulls become empty fields; the server turns them back into nulls.
 const toFormValues = (patient?: Patient): FormValues => ({
@@ -213,9 +222,13 @@ const UpsertPatientForm = ({
     defaultValues: toFormValues(patient),
   });
 
+  // What the last CEP lookup wrote, so a corrected CEP can replace it.
+  const autofilled = useRef<Partial<Record<AddressField, string>>>({});
+
   useEffect(() => {
     if (isOpen) {
       form.reset(toFormValues(patient));
+      autofilled.current = {};
     }
   }, [isOpen, form, patient]);
 
@@ -229,15 +242,19 @@ const UpsertPatientForm = ({
     },
   });
 
-  // Fills only the address fields still empty, never over what was typed.
+  // Fills the address fields that are empty or still hold the previous
+  // lookup's value, never over what the user typed.
   const fillAddress = async (cep: string) => {
     const address = await fetchAddressByCep(cep);
-    if (!address) {
+    // A slow answer for a CEP the user has since changed is dropped.
+    if (!address || onlyDigits(form.getValues("addressZip") ?? "") !== cep) {
       return;
     }
-    const fill = (name: FieldPath<FormValues>, value: string) => {
-      if (value && !form.getValues(name)) {
+    const fill = (name: AddressField, value: string) => {
+      const current = form.getValues(name);
+      if (value && (!current || current === autofilled.current[name])) {
         form.setValue(name, value, { shouldValidate: true });
+        autofilled.current[name] = value;
       }
     };
     fill("addressStreet", address.street);
@@ -378,13 +395,19 @@ const UpsertPatientForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>UF</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value === NO_STATE ? "" : value)
+                    }
+                    value={field.value || ""}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value={NO_STATE}>Não informar</SelectItem>
                       {BRAZILIAN_STATES.map((state) => (
                         <SelectItem key={state} value={state}>
                           {state}
