@@ -60,6 +60,9 @@ export function ClinicSettingsForm({
   const updateAction = useAction(updateClinic, {
     onSuccess: () => {
       toast.success("Dados da clínica salvos.");
+      // What was saved becomes the new baseline, so the logo isn't counted
+      // as changed (and sent again) on the next save.
+      form.reset(form.getValues());
       router.refresh();
     },
     onError: ({ error }) =>
@@ -86,7 +89,13 @@ export function ClinicSettingsForm({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((values) =>
-              updateAction.execute(values),
+              // The logo (up to 150 KB) goes only when it changed; left out,
+              // the action keeps the stored one and its URL version.
+              updateAction.execute(
+                form.formState.dirtyFields.logoDataUrl
+                  ? values
+                  : { ...values, logoDataUrl: undefined },
+              ),
             )}
             className="space-y-4"
           >

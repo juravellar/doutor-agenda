@@ -16,7 +16,7 @@ export const loadSessionMemberships = (userId: string) =>
           id: true,
           name: true,
           createdAt: true,
-          updatedAt: true,
+          logoUpdatedAt: true,
           brandColor: true,
         },
         extras: (clinic, { sql }) => ({
@@ -33,7 +33,8 @@ type SessionMembership = Awaited<
 >[number];
 
 // The active clinic's color and logo version for the layout. The version is
-// the clinic's last update, so a new logo gets a new (cacheable) URL.
+// when the logo last changed, so a new logo gets a new URL and other edits
+// to the clinic keep the cached one.
 export const sessionBranding = (
   memberships: SessionMembership[],
   activeClinicId: string | undefined,
@@ -47,7 +48,7 @@ export const sessionBranding = (
   return {
     brandColor: clinic.brandColor,
     logoVersion: clinic.hasLogo
-      ? String(clinic.updatedAt?.getTime() ?? clinic.createdAt.getTime())
+      ? String(clinic.logoUpdatedAt?.getTime() ?? clinic.createdAt.getTime())
       : null,
   };
 };

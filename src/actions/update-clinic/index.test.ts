@@ -57,6 +57,7 @@ describe("updateClinic", () => {
       phoneNumber: "11999999999",
       brandColor: undefined,
       logoDataUrl: undefined,
+      logoUpdatedAt: undefined,
     });
   });
 
@@ -75,6 +76,7 @@ describe("updateClinic", () => {
       phoneNumber: null,
       brandColor: null,
       logoDataUrl: null,
+      logoUpdatedAt: expect.any(Date),
     });
   });
 
@@ -88,6 +90,7 @@ describe("updateClinic", () => {
       phoneNumber: undefined,
       brandColor: undefined,
       logoDataUrl: undefined,
+      logoUpdatedAt: undefined,
     });
   });
 

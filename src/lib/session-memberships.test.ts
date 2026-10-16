@@ -16,7 +16,7 @@ describe("loadSessionMemberships", () => {
       id: true,
       name: true,
       createdAt: true,
-      updatedAt: true,
+      logoUpdatedAt: true,
       brandColor: true,
     });
     expect(relations.clinic.columns).not.toHaveProperty("logoDataUrl");
@@ -32,13 +32,13 @@ describe("sessionBranding", () => {
       id: clinicId,
       name: clinicId,
       createdAt: new Date(1_000),
-      updatedAt: new Date(2_000),
+      logoUpdatedAt: new Date(2_000),
       brandColor: "#16a34a",
       hasLogo,
     },
   });
 
-  it("gives the active clinic's color and a logo version that changes with each update", () => {
+  it("gives the active clinic's color and a logo version that changes with the logo", () => {
     expect(
       sessionBranding([membership("a", false), membership("b", true)], "b"),
     ).toEqual({ brandColor: "#16a34a", logoVersion: "2000" });

@@ -39,6 +39,9 @@ export const updateClinic = clinicWriteActionClient
           phoneNumber: optional(parsedInput.phoneNumber),
           brandColor: optional(parsedInput.brandColor?.toLowerCase()),
           logoDataUrl: optional(parsedInput.logoDataUrl),
+          // Sent only when the logo changed (see the settings form).
+          logoUpdatedAt:
+            parsedInput.logoDataUrl === undefined ? undefined : new Date(),
         })
         .where(eq(clinicsTable.id, ctx.clinic.id));
       await recordAudit(

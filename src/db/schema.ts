@@ -95,6 +95,9 @@ export const clinicsTable = pgTable("clinics", {
   // stored as a data URL (resized in the browser; SVG is refused).
   brandColor: text("brand_color"),
   logoDataUrl: text("logo_data_url"),
+  // When the logo last changed: its URL's version, so other edits to the
+  // clinic don't make every member download it again.
+  logoUpdatedAt: timestamp("logo_updated_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

@@ -1,5 +1,5 @@
 {
-  "id": "e9788b5a-157a-414d-a916-b009f58ee90e",
+  "id": "81bd0a7e-6137-46e5-94a4-23513cc38cda",
   "prevId": "4474d4dd-4a01-46b8-a949-3ca963fd0487",
   "version": "7",
   "dialect": "postgresql",
@@ -373,6 +373,12 @@
         "logo_data_url": {
           "name": "logo_data_url",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_updated_at": {
+          "name": "logo_updated_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
