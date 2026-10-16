@@ -2,13 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { type ReactNode, useEffect } from "react";
+import { type Control, type FieldPath, useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
-import { z } from "zod";
+import type { z } from "zod";
 
 import { upsertPatient } from "@/actions/upsert-patient";
+import { upsertPatientSchema } from "@/actions/upsert-patient/schema";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -20,6 +21,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,27 +35,136 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { patientsTable } from "@/db/schema";
+import { fetchAddressByCep } from "@/helpers/cep";
+import { BRAZILIAN_STATES } from "@/helpers/cpf";
+import { clinicToday } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 
-const formSchema = z.object({
-  name: z.string().trim().min(1, {
-    message: "Nome é obrigatório.",
-  }),
-  email: z.string().email({
-    message: "Email inválido.",
-  }),
-  phoneNumber: z.string().trim().min(1, {
-    message: "Número de telefone é obrigatório.",
-  }),
-  sex: z.enum(["male", "female"], {
-    required_error: "Sexo é obrigatório.",
-  }),
+const formSchema = upsertPatientSchema.omit({ id: true });
+type FormValues = z.infer<typeof formSchema>;
+type Patient = typeof patientsTable.$inferSelect;
+
+// Stored nulls become empty fields; the server turns them back into nulls.
+const toFormValues = (patient?: Patient): FormValues => ({
+  name: patient?.name ?? "",
+  email: patient?.email ?? "",
+  phoneNumber: patient?.phoneNumber ?? "",
+  sex: patient?.sex ?? (undefined as unknown as FormValues["sex"]),
+  birthDate: patient?.birthDate ?? "",
+  cpf: patient?.cpf ?? "",
+  healthInsurance: patient?.healthInsurance ?? "",
+  healthInsuranceNumber: patient?.healthInsuranceNumber ?? "",
+  addressZip: patient?.addressZip ?? "",
+  addressStreet: patient?.addressStreet ?? "",
+  addressNumber: patient?.addressNumber ?? "",
+  addressComplement: patient?.addressComplement ?? "",
+  addressDistrict: patient?.addressDistrict ?? "",
+  addressCity: patient?.addressCity ?? "",
+  addressState: patient?.addressState ?? "",
+  emergencyContactName: patient?.emergencyContactName ?? "",
+  emergencyContactPhone: patient?.emergencyContactPhone ?? "",
+  notes: patient?.notes ?? "",
 });
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <fieldset className="space-y-3">
+      <legend className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+        {title}
+      </legend>
+      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+    </fieldset>
+  );
+}
+
+function TextField({
+  control,
+  name,
+  label,
+  placeholder,
+  className,
+}: {
+  control: Control<FormValues>;
+  name: FieldPath<FormValues>;
+  label: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className={className}>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <Input
+              placeholder={placeholder}
+              {...field}
+              value={field.value ?? ""}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+function MaskedField({
+  control,
+  name,
+  label,
+  format,
+  placeholder,
+  onComplete,
+}: {
+  control: Control<FormValues>;
+  name: FieldPath<FormValues>;
+  label: string;
+  format: string;
+  placeholder: string;
+  onComplete?: (digits: string) => void;
+}) {
+  const digits = format.split("#").length - 1;
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <PatternFormat
+              format={format}
+              mask="_"
+              placeholder={placeholder}
+              inputMode="numeric"
+              value={field.value ?? ""}
+              onBlur={field.onBlur}
+              name={field.name}
+              getInputRef={field.ref}
+              onValueChange={({ value }) => {
+                field.onChange(value);
+                if (value.length === digits) {
+                  onComplete?.(value);
+                }
+              }}
+              customInput={Input}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
 
 interface UpsertPatientFormProps {
   isOpen: boolean;
-  patient?: typeof patientsTable.$inferSelect;
+  patient?: Patient;
   onSuccess?: () => void;
 }
 
@@ -62,20 +173,14 @@ const UpsertPatientForm = ({
   onSuccess,
   isOpen,
 }: UpsertPatientFormProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    shouldUnregister: true,
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: patient?.name ?? "",
-      email: patient?.email ?? "",
-      phoneNumber: patient?.phoneNumber ?? "",
-      sex: patient?.sex ?? undefined,
-    },
+    defaultValues: toFormValues(patient),
   });
 
   useEffect(() => {
     if (isOpen) {
-      form.reset(patient);
+      form.reset(toFormValues(patient));
     }
   }, [isOpen, form, patient]);
 
@@ -89,15 +194,31 @@ const UpsertPatientForm = ({
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    upsertPatientAction.execute({
-      ...values,
-      id: patient?.id,
-    });
+  // Fills only the address fields still empty, never over what was typed.
+  const fillAddress = async (cep: string) => {
+    const address = await fetchAddressByCep(cep);
+    if (!address) {
+      return;
+    }
+    const fill = (name: FieldPath<FormValues>, value: string) => {
+      if (value && !form.getValues(name)) {
+        form.setValue(name, value, { shouldValidate: true });
+      }
+    };
+    fill("addressStreet", address.street);
+    fill("addressDistrict", address.district);
+    fill("addressCity", address.city);
+    fill("addressState", address.state);
   };
 
+  const onSubmit = (values: FormValues) => {
+    upsertPatientAction.execute({ ...values, id: patient?.id });
+  };
+
+  const { control } = form;
+
   return (
-    <DialogContent>
+    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>
           {patient ? patient.name : "Adicionar paciente"}
@@ -105,90 +226,201 @@ const UpsertPatientForm = ({
         <DialogDescription>
           {patient
             ? "Edite as informações desse paciente."
-            : "Adicione um novo paciente."}
+            : "Só nome, email, telefone e sexo são obrigatórios."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome do paciente</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Digite o nome completo do paciente"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="exemplo@email.com"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Número de telefone</FormLabel>
-                <FormControl>
-                  <PatternFormat
-                    format="(##) #####-####"
-                    mask="_"
-                    placeholder="(11) 99999-9999"
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value.value);
-                    }}
-                    customInput={Input}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="sex"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sexo</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Section title="Dados pessoais">
+            <TextField
+              control={control}
+              name="name"
+              label="Nome completo"
+              placeholder="Nome do paciente"
+              className="sm:col-span-2"
+            />
+            <FormField
+              control={control}
+              name="sex"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sexo</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="male">Masculino</SelectItem>
+                      <SelectItem value="female">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data de nascimento</FormLabel>
                   <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o sexo" />
-                    </SelectTrigger>
+                    <Input
+                      type="date"
+                      max={clinicToday()}
+                      min="1900-01-01"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="male">Masculino</SelectItem>
-                    <SelectItem value="female">Feminino</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <MaskedField
+              control={control}
+              name="cpf"
+              label="CPF"
+              format="###.###.###-##"
+              placeholder="000.000.000-00"
+            />
+          </Section>
+
+          <Section title="Contato">
+            <FormField
+              control={control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="exemplo@email.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <MaskedField
+              control={control}
+              name="phoneNumber"
+              label="Telefone"
+              format="(##) #####-####"
+              placeholder="(11) 99999-9999"
+            />
+          </Section>
+
+          <Section title="Endereço">
+            <MaskedField
+              control={control}
+              name="addressZip"
+              label="CEP"
+              format="#####-###"
+              placeholder="00000-000"
+              onComplete={fillAddress}
+            />
+            <TextField
+              control={control}
+              name="addressStreet"
+              label="Logradouro"
+              placeholder="Rua, avenida…"
+            />
+            <TextField control={control} name="addressNumber" label="Número" />
+            <TextField
+              control={control}
+              name="addressComplement"
+              label="Complemento"
+              placeholder="Apto, bloco…"
+            />
+            <TextField
+              control={control}
+              name="addressDistrict"
+              label="Bairro"
+            />
+            <TextField control={control} name="addressCity" label="Cidade" />
+            <FormField
+              control={control}
+              name="addressState"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>UF</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {BRAZILIAN_STATES.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </Section>
+
+          <Section title="Convênio">
+            <TextField
+              control={control}
+              name="healthInsurance"
+              label="Convênio"
+              placeholder="Particular, Unimed…"
+            />
+            <TextField
+              control={control}
+              name="healthInsuranceNumber"
+              label="Número da carteirinha"
+            />
+          </Section>
+
+          <Section title="Contato de emergência">
+            <TextField
+              control={control}
+              name="emergencyContactName"
+              label="Nome"
+            />
+            <MaskedField
+              control={control}
+              name="emergencyContactPhone"
+              label="Telefone"
+              format="(##) #####-####"
+              placeholder="(11) 99999-9999"
+            />
+          </Section>
+
+          <FormField
+            control={control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Observações administrativas</FormLabel>
+                <FormControl>
+                  <Textarea
+                    rows={3}
+                    placeholder="Ex.: prefere ser contatado por WhatsApp"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Não registre aqui diagnósticos, exames ou prescrições: o
+                  Avelliq não é um prontuário eletrônico.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <DialogFooter>
             <Button
               type="submit"

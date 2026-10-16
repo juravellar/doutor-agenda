@@ -54,6 +54,10 @@ export default function TermsOfUsePage() {
         </li>
         <li>cadastrar apenas os dados necessários ao agendamento;</li>
         <li>
+          não registrar informações clínicas (diagnósticos, exames, prescrições)
+          no Avelliq, que não é um prontuário eletrônico;
+        </li>
+        <li>
           atender aos pedidos dos pacientes sobre os próprios dados, com o apoio
           das ferramentas do sistema;
         </li>

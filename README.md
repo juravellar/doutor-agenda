@@ -15,7 +15,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 - **Autenticação** com e-mail e senha ou conta Google ([Better Auth](https://www.better-auth.com)), com recuperação de senha por e-mail.
 - **Clínica:** cada usuário trabalha dentro da sua clínica, e os dados de uma clínica não são visíveis para outra.
 - **Médicos:** especialidade, valor da consulta, dias da semana e horário de atendimento.
-- **Pacientes:** cadastro e listagem.
+- **Pacientes:** cadastro e listagem. Além dos dados básicos, a clínica pode registrar data de nascimento, CPF, endereço (preenchido pelo CEP), convênio, contato de emergência e observações administrativas.
 - **Agendamentos:** só oferece horários dentro do expediente do médico e que ainda não estejam ocupados.
 - **Dashboard:** faturamento, número de consultas, médicos e especialidades mais procurados, e os agendamentos do dia.
 - **Tema claro e escuro:** segue o tema do sistema ou a escolha feita no menu do rodapé (Tema).

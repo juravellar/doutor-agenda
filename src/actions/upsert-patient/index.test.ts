@@ -108,4 +108,57 @@ describe("upsertPatient", () => {
       mocks.countPatients.mock.invocationCallOrder[0],
     );
   });
+
+  it("stores optional details normalized: digits only, empty as null", async () => {
+    mocks.countPatients.mockResolvedValue(0);
+
+    const result = await upsertPatient({
+      ...input,
+      cpf: "529.982.247-25",
+      addressZip: "01310-100",
+      emergencyContactPhone: "(11) 98888-7777",
+      healthInsurance: "",
+      birthDate: "1990-05-20",
+    });
+
+    expect(result?.serverError).toBeUndefined();
+    expect(mocks.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cpf: "52998224725",
+        addressZip: "01310100",
+        emergencyContactPhone: "11988887777",
+        healthInsurance: null,
+        notes: null,
+        birthDate: "1990-05-20",
+      }),
+    );
+  });
+
+  it("refuses an invalid CPF before touching the database", async () => {
+    const result = await upsertPatient({ ...input, cpf: "529.982.247-24" });
+
+    expect(result?.validationErrors?.cpf).toBeDefined();
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("refuses a birth date in the future", async () => {
+    const result = await upsertPatient({ ...input, birthDate: "2999-01-01" });
+
+    expect(result?.validationErrors?.birthDate).toBeDefined();
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+
+  it("explains a CPF already used in the clinic", async () => {
+    mocks.onConflictDoUpdate.mockImplementationOnce(() => ({
+      returning: async () => {
+        throw Object.assign(new Error("duplicate key"), { code: "23505" });
+      },
+    }));
+
+    const result = await upsertPatient({ ...input, cpf: "52998224725" });
+
+    expect(result?.serverError).toBe(
+      "Já existe um paciente com este CPF nesta clínica.",
+    );
+  });
 });

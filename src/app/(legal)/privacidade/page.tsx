@@ -62,7 +62,11 @@ export default function PrivacyPolicyPage() {
           atendimento e valor da consulta.
         </li>
         <li>
-          <strong>Pacientes:</strong> nome, email, telefone e sexo.
+          <strong>Pacientes:</strong> nome, email, telefone e sexo e, se a
+          clínica preencher, data de nascimento, CPF, endereço, convênio e
+          número da carteirinha, contato de emergência e observações
+          administrativas. O Avelliq não guarda informações clínicas
+          (diagnósticos, exames, prescrições).
         </li>
         <li>
           <strong>Agendamentos:</strong> data, horário, médico, paciente e

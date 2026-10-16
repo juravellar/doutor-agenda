@@ -36,6 +36,12 @@ O Avelliq trata dados de saúde (agendamentos revelam que uma pessoa buscou aten
 - [ ] **Registro das operações de tratamento (art. 37):** manter este documento atualizado.
 - [ ] **Relatório de impacto (art. 38):** recomendado por haver dados sensíveis.
 
+## Dados de pacientes
+
+Além de nome, email, telefone e sexo, a clínica pode preencher data de nascimento, CPF (único por clínica), endereço, convênio, contato de emergência e observações administrativas. O Avelliq **não é prontuário**: o formulário e os Termos pedem que diagnósticos, exames e prescrições não sejam registrados. Guardar dados clínicos traria as exigências do CFM (prontuário eletrônico, guarda por 20 anos), que o sistema não atende hoje.
+
+Ao mudar a lista de dados coletados, a Política de Privacidade muda junto, e `TERMS_VERSION` sobe para que todos aceitem de novo.
+
 ## Limites conhecidos
 
 - **Auditoria:** registra alterações, não leituras. Registrar cada visualização exigiria outra estrutura de logs.

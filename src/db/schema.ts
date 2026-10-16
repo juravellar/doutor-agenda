@@ -1,6 +1,7 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
   integer,
   pgEnum,
@@ -185,10 +186,32 @@ export const patientsTable = pgTable("patients", {
   phoneNumber: text("phone_number").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   sex: patientSexEnum("sex").notNull(),
+  // Registration details, all optional. Clinical information (diagnoses,
+  // exams, prescriptions) deliberately has no place here: that would be a
+  // medical record, with its own legal requirements.
+  birthDate: date("birth_date"),
+  cpf: text("cpf"),
+  healthInsurance: text("health_insurance"),
+  healthInsuranceNumber: text("health_insurance_number"),
+  addressZip: text("address_zip"),
+  addressStreet: text("address_street"),
+  addressNumber: text("address_number"),
+  addressComplement: text("address_complement"),
+  addressDistrict: text("address_district"),
+  addressCity: text("address_city"),
+  addressState: text("address_state"),
+  emergencyContactName: text("emergency_contact_name"),
+  emergencyContactPhone: text("emergency_contact_phone"),
+  notes: text("notes"),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}, (table) => [
+  // A CPF identifies one person: no two patients of a clinic share it.
+  uniqueIndex("patients_clinic_cpf_unique")
+    .on(table.clinicId, table.cpf)
+    .where(sql`${table.cpf} is not null`),
+]);
 
 export const patientsTableRelations = relations(
   patientsTable,

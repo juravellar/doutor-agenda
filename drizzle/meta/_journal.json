@@ -57,6 +57,13 @@
       "when": 1792072878196,
       "tag": "0007_lgpd",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792122608156,
+      "tag": "0008_patient_details",
+      "breakpoints": true
     }
   ]
 }
