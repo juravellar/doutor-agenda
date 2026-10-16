@@ -119,3 +119,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Reduced motion: no travel or scaling, only fades (they still help to see
+   what changed). !important beats the per-element animation utilities. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    --tw-enter-scale: 1 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+  }
+  .active\:scale-\[0\.97\]:active {
+    scale: none !important;
+  }
+}
