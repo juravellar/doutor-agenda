@@ -1,6 +1,5 @@
 "use client";
 
-import { loadStripe } from "@stripe/stripe-js";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
@@ -14,6 +13,8 @@ import { actionErrorMessage } from "@/lib/action-errors";
 import type { Plan, PlanId } from "@/lib/plans";
 import type { PlanPrice } from "@/lib/stripe-plan";
 import { cn } from "@/lib/utils";
+
+const STRIPE_CHECKOUT_ORIGIN = "https://checkout.stripe.com";
 
 interface PlanCardProps {
   plan: Plan;
@@ -35,22 +36,13 @@ export function PlanCard({
 }: PlanCardProps) {
   const router = useRouter();
   const createStripeCheckoutAction = useAction(createStripeCheckout, {
-    onSuccess: async ({ data }) => {
-      if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-        throw new Error("Stripe publishable key not found");
+    onSuccess: ({ data }) => {
+      // Only ever leave the app for Stripe's own checkout page.
+      if (!data?.url || new URL(data.url).origin !== STRIPE_CHECKOUT_ORIGIN) {
+        toast.error("Não foi possível iniciar o pagamento. Tente novamente.");
+        return;
       }
-      const stripe = await loadStripe(
-        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-      );
-      if (!stripe) {
-        throw new Error("Stripe not found");
-      }
-      if (!data?.sessionId) {
-        throw new Error("Session ID not found");
-      }
-      await stripe.redirectToCheckout({
-        sessionId: data.sessionId,
-      });
+      window.location.assign(data.url);
     },
     onError: ({ error }) => {
       toast.error(

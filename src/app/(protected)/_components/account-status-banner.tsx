@@ -36,20 +36,28 @@ function Banner({
 
 const linkClass = "font-medium underline";
 
+// Plan changes reach the database by Stripe webhook, sometimes after the page
+// loaded. Navigating doesn't reload the client session, so it is refreshed on
+// navigation, but at most once a minute instead of on every page change.
+const SESSION_REFRESH_MS = 60_000;
+
 export function AccountStatusBanner() {
   const session = authClient.useSession();
   const { refetch } = session;
   const pathname = usePathname();
   const visitedPath = useRef(pathname);
+  const lastRefresh = useRef(Date.now());
 
-  // Navigating inside the app doesn't reload the client session, so a change
-  // made elsewhere (e.g. a cancellation that reached the webhook after the
-  // page loaded) would only show after a full reload. Refresh on navigation.
   useEffect(() => {
-    if (visitedPath.current !== pathname) {
-      visitedPath.current = pathname;
-      refetch();
+    if (visitedPath.current === pathname) {
+      return;
     }
+    visitedPath.current = pathname;
+    if (Date.now() - lastRefresh.current < SESSION_REFRESH_MS) {
+      return;
+    }
+    lastRefresh.current = Date.now();
+    refetch();
   }, [pathname, refetch]);
 
   const user = session.data?.user;

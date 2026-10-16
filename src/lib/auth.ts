@@ -26,7 +26,6 @@ export const auth = betterAuth({
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      // TODO: colocar cache
       const [userData, memberships] = await Promise.all([
         db.query.usersTable.findFirst({
           where: eq(usersTable.id, user.id),
@@ -38,6 +37,13 @@ export const auth = betterAuth({
           },
         }),
       ]);
+      // With the cookie cache, a deleted account's cookie still looks valid
+      // until it expires; the database has the final word. null is the same
+      // "no session" answer as a request without cookies; `as never` keeps the
+      // session type inferred from the branch below.
+      if (!userData) {
+        return null as never;
+      }
       const access = resolveClinicAccess(
         memberships.map((membership) => ({
           clinicId: membership.clinicId,
@@ -121,6 +127,14 @@ export const auth = betterAuth({
   },
   session: {
     modelName: "sessionsTable",
+    // The session is validated from a signed cookie for up to 5 minutes
+    // instead of a database lookup on every request. Plan, clinics and terms
+    // still come from the database in customSession above, so they are never
+    // stale; only a revoked session can outlive its revocation by 5 minutes.
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
   },
   account: {
     modelName: "accountsTable",

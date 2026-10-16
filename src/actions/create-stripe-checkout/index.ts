@@ -117,6 +117,15 @@ const resolveOpenCheckouts = async (
   return { reusable: reusable ?? null, openIds: open.map(({ id }) => id) };
 };
 
+// The browser goes straight to the hosted checkout page, so Stripe.js never
+// loads in the app (once loaded, it reports every page change to Stripe).
+const checkoutUrl = (checkout: Stripe.Checkout.Session) => {
+  if (!checkout.url) {
+    throw new Error(`Checkout session ${checkout.id} has no url`);
+  }
+  return checkout.url;
+};
+
 export const createStripeCheckout = actionClient
   .schema(z.object({ plan: z.enum(["essential", "professional"]) }))
   .action(async ({ parsedInput }) => {
@@ -160,7 +169,7 @@ export const createStripeCheckout = actionClient
       parsedInput.plan,
     );
     if (reusable) {
-      return { sessionId: reusable.id };
+      return { url: checkoutUrl(reusable) };
     }
 
     // Requests within the same minute that saw the same open checkouts (a
@@ -199,7 +208,5 @@ export const createStripeCheckout = actionClient
         ),
       },
     );
-    return {
-      sessionId: checkout.id,
-    };
+    return { url: checkoutUrl(checkout) };
   });

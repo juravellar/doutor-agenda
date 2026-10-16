@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { actionErrorMessage } from "@/lib/action-errors";
+import { authClient } from "@/lib/auth-client";
 
 export function DeleteAccountCard({
   email,
@@ -32,8 +33,12 @@ export function DeleteAccountCard({
   const [typedEmail, setTypedEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const action = useAction(deleteAccount, {
-    // A full load: the session is gone and no client state should survive.
-    onSuccess: () => window.location.assign("/authentication"),
+    // Clear the session cookies (the cached one would otherwise look valid for
+    // a few minutes), then a full load so no client state survives.
+    onSuccess: async () => {
+      await authClient.signOut().catch(() => {});
+      window.location.assign("/authentication");
+    },
     onError: ({ error }) =>
       setError(actionErrorMessage(error, "Não foi possível excluir a conta.")),
   });
