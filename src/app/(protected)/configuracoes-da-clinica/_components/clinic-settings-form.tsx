@@ -54,7 +54,7 @@ export function ClinicSettingsForm({
     <Card className="max-w-xl">
       <CardContent className="pt-6">
         {blockReason && (
-          <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <p className="mb-4 rounded-md border border-warning-border bg-warning-muted p-3 text-sm text-warning-foreground">
             {blockReason}{" "}
             <Link href="/clinicas" className="font-medium underline">
               Minhas clínicas

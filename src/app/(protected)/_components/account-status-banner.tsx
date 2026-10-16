@@ -25,8 +25,8 @@ function Banner({
       className={cn(
         "border-b px-4 py-2 text-sm",
         tone === "warning"
-          ? "border-amber-200 bg-amber-50 text-amber-900"
-          : "border-blue-200 bg-blue-50 text-blue-900",
+          ? "border-warning-border bg-warning-muted text-warning-foreground"
+          : "border-info-border bg-info-muted text-info-foreground",
       )}
     >
       {children}

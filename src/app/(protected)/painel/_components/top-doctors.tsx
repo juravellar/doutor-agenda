@@ -34,7 +34,7 @@ export default function TopDoctors({ doctors }: TopDoctorsProps) {
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar className="h-10 w-10 shrink-0">
-                    <AvatarFallback className="bg-gray-100 text-lg font-medium text-gray-600">
+                    <AvatarFallback className="bg-muted text-lg font-medium text-muted-foreground">
                       {doctor.name
                         .split(" ")
                         .map((n) => n[0])

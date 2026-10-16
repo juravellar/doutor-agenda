@@ -11,7 +11,7 @@ export function CreateGateHint({ gate }: { gate: CreateGate }) {
     <p
       className={cn(
         "text-right text-xs",
-        gate.blockedReason ? "text-amber-700" : "text-muted-foreground",
+        gate.blockedReason ? "text-warning-foreground" : "text-muted-foreground",
       )}
     >
       {gate.blockedReason ? `${gate.blockedReason} ` : null}
