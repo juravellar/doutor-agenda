@@ -14,7 +14,7 @@ import { PLANS, resolvePlan } from "@/lib/plans";
 import { getServerSession } from "@/lib/server-session";
 import { getPlanPrices } from "@/lib/stripe-plan";
 
-import { PlanCard } from "./_components/plan-card";
+import { PlanCards } from "./_components/plan-cards";
 import { PlanUsageCard } from "./_components/plan-usage-card";
 
 const SubscriptionPage = async () => {
@@ -55,18 +55,13 @@ const SubscriptionPage = async () => {
             takes part of it. */}
         <div className="@container space-y-6">
           <PlanUsageCard planName={currentPlan.name} usage={usage} />
-          <div className="grid w-full gap-6 @4xl:grid-cols-3">
-            {Object.values(PLANS).map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                price={plan.id === "free" ? null : prices[plan.id]}
-                currentPlanId={currentPlan.id}
-                userEmail={session.user.email}
-                subscriptionNotice={subscriptionNotice}
-              />
-            ))}
-          </div>
+          <PlanCards
+            plans={Object.values(PLANS)}
+            prices={prices}
+            currentPlanId={currentPlan.id}
+            userEmail={session.user.email}
+            subscriptionNotice={subscriptionNotice}
+          />
         </div>
       </PageContent>
     </PageContainer>

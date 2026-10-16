@@ -3,7 +3,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 
-import { formatPlanPrice, planForPriceId, priceIdForPlan } from "./stripe-plan";
+import {
+  formatPlanPrice,
+  monthlyEquivalent,
+  planForPriceId,
+  priceIdForPlan,
+  yearlySavingsPercent,
+} from "./stripe-plan";
 
 const price = (overrides: Partial<Stripe.Price>) =>
   ({
@@ -18,6 +24,8 @@ describe("formatPlanPrice", () => {
     expect(formatPlanPrice(price({}))).toEqual({
       amount: "R$ 59",
       interval: "mês",
+      cents: 5900,
+      months: 1,
     });
   });
 
@@ -28,11 +36,11 @@ describe("formatPlanPrice", () => {
   });
 
   it("labels yearly prices", () => {
-    expect(
-      formatPlanPrice(
-        price({ recurring: { interval: "year" } as Stripe.Price.Recurring }),
-      )?.interval,
-    ).toBe("ano");
+    const yearly = formatPlanPrice(
+      price({ recurring: { interval: "year" } as Stripe.Price.Recurring }),
+    );
+    expect(yearly?.interval).toBe("ano");
+    expect(yearly?.months).toBe(12);
   });
 
   it("returns null for prices without a fixed amount", () => {
@@ -76,8 +84,8 @@ describe("getPlanPrices", () => {
     const { getPlanPrices } = await import("./stripe-plan");
 
     await expect(getPlanPrices()).resolves.toEqual({
-      essential: null,
-      professional: null,
+      essential: { monthly: null, yearly: null },
+      professional: { monthly: null, yearly: null },
     });
     await getPlanPrices();
 
@@ -85,5 +93,37 @@ describe("getPlanPrices", () => {
     expect(console.warn).toHaveBeenCalledWith(
       "STRIPE_SECRET_KEY is not set; plan prices are hidden",
     );
+  });
+});
+
+describe("yearly plans", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("maps a yearly price to the same plan as the monthly one", () => {
+    vi.stubEnv("STRIPE_ESSENTIAL_PLAN_PRICE_ID", "price_ess_month");
+    vi.stubEnv("STRIPE_ESSENTIAL_ANNUAL_PRICE_ID", "price_ess_year");
+
+    expect(priceIdForPlan("essential", "yearly")).toBe("price_ess_year");
+    expect(planForPriceId("price_ess_year")).toBe("essential");
+    expect(planForPriceId("price_ess_month")).toBe("essential");
+  });
+
+  it("has no yearly price when it isn't configured", () => {
+    vi.stubEnv("STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID", "");
+
+    expect(priceIdForPlan("professional", "yearly")).toBeUndefined();
+  });
+
+  it("computes the saving of paying yearly", () => {
+    const monthly = { amount: "R$ 79", interval: "mês", cents: 7900, months: 1 };
+    const yearly = { amount: "R$ 790", interval: "ano", cents: 79000, months: 12 };
+
+    // 790 instead of 12 × 79 = 948: two months free, about 17%.
+    expect(yearlySavingsPercent(monthly, yearly)).toBe(17);
+    expect(yearlySavingsPercent(monthly, { ...yearly, cents: 94800 })).toBeNull();
+    expect(yearlySavingsPercent(null, yearly)).toBeNull();
+    expect(monthlyEquivalent(yearly).replace(/\u00a0/g, " ")).toBe("R$ 65,83");
   });
 });

@@ -13,7 +13,7 @@ import { UserFacingError } from "@/lib/action-errors";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 import { isPaidPlan, type PaidPlanId } from "@/lib/plans";
-import { priceIdForPlan } from "@/lib/stripe-plan";
+import { type BillingInterval, priceIdForPlan } from "@/lib/stripe-plan";
 import {
   listCustomerSubscriptions,
   retrieveIfExists,
@@ -96,6 +96,7 @@ const resolveOpenCheckouts = async (
   stripe: Stripe,
   customerId: string,
   plan: PaidPlanId,
+  interval: BillingInterval,
 ) => {
   const listOpen = () =>
     stripe.checkout.sessions
@@ -103,7 +104,12 @@ const resolveOpenCheckouts = async (
       .autoPagingToArray({ limit: 1_000 });
 
   const open = await listOpen();
-  const reusable = open.find((session) => session.metadata?.plan === plan);
+  // Sessions from before yearly billing carry no interval: they're monthly.
+  const reusable = open.find(
+    (session) =>
+      session.metadata?.plan === plan &&
+      (session.metadata?.interval ?? "monthly") === interval,
+  );
   const others = open.filter((session) => session !== reusable);
   await Promise.allSettled(
     others.map((session) => stripe.checkout.sessions.expire(session.id)),
@@ -127,7 +133,12 @@ const checkoutUrl = (checkout: Stripe.Checkout.Session) => {
 };
 
 export const createStripeCheckout = actionClient
-  .schema(z.object({ plan: z.enum(["essential", "professional"]) }))
+  .schema(
+    z.object({
+      plan: z.enum(["essential", "professional"]),
+      interval: z.enum(["monthly", "yearly"]).default("monthly"),
+    }),
+  )
   .action(async ({ parsedInput }) => {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -138,7 +149,12 @@ export const createStripeCheckout = actionClient
     if (!process.env.STRIPE_SECRET_KEY) {
       throw new Error("Stripe secret key not found");
     }
-    const priceId = priceIdForPlan(parsedInput.plan);
+    const priceId = priceIdForPlan(parsedInput.plan, parsedInput.interval);
+    if (!priceId && parsedInput.interval === "yearly") {
+      throw new UserFacingError(
+        "O pagamento anual não está disponível para este plano.",
+      );
+    }
     if (!priceId) {
       throw new Error(`Stripe price not configured for ${parsedInput.plan}`);
     }
@@ -167,6 +183,7 @@ export const createStripeCheckout = actionClient
       stripe,
       customerId,
       parsedInput.plan,
+      parsedInput.interval,
     );
     if (reusable) {
       return { url: checkoutUrl(reusable) };
@@ -185,7 +202,7 @@ export const createStripeCheckout = actionClient
         customer: customerId,
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/painel?assinatura=confirmada`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura`,
-        metadata: { plan: parsedInput.plan },
+        metadata: { plan: parsedInput.plan, interval: parsedInput.interval },
         subscription_data: {
           metadata: {
             userId: user.id,
