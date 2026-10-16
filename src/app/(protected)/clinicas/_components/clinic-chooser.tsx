@@ -96,15 +96,15 @@ export function ClinicChooser({
   return (
     <div className="space-y-6">
       {mustChoose && (
-        <Card className="border-amber-300 bg-amber-50">
+        <Card className="border-warning-border bg-warning-muted">
           <CardHeader>
-            <CardTitle className="text-base text-amber-900">
+            <CardTitle className="text-base text-warning-foreground">
               {firstChoice
                 ? "Escolha quais clínicas continuam ativas"
                 : "Clínicas ativas no seu plano"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-amber-900">
+          <CardContent className="space-y-2 text-sm text-warning-foreground">
             <p>
               Você tem {clinics.length} clínicas e seu plano permite {limit}. As
               outras ficam só leitura: você continua vendo os dados, mas não
@@ -162,8 +162,8 @@ export function ClinicChooser({
                     className={cn(
                       "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
                       isSelected
-                        ? "border-primary bg-primary text-white"
-                        : "border-gray-300 bg-white",
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background",
                       blocked && "cursor-not-allowed opacity-40",
                     )}
                   >
@@ -175,11 +175,11 @@ export function ClinicChooser({
                   <div className="mt-1 flex flex-wrap gap-2">
                     {isActive && <Badge variant="outline">Aberta agora</Badge>}
                     {clinic.writable ? (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                      <Badge className="bg-success-muted text-success-foreground hover:bg-success-muted">
                         Ativa
                       </Badge>
                     ) : (
-                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                      <Badge className="bg-warning-muted text-warning-foreground hover:bg-warning-muted">
                         <Lock className="mr-1 h-3 w-3" />
                         Só leitura
                       </Badge>

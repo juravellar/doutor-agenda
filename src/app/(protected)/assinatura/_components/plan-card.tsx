@@ -94,43 +94,43 @@ export function PlanCard({
     <Card
       className={cn(
         "flex flex-col",
-        isCurrent && "border-green-500 ring-1 ring-green-500",
+        isCurrent && "border-success ring-1 ring-success",
         className,
       )}
     >
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+          <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
           {isCurrent &&
             (subscriptionNotice?.pastDue || subscriptionNotice?.endsOn ? (
-              <Badge className="shrink-0 bg-amber-100 text-amber-800 hover:bg-amber-100">
+              <Badge className="shrink-0 bg-warning-muted text-warning-foreground hover:bg-warning-muted">
                 {subscriptionNotice.pastDue
                   ? "Pagamento pendente"
                   : "Cancelada"}
               </Badge>
             ) : (
-              <Badge className="shrink-0 bg-green-100 text-green-700 hover:bg-green-100">
+              <Badge className="shrink-0 bg-success-muted text-success-foreground hover:bg-success-muted">
                 Atual
               </Badge>
             ))}
         </div>
-        <p className="text-gray-600">{plan.description}</p>
+        <p className="text-muted-foreground">{plan.description}</p>
         {isCurrent && subscriptionNotice?.endsOn && (
-          <p className="text-sm text-amber-800">
+          <p className="text-sm text-warning-foreground">
             Acesso até {subscriptionNotice.endsOn}. Depois disso, a conta volta
             para o Free.
           </p>
         )}
         {plan.id === "free" ? (
-          <span className="text-3xl font-bold text-gray-900">Grátis</span>
+          <span className="text-3xl font-bold text-foreground">Grátis</span>
         ) : (
           price && (
             <div className="flex items-baseline">
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-bold text-foreground">
                 {price.amount}
               </span>
               {price.interval && (
-                <span className="ml-1 text-gray-600">/ {price.interval}</span>
+                <span className="ml-1 text-muted-foreground">/ {price.interval}</span>
               )}
             </div>
           )
@@ -138,18 +138,18 @@ export function PlanCard({
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col">
-        <div className="flex-1 space-y-4 border-t border-gray-200 pt-6">
+        <div className="flex-1 space-y-4 border-t border-border pt-6">
           {plan.features.map((feature) => (
             <div key={feature} className="flex items-start">
-              <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-500" />
-              <p className="ml-3 text-gray-600">{feature}</p>
+              <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+              <p className="ml-3 text-muted-foreground">{feature}</p>
             </div>
           ))}
         </div>
 
         <div className="mt-8 min-h-10">
           {plan.id === "free" && !isCurrent && subscriptionNotice?.endsOn && (
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               A conta volta para o Free em {subscriptionNotice.endsOn}.
             </p>
           )}

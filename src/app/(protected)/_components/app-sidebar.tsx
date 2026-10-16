@@ -12,6 +12,7 @@ import {
   Plus,
   Settings,
   Stethoscope,
+  SunMoon,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -29,7 +31,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -103,6 +110,7 @@ export function AppSidebar() {
   });
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
+  const { theme, setTheme } = useTheme();
   const [clinicLimitOpen, setClinicLimitOpen] = useState(false);
 
   // On a phone the menu is a sheet over the page; once a page is chosen it
@@ -140,7 +148,7 @@ export function AppSidebar() {
         >
           <span className="flex items-center gap-2">
             <Image src="/logo-symbol.svg" alt="" width={28} height={28} />
-            <span className="text-xl font-semibold tracking-tight text-[#0E0A2F]">
+            <span className="text-foreground text-xl font-semibold tracking-tight">
               Avelliq
             </span>
           </span>
@@ -286,6 +294,28 @@ export function AppSidebar() {
                   <UserRound className="mr-2 h-4 w-4" />
                   Minha conta
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <SunMoon className="mr-2 h-4 w-4" />
+                    Tema
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup
+                      value={theme ?? "system"}
+                      onValueChange={setTheme}
+                    >
+                      <DropdownMenuRadioItem value="light">
+                        Claro
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="dark">
+                        Escuro
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="system">
+                        Igual ao sistema
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}

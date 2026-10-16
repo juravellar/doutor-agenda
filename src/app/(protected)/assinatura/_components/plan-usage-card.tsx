@@ -57,20 +57,20 @@ function UsageTile({
     <div
       className={cn(
         "flex flex-col gap-3 rounded-lg border p-4",
-        atLimit ? "border-amber-300 bg-amber-50" : "bg-gray-50/60",
+        atLimit ? "border-warning-border bg-warning-muted" : "bg-muted/40",
       )}
     >
-      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-        <Icon className="h-4 w-4 text-gray-500" aria-hidden />
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
         {metric.label}
       </div>
 
       <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-semibold text-gray-900">
+        <span className="text-3xl font-semibold text-foreground">
           {usage.used}
         </span>
         {usage.limit !== null && (
-          <span className="text-base text-gray-500">de {usage.limit}</span>
+          <span className="text-base text-muted-foreground">de {usage.limit}</span>
         )}
       </div>
 
@@ -79,7 +79,7 @@ function UsageTile({
           value={Math.min(100, (usage.used / usage.limit) * 100)}
           aria-label={`${metric.label}: ${usage.used} de ${usage.limit}`}
           className={cn(
-            atLimit && "[&>[data-slot=progress-indicator]]:bg-amber-500",
+            atLimit && "[&>[data-slot=progress-indicator]]:bg-warning",
           )}
         />
       )}
@@ -88,12 +88,12 @@ function UsageTile({
         <p
           className={cn(
             "text-sm",
-            atLimit ? "font-medium text-amber-800" : "text-gray-600",
+            atLimit ? "font-medium text-warning-foreground" : "text-muted-foreground",
           )}
         >
           {statusText(usage, planName)}
         </p>
-        {metric.note && <p className="text-xs text-gray-500">{metric.note}</p>}
+        {metric.note && <p className="text-xs text-muted-foreground">{metric.note}</p>}
       </div>
     </div>
   );
@@ -111,7 +111,7 @@ export function PlanUsageCard({
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Seu uso no plano {planName}</CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Cadastros da sua clínica e o que o seu plano permite.
         </p>
       </CardHeader>
@@ -127,7 +127,7 @@ export function PlanUsageCard({
           ))}
         </div>
         {anyAtLimit && (
-          <p className="text-sm text-amber-800">
+          <p className="text-sm text-warning-foreground">
             Você atingiu um limite do seu plano. Para continuar cadastrando,
             escolha um plano maior abaixo.
           </p>

@@ -45,9 +45,9 @@ export function DeleteAccountCard({
   const matches = typedEmail.trim().toLowerCase() === email.toLowerCase();
 
   return (
-    <Card className="border-red-200">
+    <Card className="border-destructive/30">
       <CardHeader>
-        <CardTitle className="text-base text-red-700">Excluir conta</CardTitle>
+        <CardTitle className="text-base text-destructive">Excluir conta</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">
@@ -86,7 +86,7 @@ export function DeleteAccountCard({
                 onChange={(event) => setTypedEmail(event.target.value)}
               />
               {error && (
-                <p role="alert" className="text-sm text-red-700">
+                <p role="alert" className="text-sm text-destructive">
                   {error}
                 </p>
               )}

@@ -73,7 +73,7 @@ export function AppointmentsTableActions({
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <EditIcon className="mr-2 h-4 w-4 text-black" />
+              <EditIcon className="mr-2 h-4 w-4 text-foreground" />
               Editar
             </DropdownMenuItem>
           </DialogTrigger>
