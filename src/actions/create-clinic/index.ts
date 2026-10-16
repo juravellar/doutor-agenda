@@ -80,5 +80,5 @@ export const createClinic = async (rawName: string) => {
   }
   // The new clinic becomes the active one, which the layout reads.
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/painel");
 };

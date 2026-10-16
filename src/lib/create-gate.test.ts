@@ -46,9 +46,9 @@ describe("createGate", () => {
   });
 
   it("sends each kind of block to where it can be solved", () => {
-    expect(BLOCKED_COPY["read-only"].href).toBe("/clinics");
-    expect(BLOCKED_COPY["free-period-over"].href).toBe("/subscription");
-    expect(BLOCKED_COPY.limit.href).toBe("/subscription");
+    expect(BLOCKED_COPY["read-only"].href).toBe("/clinicas");
+    expect(BLOCKED_COPY["free-period-over"].href).toBe("/assinatura");
+    expect(BLOCKED_COPY.limit.href).toBe("/assinatura");
   });
 
   it("hides usage for unlimited plans", () => {

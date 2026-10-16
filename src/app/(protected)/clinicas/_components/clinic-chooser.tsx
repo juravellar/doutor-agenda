@@ -63,7 +63,7 @@ export function ClinicChooser({
   const switchAction = useAction(switchClinic, {
     onSuccess: () => {
       refresh();
-      router.push("/dashboard");
+      router.push("/painel");
     },
     onError: () => toast.error("Não foi possível abrir a clínica."),
   });

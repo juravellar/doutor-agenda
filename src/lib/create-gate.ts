@@ -15,19 +15,19 @@ export const BLOCKED_COPY: Record<
   limit: {
     title: "Limite do plano atingido",
     next: "Para cadastrar mais, escolha um plano maior.",
-    href: "/subscription",
+    href: "/assinatura",
     action: "Ver planos",
   },
   "free-period-over": {
     title: "Período gratuito encerrado",
     next: "Seus dados continuam disponíveis. Para voltar a cadastrar e editar, assine um plano.",
-    href: "/subscription",
+    href: "/assinatura",
     action: "Ver planos",
   },
   "read-only": {
     title: "Clínica só leitura",
     next: "Escolha quais clínicas ficam ativas no seu plano ou faça upgrade.",
-    href: "/clinics",
+    href: "/clinicas",
     action: "Minhas clínicas",
   },
 };

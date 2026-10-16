@@ -38,5 +38,5 @@ export const deleteDoctor = clinicWriteActionClient
         tx,
       );
     });
-    revalidatePath("/doctors");
+    revalidatePath("/medicos");
   });

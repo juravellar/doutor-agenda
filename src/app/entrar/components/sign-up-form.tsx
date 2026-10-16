@@ -70,7 +70,7 @@ const SignUpForm = () => {
         email: values.email,
         password: values.password,
         name: values.username,
-        callbackURL: "/dashboard",
+        callbackURL: "/painel",
       },
       {
         // The server records the acceptance only with this header.
@@ -85,7 +85,7 @@ const SignUpForm = () => {
             form.reset();
             return;
           }
-          router.push("/dashboard");
+          router.push("/painel");
         },
         onError: (ctx) => {
           if (ctx.error.code === "USER_ALREADY_EXISTS") {

@@ -37,7 +37,7 @@ export function DeleteAccountCard({
     // a few minutes), then a full load so no client state survives.
     onSuccess: async () => {
       await authClient.signOut().catch(() => {});
-      window.location.assign("/authentication");
+      window.location.assign("/entrar");
     },
     onError: ({ error }) =>
       setError(actionErrorMessage(error, "Não foi possível excluir a conta.")),

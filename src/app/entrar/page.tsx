@@ -44,7 +44,7 @@ const AuthenticationPage = async () => {
   });
 
   if (session?.user) {
-    redirect("/dashboard");
+    redirect("/painel");
   }
 
   return (

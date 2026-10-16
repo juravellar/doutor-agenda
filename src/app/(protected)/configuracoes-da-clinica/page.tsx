@@ -19,16 +19,16 @@ import { ClinicSettingsForm } from "./_components/clinic-settings-form";
 const ClinicSettingsPage = async () => {
   const session = await getServerSession();
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   if (!session.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
   const clinic = await db.query.clinicsTable.findFirst({
     where: eq(clinicsTable.id, session.user.clinic.id),
   });
   if (!clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
 
   return (

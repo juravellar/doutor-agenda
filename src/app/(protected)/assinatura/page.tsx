@@ -20,10 +20,10 @@ import { PlanUsageCard } from "./_components/plan-usage-card";
 const SubscriptionPage = async () => {
   const session = await getServerSession();
   if (!session) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   if (!session.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
   const currentPlan = resolvePlan(session.user.plan);
   const [prices, usage] = await Promise.all([

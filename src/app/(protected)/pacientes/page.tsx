@@ -24,10 +24,10 @@ import { patientsTableColumns } from "./_components/table.columns";
 const PatientsPage = async () => {
   const session = await getServerSession();
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   if (!session.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
   const patients = await db.query.patientsTable.findMany({
     where: eq(patientsTable.clinicId, session.user.clinic.id),

@@ -24,11 +24,11 @@ const DoctorsPage = async () => {
   const session = await getServerSession();
 
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
 
   if (!session?.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
 
   const doctors = await db.query.doctorsTable.findMany({

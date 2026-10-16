@@ -21,8 +21,32 @@ const securityHeaders = [
   },
 ];
 
+// Routes were renamed to Portuguese. Old links (bookmarks, emails already
+// sent, the Stripe portal's return URL) keep working through permanent
+// redirects, which also tell browsers and search engines the new address.
+const RENAMED_ROUTES: Record<string, string> = {
+  "/authentication": "/entrar",
+  "/dashboard": "/painel",
+  "/appointments": "/agendamentos",
+  "/doctors": "/medicos",
+  "/patients": "/pacientes",
+  "/subscription": "/assinatura",
+  "/new-subscription": "/assinatura",
+  "/clinics": "/clinicas",
+  "/clinic-settings": "/configuracoes-da-clinica",
+  "/clinic-form": "/nova-clinica",
+  "/account": "/minha-conta",
+};
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    return Object.entries(RENAMED_ROUTES).map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: true,
+    }));
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

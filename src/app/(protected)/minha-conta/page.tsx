@@ -22,7 +22,7 @@ import { DeleteAccountCard } from "./_components/delete-account-card";
 const AccountPage = async () => {
   const session = await getServerSession();
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   const { user } = session;
 

@@ -40,5 +40,5 @@ export const deletePatient = clinicWriteActionClient
         tx,
       );
     });
-    revalidatePath("/patients");
+    revalidatePath("/pacientes");
   });

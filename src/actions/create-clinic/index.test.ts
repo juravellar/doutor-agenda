@@ -51,7 +51,7 @@ describe("createClinic", () => {
   });
 
   it("creates the first clinic and makes it active", async () => {
-    await expect(createClinic("Centro")).rejects.toThrow("redirect:/dashboard");
+    await expect(createClinic("Centro")).rejects.toThrow("redirect:/painel");
 
     expect(mocks.values).toHaveBeenCalledWith({ name: "Centro" });
     expect(mocks.values).toHaveBeenCalledWith({
@@ -71,7 +71,7 @@ describe("createClinic", () => {
     });
     mocks.count.mockResolvedValue(2);
 
-    await expect(createClinic("Filial")).rejects.toThrow("redirect:/dashboard");
+    await expect(createClinic("Filial")).rejects.toThrow("redirect:/painel");
 
     expect(mocks.set).toHaveBeenCalledWith({ keptInPlan: false });
   });
@@ -97,7 +97,7 @@ describe("createClinic", () => {
     });
     mocks.count.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
 
-    await expect(createClinic("Norte")).rejects.toThrow("redirect:/dashboard");
+    await expect(createClinic("Norte")).rejects.toThrow("redirect:/painel");
     await expect(createClinic("Sul")).resolves.toEqual({ limitReached: true });
     expect(mocks.values).toHaveBeenCalledTimes(2);
   });
@@ -108,7 +108,7 @@ describe("createClinic", () => {
     });
     mocks.count.mockResolvedValue(25);
 
-    await expect(createClinic("Filial")).rejects.toThrow("redirect:/dashboard");
+    await expect(createClinic("Filial")).rejects.toThrow("redirect:/painel");
   });
 
   it("counts clinics under the user's lock", async () => {

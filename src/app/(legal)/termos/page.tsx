@@ -88,7 +88,7 @@ export default function TermsOfUsePage() {
       <h2>6. Encerramento</h2>
       <p>
         Você pode excluir sua conta a qualquer momento em{" "}
-        <Link href="/account" className="underline">
+        <Link href="/minha-conta" className="underline">
           Minha conta
         </Link>
         , depois de baixar uma cópia dos dados, se quiser. A exclusão apaga

@@ -56,7 +56,7 @@ const LoginForm = ({ canResetPassword }: { canResetPassword: boolean }) => {
       authClient.signIn.email({
         email: values.email,
         password,
-        callbackURL: "/dashboard",
+        callbackURL: "/painel",
       });
 
     let { error } = await signIn(values.password);
@@ -71,7 +71,7 @@ const LoginForm = ({ canResetPassword }: { canResetPassword: boolean }) => {
     }
 
     if (!error) {
-      router.push("/dashboard");
+      router.push("/painel");
       return;
     }
     if (error.code === "EMAIL_NOT_VERIFIED") {
@@ -86,7 +86,7 @@ const LoginForm = ({ canResetPassword }: { canResetPassword: boolean }) => {
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/painel",
     });
   };
 

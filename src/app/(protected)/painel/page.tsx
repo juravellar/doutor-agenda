@@ -37,10 +37,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   const session = await getServerSession();
 
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   if (!session.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
 
   // Missing dates are filled in here and rendered right away, instead of

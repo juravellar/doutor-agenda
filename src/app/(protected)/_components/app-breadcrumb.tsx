@@ -20,7 +20,7 @@ export function AppBreadcrumb() {
   const pathname = usePathname();
   const { clinic } = useSessionUser();
   const title = pageTitle(pathname);
-  const onDashboard = pathname.startsWith("/dashboard");
+  const onDashboard = pathname.startsWith("/painel");
 
   return (
     <Breadcrumb className="min-w-0">
@@ -32,7 +32,7 @@ export function AppBreadcrumb() {
                 <span className="truncate">{clinic.name}</span>
               ) : (
                 <BreadcrumbLink asChild className="truncate">
-                  <Link href="/dashboard" prefetch={false}>
+                  <Link href="/painel" prefetch={false}>
                     {clinic.name}
                   </Link>
                 </BreadcrumbLink>

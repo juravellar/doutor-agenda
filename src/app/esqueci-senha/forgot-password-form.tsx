@@ -75,7 +75,7 @@ export function ForgotPasswordForm() {
         </CardHeader>
         <CardFooter>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/authentication">Voltar para o login</Link>
+            <Link href="/entrar">Voltar para o login</Link>
           </Button>
         </CardFooter>
       </Card>
@@ -126,7 +126,7 @@ export function ForgotPasswordForm() {
               )}
             </Button>
             <Button asChild variant="ghost" className="w-full">
-              <Link href="/authentication">Voltar para o login</Link>
+              <Link href="/entrar">Voltar para o login</Link>
             </Button>
           </CardFooter>
         </form>

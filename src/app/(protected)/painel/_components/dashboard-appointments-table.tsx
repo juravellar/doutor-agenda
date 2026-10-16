@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/ui/data-table";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 
-import { createAppointmentsTableColumns } from "../../appointments/_components/table-columns";
+import { createAppointmentsTableColumns } from "../../agendamentos/_components/table-columns";
 
 export type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
   patient: typeof patientsTable.$inferSelect;

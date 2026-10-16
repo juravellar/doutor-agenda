@@ -61,7 +61,7 @@ export function AccountStatusBanner() {
           {status.clinicLimit}{" "}
           {status.clinicLimit === 1 ? "clínica" : "clínicas"}. Você pode ver os
           dados, mas não cadastrar nem editar.{" "}
-          <Link href="/clinics" className={linkClass}>
+          <Link href="/clinicas" className={linkClass}>
             Minhas clínicas
           </Link>
         </Banner>
@@ -71,7 +71,7 @@ export function AccountStatusBanner() {
         <Banner tone="warning">
           Você tem {status.clinicCount} clínicas e seu plano permite{" "}
           {status.clinicLimit}. Escolha quais continuam ativas.{" "}
-          <Link href="/clinics" className={linkClass}>
+          <Link href="/clinicas" className={linkClass}>
             Escolher clínicas
           </Link>
         </Banner>
@@ -92,7 +92,7 @@ export function AccountStatusBanner() {
         <Banner tone="warning">
           Seu período gratuito terminou. Você continua vendo seus dados, mas
           para cadastrar e editar é preciso{" "}
-          <Link href="/subscription" className={linkClass}>
+          <Link href="/assinatura" className={linkClass}>
             assinar um plano
           </Link>
           .
@@ -104,7 +104,7 @@ export function AccountStatusBanner() {
           {status.daysLeft === 0
             ? "Seu período gratuito termina hoje."
             : `Seu período gratuito termina em ${status.daysLeft} ${status.daysLeft === 1 ? "dia" : "dias"}.`}{" "}
-          <Link href="/subscription" className={linkClass}>
+          <Link href="/assinatura" className={linkClass}>
             Ver planos
           </Link>
         </Banner>

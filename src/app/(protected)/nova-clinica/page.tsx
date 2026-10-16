@@ -14,11 +14,11 @@ import ClinicForm from "./_components/form";
 const ClinicFormPage = async () => {
   const session = await getServerSession();
   if (!session) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   // Further clinics are created from a dialog over the current page.
   if (session.user.clinics.length > 0) {
-    redirect("/clinics");
+    redirect("/clinicas");
   }
   return (
     <Dialog open={true}>

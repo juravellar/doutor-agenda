@@ -22,10 +22,10 @@ import { NewClinicButton } from "./_components/new-clinic-button";
 const ClinicsPage = async () => {
   const session = await getServerSession();
   if (!session?.user) {
-    redirect("/authentication");
+    redirect("/entrar");
   }
   if (!session.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/nova-clinica");
   }
   const { clinics, clinicLimit, overClinicLimit } = session.user;
   const plan = resolvePlan(session.user.plan);
@@ -51,7 +51,7 @@ const ClinicsPage = async () => {
             <NewClinicButton />
           ) : (
             <Button asChild variant="outline">
-              <Link href="/subscription">Ver planos para mais clínicas</Link>
+              <Link href="/assinatura">Ver planos para mais clínicas</Link>
             </Button>
           )}
         </PageActions>
