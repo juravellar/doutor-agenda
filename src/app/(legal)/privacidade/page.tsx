@@ -55,7 +55,8 @@ export default function PrivacyPolicyPage() {
           informados diretamente ao Stripe e não passam pelo Avelliq.
         </li>
         <li>
-          <strong>Clínica:</strong> nome, endereço e telefone.
+          <strong>Clínica:</strong> nome, endereço e telefone e, se a clínica
+          quiser, o logo e a cor usados no aplicativo.
         </li>
         <li>
           <strong>Médicos:</strong> nome, especialidade, dias e horários de

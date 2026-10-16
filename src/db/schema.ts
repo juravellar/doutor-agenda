@@ -91,6 +91,13 @@ export const clinicsTable = pgTable("clinics", {
   name: text("name").notNull(),
   address: text("address"),
   phoneNumber: text("phone_number"),
+  // White label: the clinic's color (#rrggbb) and logo, a small raster image
+  // stored as a data URL (resized in the browser; SVG is refused).
+  brandColor: text("brand_color"),
+  logoDataUrl: text("logo_data_url"),
+  // When the logo last changed: its URL's version, so other edits to the
+  // clinic don't make every member download it again.
+  logoUpdatedAt: timestamp("logo_updated_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -176,42 +183,46 @@ export const doctorsTableRelations = relations(
 
 export const patientSexEnum = pgEnum("patient_sex", ["male", "female"]);
 
-export const patientsTable = pgTable("patients", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  clinicId: uuid("clinic_id")
-    .notNull()
-    .references(() => clinicsTable.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phoneNumber: text("phone_number").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  sex: patientSexEnum("sex").notNull(),
-  // Registration details, all optional. Clinical information (diagnoses,
-  // exams, prescriptions) deliberately has no place here: that would be a
-  // medical record, with its own legal requirements.
-  birthDate: date("birth_date"),
-  cpf: text("cpf"),
-  healthInsurance: text("health_insurance"),
-  healthInsuranceNumber: text("health_insurance_number"),
-  addressZip: text("address_zip"),
-  addressStreet: text("address_street"),
-  addressNumber: text("address_number"),
-  addressComplement: text("address_complement"),
-  addressDistrict: text("address_district"),
-  addressCity: text("address_city"),
-  addressState: text("address_state"),
-  emergencyContactName: text("emergency_contact_name"),
-  emergencyContactPhone: text("emergency_contact_phone"),
-  notes: text("notes"),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-}, (table) => [
-  // A CPF identifies one person: no two patients of a clinic share it.
-  uniqueIndex("patients_clinic_cpf_unique")
-    .on(table.clinicId, table.cpf)
-    .where(sql`${table.cpf} is not null`),
-]);
+export const patientsTable = pgTable(
+  "patients",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clinicId: uuid("clinic_id")
+      .notNull()
+      .references(() => clinicsTable.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phoneNumber: text("phone_number").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    sex: patientSexEnum("sex").notNull(),
+    // Registration details, all optional. Clinical information (diagnoses,
+    // exams, prescriptions) deliberately has no place here: that would be a
+    // medical record, with its own legal requirements.
+    birthDate: date("birth_date"),
+    cpf: text("cpf"),
+    healthInsurance: text("health_insurance"),
+    healthInsuranceNumber: text("health_insurance_number"),
+    addressZip: text("address_zip"),
+    addressStreet: text("address_street"),
+    addressNumber: text("address_number"),
+    addressComplement: text("address_complement"),
+    addressDistrict: text("address_district"),
+    addressCity: text("address_city"),
+    addressState: text("address_state"),
+    emergencyContactName: text("emergency_contact_name"),
+    emergencyContactPhone: text("emergency_contact_phone"),
+    notes: text("notes"),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // A CPF identifies one person: no two patients of a clinic share it.
+    uniqueIndex("patients_clinic_cpf_unique")
+      .on(table.clinicId, table.cpf)
+      .where(sql`${table.cpf} is not null`),
+  ],
+);
 
 export const patientsTableRelations = relations(
   patientsTable,

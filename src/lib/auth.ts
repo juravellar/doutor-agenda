@@ -6,7 +6,7 @@ import { after } from "next/server";
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { usersTable, usersToClinicsTable } from "@/db/schema";
+import { usersTable } from "@/db/schema";
 import { resolveClinicAccess } from "@/lib/clinic-access";
 import {
   isEmailConfigured,
@@ -14,6 +14,10 @@ import {
   sendEmail,
   verificationEmail,
 } from "@/lib/email";
+import {
+  loadSessionMemberships,
+  sessionBranding,
+} from "@/lib/session-memberships";
 import { ACCEPT_TERMS_HEADER, termsAcceptanceForNewUser } from "@/lib/terms";
 
 export const auth = betterAuth({
@@ -42,12 +46,7 @@ export const auth = betterAuth({
         db.query.usersTable.findFirst({
           where: eq(usersTable.id, user.id),
         }),
-        db.query.usersToClinicsTable.findMany({
-          where: eq(usersToClinicsTable.userId, user.id),
-          with: {
-            clinic: true,
-          },
-        }),
+        loadSessionMemberships(user.id),
       ]);
       // With the cookie cache, a deleted account's cookie still looks valid
       // until it expires; the database has the final word. null is the same
@@ -81,6 +80,7 @@ export const auth = betterAuth({
           clinicChoiceMadeAt: userData?.clinicChoiceMadeAt ?? null,
           clinicChoiceChangedAt: userData?.clinicChoiceChangedAt ?? null,
           termsVersion: userData?.termsVersion ?? null,
+          branding: sessionBranding(memberships, access.active?.id),
         },
         session,
       };

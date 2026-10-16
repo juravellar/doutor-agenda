@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { brandStylesheet, clinicLogoUrl } from "@/lib/branding";
 import { getServerSession } from "@/lib/server-session";
 
 import { AccountStatusBanner } from "./_components/account-status-banner";
@@ -18,10 +19,20 @@ export default async function Layout({ children }: { children: ReactNode }) {
   if (!session?.user) {
     redirect("/entrar");
   }
+  const clinicId = session.user.clinic?.id;
+  // The session already read the active clinic's branding; the sidebar loads
+  // the logo itself from its own cacheable URL.
+  const { branding } = session.user;
+  const brandCss = brandStylesheet(branding?.brandColor);
+  const logoUrl =
+    clinicId && branding?.logoVersion
+      ? clinicLogoUrl(clinicId, branding.logoVersion)
+      : null;
   return (
     <SessionProvider user={session.user}>
+      {brandCss && <style>{brandCss}</style>}
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar logoUrl={logoUrl} />
         <main className="w-full min-w-0">
           <header className="bg-background flex h-10 items-center gap-4 border-b px-4">
             <SidebarTrigger />

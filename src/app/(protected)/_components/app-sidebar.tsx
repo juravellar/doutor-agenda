@@ -91,7 +91,8 @@ const otherItems = [
   },
 ];
 
-export function AppSidebar() {
+// With a logo, the clinic's brand replaces Avelliq's at the top of the menu.
+export function AppSidebar({ logoUrl }: { logoUrl: string | null }) {
   const router = useRouter();
   const user = useSessionUser();
   const clinics = user.clinics;
@@ -143,15 +144,30 @@ export function AppSidebar() {
         <Link
           href="/painel"
           prefetch={false}
-          aria-label="Avelliq, ir para o dashboard"
-          className="inline-block"
+          aria-label={`${logoUrl && user.clinic ? user.clinic.name : "Avelliq"}, ir para o painel`}
+          className="inline-block min-w-0"
         >
-          <span className="flex items-center gap-2">
-            <Image src="/logo-symbol.svg" alt="" width={28} height={28} />
-            <span className="text-foreground text-xl font-semibold tracking-tight">
-              Avelliq
+          {logoUrl && user.clinic ? (
+            <span className="flex min-w-0 items-center gap-2">
+              {/* A small logo served by the app; next/image adds nothing. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-md object-contain"
+              />
+              <span className="text-foreground truncate text-lg font-semibold tracking-tight">
+                {user.clinic.name}
+              </span>
             </span>
-          </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Image src="/logo-symbol.svg" alt="" width={28} height={28} />
+              <span className="text-foreground text-xl font-semibold tracking-tight">
+                Avelliq
+              </span>
+            </span>
+          )}
         </Link>
       </SidebarHeader>
       <SidebarContent>

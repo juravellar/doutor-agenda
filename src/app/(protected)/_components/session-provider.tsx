@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, type ReactNode, useContext, useEffect, useRef } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 
 import type { SessionUser } from "@/lib/server-session";
 

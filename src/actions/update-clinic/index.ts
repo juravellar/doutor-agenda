@@ -12,6 +12,11 @@ import { clinicWriteActionClient } from "@/lib/clinic-action";
 
 import { INVALID_PHONE_MESSAGE, updateClinicSchema } from "./schema";
 
+// An empty field clears the column; a field left out of the call (undefined,
+// which Drizzle skips) keeps what is stored.
+const optional = (value: string | undefined) =>
+  value === undefined ? undefined : value || null;
+
 export const updateClinic = clinicWriteActionClient
   .schema(updateClinicSchema)
   .action(async ({ parsedInput, ctx }) => {
@@ -30,8 +35,13 @@ export const updateClinic = clinicWriteActionClient
         .update(clinicsTable)
         .set({
           name: parsedInput.name,
-          address: parsedInput.address || null,
-          phoneNumber: parsedInput.phoneNumber || null,
+          address: optional(parsedInput.address),
+          phoneNumber: optional(parsedInput.phoneNumber),
+          brandColor: optional(parsedInput.brandColor?.toLowerCase()),
+          logoDataUrl: optional(parsedInput.logoDataUrl),
+          // Sent only when the logo changed (see the settings form).
+          logoUpdatedAt:
+            parsedInput.logoDataUrl === undefined ? undefined : new Date(),
         })
         .where(eq(clinicsTable.id, ctx.clinic.id));
       await recordAudit(

@@ -49,6 +49,8 @@ const ClinicSettingsPage = async () => {
             name: clinic.name,
             address: clinic.address ?? "",
             phoneNumber: clinic.phoneNumber ?? "",
+            brandColor: clinic.brandColor ?? "",
+            logoDataUrl: clinic.logoDataUrl ?? "",
           }}
           block={writeBlock(session.user)}
         />

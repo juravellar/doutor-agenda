@@ -8,7 +8,12 @@ import {
   type PlanPrice,
   yearlySavingsPercent,
 } from "@/lib/plan-price";
-import { PAID_PLAN_IDS, type PaidPlanId,type Plan, type PlanId } from "@/lib/plans";
+import {
+  PAID_PLAN_IDS,
+  type PaidPlanId,
+  type Plan,
+  type PlanId,
+} from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 import { PlanCard } from "./plan-card";

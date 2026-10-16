@@ -4,7 +4,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Loading states shaped like the pages they stand in for, shown the moment a
 // link is clicked while the server renders the real page.
 
-export function HeaderSkeleton({ withAction = true }: { withAction?: boolean }) {
+export function HeaderSkeleton({
+  withAction = true,
+}: {
+  withAction?: boolean;
+}) {
   return (
     <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-2">

@@ -26,10 +26,17 @@ describe("fetchAddressByCep", () => {
   });
 
   it("returns null for an unknown CEP, an error or an incomplete one", async () => {
-    await expect(fetchAddressByCep("99999-999", json({ erro: true }))).resolves.toBeNull();
-    await expect(fetchAddressByCep("01310-100", json({}, 500))).resolves.toBeNull();
     await expect(
-      fetchAddressByCep("01310-100", vi.fn().mockRejectedValue(new Error("offline"))),
+      fetchAddressByCep("99999-999", json({ erro: true })),
+    ).resolves.toBeNull();
+    await expect(
+      fetchAddressByCep("01310-100", json({}, 500)),
+    ).resolves.toBeNull();
+    await expect(
+      fetchAddressByCep(
+        "01310-100",
+        vi.fn().mockRejectedValue(new Error("offline")),
+      ),
     ).resolves.toBeNull();
     const fetcher = vi.fn();
     await expect(fetchAddressByCep("0131", fetcher)).resolves.toBeNull();

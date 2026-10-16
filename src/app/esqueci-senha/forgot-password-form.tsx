@@ -108,7 +108,7 @@ export function ForgotPasswordForm() {
               )}
             />
             {error && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="text-destructive text-sm">
                 {error}
               </p>
             )}
