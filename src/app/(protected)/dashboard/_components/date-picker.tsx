@@ -31,16 +31,16 @@ const parseAsDay = createParser({
   eq: (a, b) => a.getTime() === b.getTime(),
 });
 
-// from and to come from the server, which decides the period the page shows.
+// from and to come from the server, which decides the period the page shows;
+// the URL is only written, so the picker never shows dates the page didn't
+// load (e.g. an end before the start, which the server corrects).
 export function DatePicker({ from, to }: { from: string; to: string }) {
   const isMobile = useIsMobile();
-  const [range, setRange] = useQueryStates(
-    {
-      from: parseAsDay.withDefault(parseDay(from)),
-      to: parseAsDay.withDefault(parseDay(to)),
-    },
+  const [, setRange] = useQueryStates(
+    { from: parseAsDay, to: parseAsDay },
     { shallow: false },
   );
+  const range = { from: parseDay(from), to: parseDay(to) };
 
   // Both ends are written together: a start alone would be paired on the
   // server with an end that may come before it.
