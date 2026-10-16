@@ -73,9 +73,12 @@ export const createClinic = async (rawName: string) => {
     return true;
   });
 
-  if (created) {
-    // The new clinic becomes the active one, which the layout reads.
-    revalidatePath("/", "layout");
+  if (!created) {
+    // Reached only by a double submit or a plan change in another tab: the
+    // menu already checks the limit before opening the form.
+    return { limitReached: true };
   }
-  redirect(created ? "/painel" : "/clinicas");
+  // The new clinic becomes the active one, which the layout reads.
+  revalidatePath("/", "layout");
+  redirect("/painel");
 };

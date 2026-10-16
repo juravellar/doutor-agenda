@@ -47,11 +47,15 @@ const ClinicForm = ({
 
   const onSubmit = async (data: ClinicFormData) => {
     try {
-      await createClinic(data.name);
-      toast.success("Clínica criada com sucesso");
-      form.reset();
+      const result = await createClinic(data.name);
+      if (result?.limitReached) {
+        toast.error("Seu plano não permite mais clínicas.");
+        onCancel?.();
+      }
     } catch (error) {
+      // Success redirects to the dashboard, which surfaces here as an error.
       if (isRedirectError(error)) {
+        toast.success("Clínica criada com sucesso");
         onCreated?.();
         return;
       }
