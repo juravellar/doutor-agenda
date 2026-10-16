@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -45,9 +46,19 @@ const ClinicForm = ({
     },
   });
 
+  // A second submit (double click, Enter twice) would hit the plan's clinic
+  // limit right after the first one created the clinic. Once a clinic is
+  // created the form stays locked while the redirect happens.
+  const submitting = useRef(false);
+
   const onSubmit = async (data: ClinicFormData) => {
+    if (submitting.current) {
+      return;
+    }
+    submitting.current = true;
     try {
       const result = await createClinic(data.name);
+      submitting.current = false;
       if (result?.limitReached) {
         toast.error("Seu plano não permite mais clínicas.");
         onCancel?.();
@@ -59,6 +70,7 @@ const ClinicForm = ({
         onCreated?.();
         return;
       }
+      submitting.current = false;
       console.error(error);
       toast.error("Erro ao criar clínica");
     }
