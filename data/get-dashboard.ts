@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { and, count, desc, eq, gte, lt, sql, sum } from "drizzle-orm";
 
+import { PATIENT_OPTION_COLUMNS } from "@/app/(protected)/agendamentos/_components/patient-option";
 import { db } from "@/db";
 import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 import { CLINIC_TIMEZONE, clinicDayRange, clinicToday } from "@/helpers/time";
@@ -124,12 +125,12 @@ export const getDashboard = async ({ from, to, session }: Params) => {
         lt(appointmentsTable.date, today.end),
       ),
       with: {
-        patient: true,
+        patient: { columns: PATIENT_OPTION_COLUMNS },
         doctor: true,
       },
     }),
     db
-      .select()
+      .select({ id: patientsTable.id, name: patientsTable.name })
       .from(patientsTable)
       .where(eq(patientsTable.clinicId, session.user.clinic.id)),
     db

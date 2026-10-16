@@ -1,13 +1,14 @@
 "use client";
 
-import { doctorsTable, patientsTable } from "@/db/schema";
+import { doctorsTable } from "@/db/schema";
 import type { CreateGate } from "@/lib/create-gate";
 
 import { CreateButton } from "../../_components/create-button";
 import UpsertAppointmentForm from "./add-appointment-form";
+import type { PatientOption } from "./patient-option";
 
 interface AddAppointmentButtonProps {
-  patients: (typeof patientsTable.$inferSelect)[];
+  patients: PatientOption[];
   doctors: (typeof doctorsTable.$inferSelect)[];
   gate: CreateGate;
 }

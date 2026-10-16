@@ -44,12 +44,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import { appointmentsTable, doctorsTable } from "@/db/schema";
 import { priceInCentsForDoctor } from "@/helpers/appointment-price";
 import { formatReais, priceInReaisSchema, reaisToCents } from "@/helpers/currency";
 import { inClinicTimezone, isWeekDayInRange } from "@/helpers/time";
 import { actionErrorMessage } from "@/lib/action-errors";
 import { cn } from "@/lib/utils";
+
+import type { PatientOption } from "./patient-option";
 
 const formSchema = z.object({
   patientId: z.string().min(1, {
@@ -69,7 +71,7 @@ const formSchema = z.object({
 
 interface UpsertAppointmentFormProps {
   isOpen: boolean;
-  patients: (typeof patientsTable.$inferSelect)[];
+  patients: PatientOption[];
   doctors: (typeof doctorsTable.$inferSelect)[];
   appointment?: typeof appointmentsTable.$inferSelect;
   onSuccess?: () => void;

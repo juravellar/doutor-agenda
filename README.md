@@ -15,7 +15,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 - **Autenticação** com e-mail e senha ou conta Google ([Better Auth](https://www.better-auth.com)), com recuperação de senha por e-mail.
 - **Clínica:** cada usuário trabalha dentro da sua clínica, e os dados de uma clínica não são visíveis para outra.
 - **Médicos:** especialidade, valor da consulta, dias da semana e horário de atendimento.
-- **Pacientes:** cadastro e listagem.
+- **Pacientes:** cadastro e listagem. Além dos dados básicos, a clínica pode registrar data de nascimento, CPF, endereço (preenchido pelo CEP), convênio, contato de emergência e observações administrativas.
 - **Agendamentos:** só oferece horários dentro do expediente do médico e que ainda não estejam ocupados.
 - **Dashboard:** faturamento, número de consultas, médicos e especialidades mais procurados, e os agendamentos do dia.
 - **Tema claro e escuro:** segue o tema do sistema ou a escolha feita no menu do rodapé (Tema).
@@ -103,7 +103,7 @@ Sistema de agendamento para clínicas médicas: cadastro de médicos com dias e 
 | Comando | O que faz |
 |---|---|
 | `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção |
+| `npm run build` | Build de produção. Na Vercel (produção), antes confere se o banco tem todas as colunas e índices do schema |
 | `npm start` | Sobe o build de produção |
 | `npm run lint` | ESLint |
 | `npm test` | Testes com Vitest |
@@ -136,6 +136,8 @@ O banco de produção foi criado com `drizzle-kit push` e não tem o histórico 
 ```bash
 psql "$DATABASE_URL" -P pager=off -f drizzle/000X_nome.sql
 ```
+
+Se a migração for esquecida, o deploy não chega a ir ao ar: no build de produção da Vercel, [`scripts/check-db-schema.mjs`](scripts/check-db-schema.mjs) compara as colunas e os índices do schema com os do banco e falha o build listando o que falta, e a versão anterior continua no ar. Para rodar a mesma verificação localmente: `CHECK_DB_SCHEMA=1 npm run build`.
 
 Não cole a `DATABASE_URL` em chats, issues ou commits.
 

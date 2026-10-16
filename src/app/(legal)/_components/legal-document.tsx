@@ -26,9 +26,9 @@ export function LegalDocument({
 }) {
   const [year, month, day] = TERMS_VERSION.split("-");
   return (
-    <article className="space-y-4 text-sm leading-relaxed text-foreground [&_h2]:pt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
+    <article className="text-foreground [&_h2]:text-foreground space-y-4 text-sm leading-relaxed [&_h2]:pt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-foreground text-2xl font-bold">{title}</h1>
         <p className="text-muted-foreground">
           Versão de {day}/{month}/{year}
         </p>

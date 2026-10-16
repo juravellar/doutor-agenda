@@ -30,14 +30,21 @@ O Avelliq trata dados de saúde (agendamentos revelam que uma pessoa buscou aten
 - [x] **Identificação:** as páginas mostram o CNPJ só se `LEGAL_CNPJ` estiver definido na Vercel. **Nenhum dado pessoal da responsável vai para o repositório, que é público.**
 - [x] **Canal de comunicação:** como agente de pequeno porte, o Avelliq é dispensado de indicar encarregado (Resolução CD/ANPD nº 2/2022, art. 11). A política aponta para `SUPPORT_EMAIL`, que deve ser um e-mail do domínio, não pessoal. Reavaliar se o tratamento passar a ser de alto risco (por exemplo, grande volume de dados de saúde).
 - [ ] **Contrato com as clínicas:** assinar o [acordo de tratamento de dados](acordo-de-tratamento-de-dados.md) ou incorporá-lo aos termos (art. 39).
-- [ ] **Fornecedores:** guardar os DPAs de Vercel, Neon, Stripe, Google e Resend.
+- [ ] **Fornecedores:** guardar os DPAs de Vercel, Neon, Stripe, Google e Resend. O ViaCEP (consulta pública de CEP) recebe só o CEP digitado no cadastro de paciente, além do IP de quem preenche, e está listado na Política de Privacidade.
 - [ ] **Incidentes:** adotar o [plano de resposta](plano-de-resposta-a-incidentes.md) e definir os responsáveis.
 - [ ] **Backups:** confirmar no Neon o período de retenção do histórico e que ele fica na mesma região.
 - [ ] **Registro das operações de tratamento (art. 37):** manter este documento atualizado.
 - [ ] **Relatório de impacto (art. 38):** recomendado por haver dados sensíveis.
 
+## Dados de pacientes
+
+Além de nome, email, telefone e sexo, a clínica pode preencher data de nascimento, CPF (único por clínica), endereço, convênio, contato de emergência e observações administrativas. O Avelliq **não é prontuário**: o formulário e os Termos pedem que diagnósticos, exames e prescrições não sejam registrados. Guardar dados clínicos traria as exigências do CFM (prontuário eletrônico, guarda por 20 anos), que o sistema não atende hoje.
+
+Ao mudar a lista de dados coletados, a Política de Privacidade muda junto, e `TERMS_VERSION` sobe para que todos aceitem de novo.
+
 ## Limites conhecidos
 
+- **Limite de tentativas de login e de redefinição de senha:** o Better Auth limita (3 a cada 10 s no login, 3 por minuto na redefinição), mas guarda o contador na memória de cada instância da Vercel, então o limite real é aproximado. Guardar no banco (`rateLimit.storage: "database"`) exige uma tabela nova e uma escrita a cada requisição de autenticação; vale fazer quando houver tráfego que justifique.
 - **Auditoria:** registra alterações, não leituras. Registrar cada visualização exigiria outra estrutura de logs.
 - **Médico excluído:** os agendamentos dele são apagados junto. A exclusão fica na auditoria, mas o histórico de faturamento daquele médico se perde.
 - **CSP:** não restringe scripts. Isso exigiria nonce por requisição e liberar o Stripe.js.
