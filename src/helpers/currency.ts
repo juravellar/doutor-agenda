@@ -19,6 +19,16 @@ export const priceInCentsSchema = (requiredMessage: string) =>
     .min(1, { message: requiredMessage })
     .max(MAX_PRICE_IN_CENTS, { message: "Valor acima do permitido." });
 
+// The same range in reais, for the forms, so a value the server would refuse
+// is flagged under the field instead of failing on save.
+export const priceInReaisSchema = (requiredMessage: string) =>
+  z
+    .number()
+    .min(0.01, { message: requiredMessage })
+    .max(MAX_PRICE_IN_CENTS / 100, {
+      message: "Valor acima do permitido (até R$ 100.000,00).",
+    });
+
 // Reais typed in the form to cents. Rounded because 150.1 * 100 is
 // 15009.999... in floating point.
 export const reaisToCents = (reais: number) => Math.round(reais * 100);

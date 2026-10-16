@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isValidPhone } from "@/helpers/phone";
 import {
   BRAND_COLOR_PATTERN,
   LOGO_DATA_URL_PATTERN,
@@ -13,8 +14,14 @@ export const updateClinicSchema = z.object({
     .min(1, { message: "Nome é obrigatório." })
     .max(120, { message: "Use até 120 caracteres." }),
   address: z.string().trim().max(200).optional(),
-  phoneNumber: z.string().trim().max(20).optional(),
-  // Empty removes the color or the logo.
+  phoneNumber: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || isValidPhone(value), {
+      message: "Telefone inválido.",
+    }),
+  // Empty removes the color or the logo; left out, they stay as they are.
   brandColor: z
     .string()
     .optional()

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPhone, phoneDigits } from "./phone";
+import {
+  caretAfterDigits,
+  editPhone,
+  formatPhone,
+  isValidPhone,
+  phoneDigits,
+} from "./phone";
 
 describe("formatPhone", () => {
   it("formats a landline with 10 digits", () => {
@@ -30,5 +36,47 @@ describe("formatPhone", () => {
 describe("phoneDigits", () => {
   it("keeps only the digits", () => {
     expect(phoneDigits("(11) 3333-4444")).toBe("1133334444");
+  });
+});
+
+describe("isValidPhone", () => {
+  it("accepts landlines and mobiles only", () => {
+    expect(isValidPhone("1133334444")).toBe(true);
+    expect(isValidPhone("(11) 99999-8888")).toBe(true);
+    expect(isValidPhone("119")).toBe(false);
+  });
+});
+
+describe("editPhone", () => {
+  it("erases the digit before a separator erased with backspace", () => {
+    // "(11) 3333-|4444" → backspace removes the "-"
+    expect(editPhone("(11) 3333-4444", "(11) 33334444", 9, false)).toEqual({
+      digits: "113334444",
+      digitsBeforeCaret: 5,
+    });
+  });
+
+  it("erases the digit after a separator erased with delete", () => {
+    // "(11) 3333|-4444" → delete removes the "-"
+    expect(editPhone("(11) 3333-4444", "(11) 33334444", 9, true)).toEqual({
+      digits: "113333444",
+      digitsBeforeCaret: 6,
+    });
+  });
+
+  it("keeps the cursor after a digit typed in the middle", () => {
+    // "(11) 33|33-4444" → types "5"
+    expect(editPhone("(11) 3333-4444", "(11) 33533-4444", 8, false)).toEqual({
+      digits: "11335334444",
+      digitsBeforeCaret: 5,
+    });
+  });
+});
+
+describe("caretAfterDigits", () => {
+  it("puts the cursor right after the nth digit", () => {
+    expect(caretAfterDigits("(11) 33533-4444", 5)).toBe(8);
+    expect(caretAfterDigits("(11) 3333-4444", 6)).toBe(9);
+    expect(caretAfterDigits("(11) 3333-4444", 0)).toBe(1);
   });
 });

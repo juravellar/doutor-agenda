@@ -15,6 +15,12 @@ import { PlanCard } from "./plan-card";
 
 type Prices = Record<PaidPlanId, Record<BillingInterval, PlanPrice | null>>;
 
+const OPTIONS = [
+  ["monthly", "Mensal"],
+  ["yearly", "Anual"],
+] as const;
+const ARROW_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+
 // The plan cards with a monthly/yearly switch, shown only when at least one
 // plan has a yearly price in Stripe.
 export function PlanCards({
@@ -46,18 +52,29 @@ export function PlanCards({
             aria-label="Forma de pagamento"
             className="bg-muted inline-flex rounded-lg p-1"
           >
-            {(
-              [
-                ["monthly", "Mensal"],
-                ["yearly", "Anual"],
-              ] as const
-            ).map(([value, label]) => (
+            {OPTIONS.map(([value, label]) => (
               <button
                 key={value}
                 type="button"
                 role="radio"
                 aria-checked={interval === value}
+                // One tab stop for the group; arrows move between options.
+                tabIndex={interval === value ? 0 : -1}
                 onClick={() => setBillingInterval(value)}
+                onKeyDown={(event) => {
+                  if (!ARROW_KEYS.includes(event.key)) {
+                    return;
+                  }
+                  event.preventDefault();
+                  const next = value === "monthly" ? "yearly" : "monthly";
+                  setBillingInterval(next);
+                  (
+                    event.currentTarget.parentElement?.querySelector(
+                      `[data-interval="${next}"]`,
+                    ) as HTMLButtonElement | null
+                  )?.focus();
+                }}
+                data-interval={value}
                 className={cn(
                   "rounded-md px-4 py-1.5 text-sm font-medium transition-[color,background-color,box-shadow] duration-150",
                   interval === value

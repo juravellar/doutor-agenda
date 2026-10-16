@@ -151,13 +151,33 @@ describe("upsertPatient", () => {
   it("explains a CPF already used in the clinic", async () => {
     mocks.onConflictDoUpdate.mockImplementationOnce(() => ({
       returning: async () => {
-        throw Object.assign(new Error("duplicate key"), { code: "23505" });
+        throw Object.assign(new Error("duplicate key"), {
+          code: "23505",
+          constraint: "patients_clinic_cpf_unique",
+        });
       },
     }));
 
     const result = await upsertPatient({ ...input, cpf: "52998224725" });
 
     expect(result?.serverError).toBe(
+      "Já existe um paciente com este CPF nesta clínica.",
+    );
+  });
+
+  it("doesn't blame the CPF for another unique key", async () => {
+    mocks.onConflictDoUpdate.mockImplementationOnce(() => ({
+      returning: async () => {
+        throw Object.assign(new Error("duplicate key"), {
+          code: "23505",
+          constraint: "patients_pkey",
+        });
+      },
+    }));
+
+    const result = await upsertPatient(input);
+
+    expect(result?.serverError).not.toBe(
       "Já existe um paciente com este CPF nesta clínica.",
     );
   });
