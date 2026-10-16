@@ -188,4 +188,23 @@ describe("upsertPatient", () => {
       "Já existe um paciente com este CPF nesta clínica.",
     );
   });
+
+  it("keeps accepting an incomplete phone saved before the check existed", async () => {
+    mocks.findPatient.mockResolvedValue({
+      id: PATIENT_ID,
+      clinicId: CLINIC_ID,
+      phoneNumber: "1199",
+    });
+
+    const result = await upsertPatient({ ...input, phoneNumber: "1199" });
+
+    expect(result?.serverError).toBeUndefined();
+  });
+
+  it("refuses an incomplete phone that wasn't saved before", async () => {
+    const result = await upsertPatient({ ...input, phoneNumber: "119" });
+
+    expect(result?.serverError).toBe("Telefone inválido.");
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
 });

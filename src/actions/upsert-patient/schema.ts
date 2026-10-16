@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { BRAZILIAN_STATES, isValidCpf, onlyDigits } from "@/helpers/cpf";
-import { isValidPhone } from "@/helpers/phone";
+import { isAcceptablePhone, isValidPhone } from "@/helpers/phone";
 import { clinicToday, isCalendarDay } from "@/helpers/time";
 
 const text = (max: number) =>
@@ -23,11 +23,11 @@ export const upsertPatientSchema = z.object({
   email: z.string().email({
     message: "Email inválido.",
   }),
+  // Checked against the saved number by patientFormSchema and the action.
   phoneNumber: z
     .string()
     .trim()
-    .min(1, { message: "Número de telefone é obrigatório." })
-    .refine(isValidPhone, { message: "Telefone inválido." }),
+    .min(1, { message: "Número de telefone é obrigatório." }),
   sex: z.enum(["male", "female"], {
     required_error: "Sexo é obrigatório.",
   }),
@@ -75,6 +75,18 @@ export const upsertPatientSchema = z.object({
 });
 
 export type UpsertPatientSchema = z.infer<typeof upsertPatientSchema>;
+
+export const INVALID_PHONE_MESSAGE = "Telefone inválido.";
+
+// The form's rules: the shared ones, plus a phone that is valid or unchanged
+// from the one saved.
+export const patientFormSchema = (savedPhone?: string | null) =>
+  upsertPatientSchema
+    .omit({ id: true })
+    .refine((values) => isAcceptablePhone(values.phoneNumber, savedPhone), {
+      message: INVALID_PHONE_MESSAGE,
+      path: ["phoneNumber"],
+    });
 
 const orNull = (value: string | undefined) => (value ? value : null);
 const digitsOrNull = (value: string | undefined) =>

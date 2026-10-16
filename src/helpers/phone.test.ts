@@ -4,6 +4,7 @@ import {
   caretAfterDigits,
   editPhone,
   formatPhone,
+  isAcceptablePhone,
   isValidPhone,
   phoneDigits,
 } from "./phone";
@@ -36,6 +37,15 @@ describe("formatPhone", () => {
 describe("phoneDigits", () => {
   it("keeps only the digits", () => {
     expect(phoneDigits("(11) 3333-4444")).toBe("1133334444");
+  });
+});
+
+describe("isAcceptablePhone", () => {
+  it("accepts a valid number or the incomplete one already saved", () => {
+    expect(isAcceptablePhone("1133334444")).toBe(true);
+    expect(isAcceptablePhone("1199", "1199")).toBe(true);
+    expect(isAcceptablePhone("1198", "1199")).toBe(false);
+    expect(isAcceptablePhone("119")).toBe(false);
   });
 });
 

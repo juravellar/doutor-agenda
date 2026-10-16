@@ -28,6 +28,13 @@ export const formatPhone = (value: string) => {
 export const isValidPhone = (value: string) =>
   [10, 11].includes(value.replace(/\D/g, "").length);
 
+// Valid, or the number already saved. Phones saved before the check existed
+// may be incomplete; they shouldn't block saving the rest of a form until
+// someone edits them.
+export const isAcceptablePhone = (value: string, saved?: string | null) =>
+  isValidPhone(value) ||
+  (!!saved && value.replace(/\D/g, "") === saved.replace(/\D/g, ""));
+
 /**
  * Applies one edit of the formatted phone field. `edited` is the field's text
  * after the keystroke and `caret` the cursor in it. Returns the digits to keep

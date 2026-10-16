@@ -5,13 +5,18 @@ import { revalidatePath } from "next/cache";
 
 import { violatedConstraint, withClinicLock } from "@/db/clinic-lock";
 import { patientsTable } from "@/db/schema";
+import { isAcceptablePhone } from "@/helpers/phone";
 import { UserFacingError } from "@/lib/action-errors";
 import { recordAudit } from "@/lib/audit";
 import { clinicWriteActionClient } from "@/lib/clinic-action";
 import { ensurePlanAllows } from "@/lib/plan-limits";
 import { resolvePlan } from "@/lib/plans";
 
-import { patientColumns, upsertPatientSchema } from "./schema";
+import {
+  INVALID_PHONE_MESSAGE,
+  patientColumns,
+  upsertPatientSchema,
+} from "./schema";
 
 export const upsertPatient = clinicWriteActionClient
   .schema(upsertPatientSchema)
@@ -28,6 +33,11 @@ export const upsertPatient = clinicWriteActionClient
           : undefined;
         if (existingPatient && existingPatient.clinicId !== clinicId) {
           throw new Error("Paciente não encontrado");
+        }
+        if (
+          !isAcceptablePhone(input.phoneNumber, existingPatient?.phoneNumber)
+        ) {
+          throw new UserFacingError(INVALID_PHONE_MESSAGE);
         }
         if (!existingPatient) {
           const patientCount = await tx.$count(
