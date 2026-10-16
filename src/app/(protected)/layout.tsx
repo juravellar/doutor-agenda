@@ -7,6 +7,7 @@ import { getServerSession } from "@/lib/server-session";
 import { AccountStatusBanner } from "./_components/account-status-banner";
 import { AppBreadcrumb } from "./_components/app-breadcrumb";
 import { AppSidebar } from "./_components/app-sidebar";
+import { PageTransition } from "./_components/page-transition";
 import { SessionProvider } from "./_components/session-provider";
 import { TermsGate } from "./_components/terms-gate";
 
@@ -27,7 +28,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
             <AppBreadcrumb />
           </header>
           <AccountStatusBanner />
-          {children}
+          <PageTransition>{children}</PageTransition>
           <TermsGate />
         </main>
       </SidebarProvider>

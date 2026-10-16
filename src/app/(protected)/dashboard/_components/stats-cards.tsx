@@ -54,7 +54,7 @@ const StatsCards = ({
               <div className="bg-primary/10 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full sm:flex">
                 <Icon className="text-primary h-4 w-4" />
               </div>
-              <CardTitle className="text-muted-foreground min-w-0 truncate text-sm leading-none font-medium">
+              <CardTitle className="text-muted-foreground min-w-0 truncate py-0.5 text-sm font-medium">
                 {stat.title}
               </CardTitle>
             </CardHeader>

@@ -1,7 +1,7 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
 
 import {
   Breadcrumb,
@@ -11,115 +11,42 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useResourceName } from "@/hooks/use-resource-name";
-import { isUUID } from "@/lib/utils";
+import { pageTitle } from "@/lib/routes";
 
-const pathTranslations: Record<string, string> = {
-  dashboard: "Dashboard",
-  doctors: "Médicos",
-  patients: "Pacientes",
-  appointments: "Agendamentos",
-  new: "Adicionar",
-  edit: "Editar",
-  subscription: "Assinatura",
-  clinics: "Minhas clínicas",
-  "clinic-settings": "Configurações da clínica",
-  account: "Minha conta",
-};
+import { useSessionUser } from "./session-provider";
 
-type ResourceType = "patients" | "doctors" | "appointments";
-
-interface ResourceNameProps {
-  id: string;
-  resourceType: ResourceType;
-}
-
-const ResourceName: React.FC<ResourceNameProps> = ({ id, resourceType }) => {
-  const name = useResourceName(id, resourceType);
-  return <>{name || "Carregando..."}</>;
-};
-
-const outrosRoutes = [
-  "/subscription",
-  "/clinics",
-  "/clinic-settings",
-  "/account",
-];
-
-function getSidebarGroupLabel(pathname: string): string {
-  if (outrosRoutes.some((route) => pathname.startsWith(route))) {
-    return "Outros";
-  }
-  return "Menu Principal";
-}
-
+// Where the user is: the clinic they're working in, then the page.
 export function AppBreadcrumb() {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
-
-  const sidebarGroupLabel = getSidebarGroupLabel(`/${segments[0] || ""}`);
+  const { clinic } = useSessionUser();
+  const title = pageTitle(pathname);
+  const onDashboard = pathname.startsWith("/dashboard");
 
   return (
-    <div className="flex min-h-[60px] items-center">
-      <Breadcrumb aria-label="breadcrumb">
-        <BreadcrumbList className="flex items-center">
-          <BreadcrumbItem className="flex items-center">
-            <BreadcrumbLink asChild>
-              <Link
-                className="flex h-10 items-center"
-                href={
-                  sidebarGroupLabel === "Outros"
-                    ? "/subscription"
-                    : "/dashboard"
-                }
-              >
-                {sidebarGroupLabel}
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {segments.map((segment, index) => {
-            const href = `/${segments.slice(0, index + 1).join("/")}`;
-            const isLast = index === segments.length - 1;
-            const previousSegment = segments[index - 1];
-            const isId = isUUID(segment);
-            const isResource =
-              previousSegment &&
-              ["patients", "doctors", "appointments"].includes(previousSegment);
-            const resourceType = isResource
-              ? (previousSegment as ResourceType)
-              : undefined;
-            const name =
-              pathTranslations[segment] ||
-              segment.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
-
-            const breadcrumbContent =
-              isId && resourceType ? (
-                <ResourceName id={segment} resourceType={resourceType} />
+    <Breadcrumb className="min-w-0">
+      <BreadcrumbList className="flex-nowrap">
+        {clinic && (
+          <>
+            <BreadcrumbItem className="min-w-0">
+              {onDashboard ? (
+                <span className="truncate">{clinic.name}</span>
               ) : (
-                name
-              );
-
-            return (
-              <React.Fragment key={href}>
-                <BreadcrumbSeparator className="text-primary flex items-center" />
-                <BreadcrumbItem className="flex items-center">
-                  {isLast ? (
-                    <BreadcrumbPage className="text-primary flex h-10 items-center font-bold">
-                      {breadcrumbContent}
-                    </BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild className="text-primary font-bold">
-                      <Link href={href} className="flex h-10 items-center">
-                        {breadcrumbContent}
-                      </Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
-    </div>
+                <BreadcrumbLink asChild className="truncate">
+                  <Link href="/dashboard" prefetch={false}>
+                    {clinic.name}
+                  </Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+            {title && <BreadcrumbSeparator />}
+          </>
+        )}
+        {title && (
+          <BreadcrumbItem className="shrink-0">
+            <BreadcrumbPage className="font-medium">{title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        )}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

@@ -2,7 +2,7 @@ import { Calendar } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   PageActions,
   PageContainer,
@@ -20,6 +20,7 @@ import { getDashboard } from "../../../../data/get-dashboard";
 import AppointmentsChart from "./_components/appointments-charts";
 import { CheckoutReturnRefresh } from "./_components/checkout-return-refresh";
 import DashboardAppointmentsTable from "./_components/dashboard-appointments-table";
+import { DashboardCardHeader } from "./_components/dashboard-card-header";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
 import TopDoctors from "./_components/top-doctors";
@@ -98,14 +99,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         </div>
         <div className="grid gap-4 lg:grid-cols-[2.25fr_1fr] [&>*]:min-w-0">
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Calendar className="text-primary h-4 w-4" />
-                <CardTitle className="text-base">
-                  Agendamentos de hoje
-                </CardTitle>
-              </div>
-            </CardHeader>
+            <DashboardCardHeader icon={Calendar} title="Agendamentos de hoje" />
             <CardContent>
               <DashboardAppointmentsTable
                 appointments={todayAppointments}

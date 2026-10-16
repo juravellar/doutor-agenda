@@ -10,8 +10,10 @@ import {
   Stethoscope,
 } from "lucide-react";
 
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+
+import { DashboardCardHeader } from "./dashboard-card-header";
 
 interface TopSpecialtiesProps {
   topSpecialties: {
@@ -51,18 +53,13 @@ export default function TopSpecialties({
     : 0;
 
   return (
-    <Card className="mx-auto w-full">
+    <Card className="w-full">
+      <DashboardCardHeader icon={Hospital} title="Especialidades" />
       <CardContent>
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Hospital className="text-primary h-4 w-4" />
-            <CardTitle className="text-base">Especialidades</CardTitle>
-          </div>
-        </div>
 
         {!hasSpecialties ? (
           <div className="text-muted-foreground py-8 text-center text-sm">
-            Nenhum médico cadastrado.
+            Nenhum agendamento no período.
           </div>
         ) : (
           <div className="space-y-6">
